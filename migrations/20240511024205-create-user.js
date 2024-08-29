@@ -46,7 +46,7 @@ module.exports = {
       type: 'foreign key',
       name: 'custom_fkey_userinfo_id',
       references: {
-        table: 'Userinfos',
+        table: 'User_infos',
         field: 'id'
       }
     });
