@@ -15,6 +15,9 @@ module.exports = {
       layanan_id: {
         type: Sequelize.INTEGER
       },
+      isonline: {
+        type: Sequelize.BOOLEAN
+      },
       fileoutput: {
         type: Sequelize.STRING
       },
@@ -40,7 +43,7 @@ module.exports = {
     await queryInterface.addConstraint('Layanan_form_nums', {
       fields: ['userinfo_id'],
       type: 'foreign key',
-      name: 'custom_fkey_userinfo_id',
+      name: 'custom_fkey_user_info_id',
       references: {
         table: 'User_infos',
         field: 'id'
