@@ -27,16 +27,12 @@ module.exports = {
     //membuat bidang
     createbidang: async (req, res) => {
         try {
-
-            //membuat schema untuk validasi
             const schema = {
                 nama: { type: "string" },
                 desc: { type: "string", optional: true },
                 pj: { type: "string", optional: true },
                 nip_pj: { type: "string", optional: true }
             }
-
-            //buat object bidang
             let bidangCreateObj = {
                 nama: req.body.nama,
                 slug: req.body.nama ? slugify(req.body.nama, { lower: true }) : undefined,
@@ -44,23 +40,18 @@ module.exports = {
                 pj: req.body.pj,
                 nip_pj: req.body.nip_pj,
             }
-
-            //validasi menggunakan module fastest-validator
+            //validasi
             const validate = v.validate(bidangCreateObj, schema);
             if (validate.length > 0) {
                 res.status(400).json(response(400, 'validation failed', validate));
                 return;
             }
-
-            //mendapatkan data data untuk pengecekan
             let dataGets = await Bidang.findOne({
                 where: {
                     slug: bidangCreateObj.slug
                 }
             }
             );
-
-            //cek apakah slug sudah terdaftar
             if (dataGets) {
                 res.status(409).json(response(409, 'slug already registered'));
                 return;
@@ -68,8 +59,6 @@ module.exports = {
 
             //buat bidang
             let bidangCreate = await Bidang.create(bidangCreateObj);
-
-            //response menggunakan helper response.formatter
             res.status(201).json(response(201, 'success create bidang', bidangCreate));
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
@@ -90,20 +79,17 @@ module.exports = {
 
             const whereCondition = {};
 
-            // if (data?.role === "Admin Instansi" || data?.role === "Super Admin" || data?.role === "Bupati" || data?.role === "Admin Verifikasi") {
-            // } else {
-            //     whereCondition.status = true;
-            // }
-
+            if (data?.role === "Admin Instansi" || data?.role === "Super Admin" || data?.role === "Bupati" || data?.role === "Admin Verifikasi") {
+            } else {
+                whereCondition.status = true;
+            }
             let includeOptions = [];
             let isrequired = false
-
             if (showDeleted !== null) {
                 whereCondition.deletedAt = { [Op.not]: null };
             } else {
                 whereCondition.deletedAt = null;
             }
-
             if (search) {
                 whereCondition[Op.or] = [
                     { name: { [Op.iLike]: `%${search}%` } },
@@ -181,6 +167,169 @@ module.exports = {
 
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
+
+     //mendapatkan data bidang berdasarkan slug
+     getbidangBySlug: async (req, res) => {
+        try {
+            const showDeleted = req.query.showDeleted ?? null;
+            const whereCondition = { slug: req.params.slug };
+
+            if (showDeleted !== null) {
+                whereCondition.deletedAt = { [Op.not]: null };
+            } else {
+                whereCondition.deletedAt = null;
+            }
+
+            if (data?.role === "Admin Instansi" || data?.role === "Super Admin" || data?.role === "Bupati" || data?.role === "Admin Verifikasi") {
+            } else {
+                whereCondition.status = true;
+            }
+
+            let bidangGet = await Bidang.findOne({
+                where: whereCondition,
+                include: [
+                    {
+                        model: Layanan,
+                        as: 'Layanans',
+                        attributes: ['id', 'nama', 'desc', 'syarat'],
+                        where: {
+                            deletedAt: null
+                        },
+                        required: false
+                    },
+                ]
+            });
+
+            //cek jika bidang tidak ada
+            if (!bidangGet) {
+                res.status(404).json(response(404, 'bidang not found'));
+                return;
+            }
+
+            const { id, nama, slug, desc, pj, nip_pj, createdAt, updatedAt, deletedAt, Layanans } = bidangGet.toJSON();
+            const jml_layanan = Layanans.length;
+
+            const formattedBidangGets = {
+                id, nama, slug, desc, pj, nip_pj, createdAt, updatedAt, deletedAt, jml_layanan, Layanans
+            };
+
+            res.status(200).json(response(200, 'success get bidang by slug', formattedBidangGets));
+        } catch (err) {
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
+
+    //mengupdate bidang berdasarkan slug
+    updatebidang: async (req, res) => {
+        try {
+            let bidangGet = await Bidang.findOne({
+                where: {
+                    slug: req.params.slug,
+                    deletedAt: null
+                }
+            })
+            if (!bidangGet) {
+                res.status(404).json(response(404, 'bidang not found'));
+                return;
+            }
+
+            const schema = {
+                nama: { type: "string", optional: true },
+                desc: { type: "string", optional: true },
+                pj: { type: "string", optional: true },
+                nip_pj: { type: "string", optional: true },
+            }
+
+            let bidangUpdateObj = {
+                nama: req.body.nama,
+                slug: req.body.nama ? slugify(req.body.nama, { lower: true }) : undefined,
+                desc: req.body.desc,
+                pj: req.body.pj,
+                nip_pj: req.body.nip_pj,
+            }
+
+            //validasi
+            const validate = v.validate(bidangUpdateObj, schema);
+            if (validate.length > 0) {
+                res.status(400).json(response(400, 'validation failed', validate));
+                return;
+            }
+
+            await Bidang.update(bidangUpdateObj, {
+                where: {
+                    slug: req.params.slug,
+                }
+            })
+
+            //mendapatkan data bidang setelah update
+            let bidangAfterUpdate = await Bidang.findOne({
+                where: {
+                    slug: req.params.slug,
+                }
+            })
+            res.status(200).json(response(200, 'success update bidang', bidangAfterUpdate));
+        } catch (err) {
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
+
+    deletebidang: async (req, res) => {
+        const transaction = await sequelize.transaction();
+        try {
+            let bidangGet = await Bidang.findOne({
+                where: {
+                    slug: req.params.slug,
+                    deletedAt: null
+                },
+                transaction
+            });
+            if (!bidangGet) {
+                await transaction.rollback();
+                res.status(404).json(response(404, 'bidang not found'));
+                return;
+            }
+
+            const models = Object.keys(sequelize.models);
+
+            const updatePromises = [];
+
+            models.forEach(async modelName => {
+                const Model = sequelize.models[modelName];
+                if (Model.associations && Model.associations.Instansi && Model.rawAttributes.deletedAt) {
+                    updatePromises.push(
+                        Model.update({ deletedAt: new Date() }, {
+                            where: {
+                                bidang_id: bidangGet.id
+                            },
+                            transaction
+                        })
+                    );
+                }
+            });
+
+            // Jalankan semua promise update secara bersamaan
+            await Promise.all(updatePromises);
+
+            await Bidang.update({ deletedAt: new Date() }, {
+                where: {
+                    slug: req.params.slug
+                },
+                transaction
+            });
+
+            // Commit transaksi jika semua operasi berhasil
+            await transaction.commit();
+
+            res.status(200).json(response(200, 'success delete bidang'));
+
+        } catch (err) {
+            await transaction.rollback();
+            res.status(500).json(response(500, 'Internal server error', err));
             console.log(err);
         }
     },
