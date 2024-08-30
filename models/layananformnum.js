@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       Layanan_form_num.belongsTo(models.Layanan, {
         foreignKey: 'layanan_id',
       });
-      Layanan_form_num.hasMany(models.Layananforminput, {
+      Layanan_form_num.hasMany(models.Layanan_form_input, {
         foreignKey: 'layananformnum_id',
       });
       Layanan_form_num.belongsTo(models.User_info, {

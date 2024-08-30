@@ -28,16 +28,12 @@ module.exports = {
     //membuat layanan
     createlayanan: async (req, res) => {
         try {
-
-            //membuat schema untuk validasi
             const schema = {
                 nama: { type: "string" },
                 desc: { type: "string", optional: true },
                 syarat: { type: "string", optional: true },
                 bidang_id: { type: "number", optional: true }
             }
-
-            //buat object layanan
             let layananCreateObj = {
                 nama: req.body.nama,
                 slug: slugify(req.body.nama, { lower: true }),
@@ -45,23 +41,19 @@ module.exports = {
                 syarat: req.body.syarat,
                 bidang_id: req.body.bidang_id !== undefined ? Number(req.body.bidang_id) : null,
             }
-
-            //validasi menggunakan module fastest-validator
+            
+            //validasi
             const validate = v.validate(layananCreateObj, schema);
             if (validate.length > 0) {
                 res.status(400).json(response(400, 'validation failed', validate));
                 return;
             }
-
-            //mendapatkan data data untuk pengecekan
             let dataGets = await Layanan.findOne({
                 where: {
                     slug: layananCreateObj.slug
                 }
             }
             );
-
-            //cek apakah slug sudah terdaftar
             if (dataGets) {
                 res.status(409).json(response(409, 'slug already registered'));
                 return;
@@ -145,46 +137,23 @@ module.exports = {
         }
     },
 
-    //mendapatkan semua data layanan by dinas
-    getlayananbydinas: async (req, res) => {
+    //mendapatkan semua data layanan by bidang
+    getlayananbybidang: async (req, res) => {
         try {
-            const instansi_id = req.params.instansi_id;
+            const bidang_id = req.params.bidang_id;
             const showDeleted = req.query.showDeleted === 'true' ?? false;
-            let { search, pengaduan, skm } = req.query;
+            let { search } = req.query;
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const offset = (page - 1) * limit;
-            let instansiGets;
+            let bidangGets;
             let layananGets;
             let totalCount;
 
-            let includeOptions = [{ model: Instansi, attributes: ['id', 'name'] }]
-
-            if (pengaduan && data?.role === 'User') {
-                includeOptions = [{
-                    model: Layananformnum,
-                    attributes: [],
-                    required: true,
-                    where: {
-                        userinfo_id: data?.user_akun_id
-                    }
-                }];
-            }
-
-            if (skm && data?.role === 'User') {
-                
-                includeOptions = [{
-                    model: Layananformnum,
-                    attributes: [],
-                    required: true,
-                    where: {
-                        userinfo_id: data?.user_akun_id
-                    }
-                }];
-            }
+            let includeOptions = [{ model: Bidang, attributes: ['id', 'nama'] }]
 
             const whereCondition = {
-                instansi_id: instansi_id
+                bidang_id: bidang_id
             };
 
             if (data?.role === "Admin Instansi" || data?.role === "Super Admin" || data?.role === "Bupati" || data?.role === "Admin Verifikasi") {
@@ -204,10 +173,10 @@ module.exports = {
                 whereCondition.deletedAt = null;
             }
 
-            [instansiGets, layananGets, totalCount] = await Promise.all([
-                Instansi.findOne({
+            [bidangGets, layananGets, totalCount] = await Promise.all([
+                Bidang.findOne({
                     where: {
-                        id: instansi_id
+                        id: bidang_id
                     },
                 }),
                 Layanan.findAll({
@@ -216,7 +185,7 @@ module.exports = {
                     limit: limit,
                     offset: offset,
                     order: [
-                        ['status', 'DESC'],
+                        ['DESC'],
                         ['id', 'ASC']
                     ]
                 }),
@@ -228,20 +197,20 @@ module.exports = {
             ]);
 
             const modifiedLayananGets = layananGets.map(layanan => {
-                const { Instansi, ...otherData } = layanan.dataValues;
+                const { Bidang, ...otherData } = layanan.dataValues;
                 return {
                     ...otherData,
-                    instansi_name: Instansi?.name
+                    Bidang_nama: Bidang?.nama
                 };
             });
 
-            const pagination = generatePagination(totalCount, page, limit, `/api/user/layanan/dinas/get/${instansi_id}`);
+            const pagination = generatePagination(totalCount, page, limit, `/api/user/layanan/bidang/get/${bidang_id}`);
 
             res.status(200).json({
                 status: 200,
-                message: 'success get layanan by dinas',
+                message: 'success get layanan by bidang',
                 data: modifiedLayananGets,
-                instansi: instansiGets,
+                bidang: bidangGets,
                 pagination: pagination
             });
 
@@ -270,7 +239,7 @@ module.exports = {
 
             let layananGet = await Layanan.findOne({
                 where: whereCondition,
-                include: [{ model: Instansi, attributes: ['id', 'name'] }]
+                include: [{ model: Bidang, attributes: ['id', 'nama'] }]
             });
 
             //cek jika layanan tidak ada
@@ -279,13 +248,11 @@ module.exports = {
                 return;
             }
 
-            const { Instansi: instansiObj, ...otherData } = layananGet.dataValues;
+            const { Bidang: bidangObj, ...otherData } = layananGet.dataValues;
             const modifiedLayananGet = {
                 ...otherData,
-                instansi_name: instansiObj?.name
+                bidang_name: bidangObj?.nama
             };
-
-            //response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success get layanan by id', modifiedLayananGet));
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
