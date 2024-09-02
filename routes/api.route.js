@@ -6,6 +6,8 @@ const bidangRoute = require('./bidang.route');
 const layananRoute = require('./layanan.route');
 const layananformRoute = require('./layananform.route');
 const kecamatanRoute = require('./kecamatan.route');
+const desaRoute = require('./desa.route');
+
 
 module.exports = function (app, urlApi) {
     app.use(urlApi, userRoute);
@@ -16,4 +18,5 @@ module.exports = function (app, urlApi) {
     app.use(urlApi, layananRoute);
     app.use(urlApi, layananformRoute);
     app.use(urlApi, kecamatanRoute);
+    app.use(urlApi, desaRoute);
 }
