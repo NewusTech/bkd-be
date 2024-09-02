@@ -11,6 +11,9 @@ module.exports = (sequelize, DataTypes) => {
       Layanan.belongsTo(models.Bidang, {
         foreignKey: 'bidang_id',
       });
+      Layanan.hasMany(models.Layanan_file, {
+        foreignKey: 'layanan_id',
+      });
     }
   }
   Layanan.init({
