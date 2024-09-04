@@ -1,4 +1,4 @@
-const layananforminput = require('../controllers/layananforminput.controller');
+const layananforminput = require('../controllers/layananforminput.controller.js');
 
 const mid = require('../middlewares/auth.middleware');
 
