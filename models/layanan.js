@@ -20,7 +20,10 @@ module.exports = (sequelize, DataTypes) => {
     nama: DataTypes.STRING,
     slug: DataTypes.STRING,
     desc: DataTypes.TEXT,
+    penanggung_jawab: DataTypes.STRING,
     syarat: DataTypes.TEXT,
+    ketentuan: DataTypes.TEXT,
+    langkah: DataTypes.TEXT,
     bidang_id: DataTypes.INTEGER,
     deletedAt: DataTypes.DATE
   }, {
