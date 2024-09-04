@@ -32,6 +32,9 @@ module.exports = {
                 nama: { type: "string" },
                 desc: { type: "string", optional: true },
                 syarat: { type: "string", optional: true },
+                ketentuan: { type: "string", optional: true },
+                langkah: { type: "string", optional: true },
+                penanggung_jawab: { type: "string", optional: true },
                 bidang_id: { type: "number", optional: true }
             }
             let layananCreateObj = {
@@ -39,6 +42,9 @@ module.exports = {
                 slug: slugify(req.body.nama, { lower: true }),
                 desc: req.body.desc,
                 syarat: req.body.syarat,
+                ketentuan: req.body.ketentuan,
+                langkah: req.body.langkah,
+                penanggung_jawab: req.body.penanggung_jawab,
                 bidang_id: req.body.bidang_id !== undefined ? Number(req.body.bidang_id) : null,
             }
             
