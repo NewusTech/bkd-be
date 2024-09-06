@@ -26,7 +26,7 @@ const s3Client = new S3Client({
 module.exports = {
 
     //membuat layanan
-    createlayanan: async (req, res) => {
+    createLayanan: async (req, res) => {
         try {
             const schema = {
                 nama: { type: "string" },
@@ -76,8 +76,8 @@ module.exports = {
         }
     },
 
-    //mendapatkan semua data layanan
-    getlayanan: async (req, res) => {
+    //get semua data layanan
+    getLayanan: async (req, res) => {
         try {
             const search = req.query.search ?? null;
             const showDeleted = req.query.showDeleted === 'true' ?? false;
@@ -143,8 +143,8 @@ module.exports = {
         }
     },
 
-    //mendapatkan semua data layanan by bidang
-    getlayananbybidang: async (req, res) => {
+    //get semua data layanan by bidang
+    getLayananByBidang: async (req, res) => {
         try {
             const bidang_id = req.params.bidang_id;
             const showDeleted = req.query.showDeleted === 'true' ?? false;
@@ -226,8 +226,8 @@ module.exports = {
         }
     },
 
-    //mendapatkan data layanan berdasarkan id
-    getlayananById: async (req, res) => {
+    //get data layanan berdasarkan id
+    getLayananById: async (req, res) => {
         try {
             const showDeleted = req.query.showDeleted ?? null;
             const whereCondition = { id: req.params.id };
@@ -266,5 +266,91 @@ module.exports = {
         }
     },
 
+    //update layanan berdasarkan id
+    updateLayanan: async (req, res) => {
+        try {
+            let layananGet = await Layanan.findOne({
+                where: {
+                    id: req.params.id,
+                    deletedAt: null
+                }
+            })
+            if (!layananGet) {
+                res.status(404).json(response(404, 'layanan not found'));
+                return;
+            }
+
+            const schema = {
+                nama: { type: "string", optional: true },
+                desc: { type: "string", optional: true },
+                syarat: { type: "string", optional: true },
+                ketentuan: { type: "string", optional: true },
+                langkah: { type: "string", optional: true },
+                penanggung_jawab: { type: "string", optional: true },
+            }
+
+            let layananUpdateObj = {
+                nama: req.body.nama,
+                slug: req.body.nama ? slugify(req.body.nama, { lower: true }) : undefined,
+                desc: req.body.desc,
+                syarat: req.body.syarat,
+                ketentuan: req.body.ketentuan,
+                langkah: req.body.langkah,
+                penanggung_jawab: req.body.penanggung_jawab,
+            }
+
+            const validate = v.validate(layananUpdateObj, schema);
+            if (validate.length > 0) {
+                res.status(400).json(response(400, 'validation failed', validate));
+                return;
+            }
+
+            //update layanan
+            await Layanan.update(layananUpdateObj, {
+                where: {
+                    id: req.params.id,
+                }
+            })
+
+            let layananAfterUpdate = await Layanan.findOne({
+                where: {
+                    id: req.params.id,
+                }
+            })
+            res.status(200).json(response(200, 'success update layanan', layananAfterUpdate));
+
+        } catch (err) {
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
+
+    //menghapus layanan
+    deleteLayanan: async (req, res) => {
+        try {
+            let layananGet = await Layanan.findOne({
+                where: {
+                    id: req.params.id,
+                    deletedAt: null
+                }
+            })
+            if (!layananGet) {
+                res.status(404).json(response(404, 'layanan not found'));
+                return;
+            }
+
+            await Layanan.update({ deletedAt: new Date() }, {
+                where: {
+                    id: req.params.id
+                }
+            });
+
+            res.status(200).json(response(200, 'success delete layanan'));
+
+        } catch (err) {
+            res.status(500).json(response(500, 'Internal server error', err));
+            console.log(err);
+        }
+    },
 
 }
