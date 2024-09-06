@@ -32,6 +32,7 @@ module.exports = {
             const schema = {
                 name: { type: "string", min: 3 },
                 nip: { type: "string", min: 3 },
+                nik: { type: "string", min: 3 },
                 email: { type: "string", min: 5, max: 50, pattern: /^\S+@\S+\.\S+$/, optional: true },
                 telepon: { type: "string", min: 7, max: 15, pattern: /^[0-9]+$/, optional: true },
                 password: { type: "string", min: 5, max: 16 },
@@ -43,6 +44,7 @@ module.exports = {
             const validate = v.validate({
                 name: req.body.name,
                 nip: req.body.nip,
+                nik: req.body.nik,
                 password: req.body.password,
                 role_id: req.body.role_id !== undefined ? Number(req.body.role_id) : undefined,
                 email: req.body.email,
@@ -78,6 +80,7 @@ module.exports = {
             let userinfoCreateObj = {
                 name: req.body.name,
                 nip: req.body.nip,
+                nik: req.body.nik,
                 email: req.body.email,
                 telepon: req.body.telepon,
                 alamat: req.body.alamat,
@@ -218,15 +221,11 @@ module.exports = {
     //logout user
     logoutUser: async (req, res) => {
         try {
-            //memasukan token kedalam variable
             let token = req.headers.authorization.split(' ')[1];
 
-            //memasukan token ke table token
             let tokenInsert = await Token.create({
                 token: token
             });
-
-            //send response
             res.status(200).json(response(200, 'logout success', tokenInsert));
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
@@ -234,7 +233,7 @@ module.exports = {
         }
     },
 
-    //mendapatkan semua data user
+    //get all data user
     getuser: async (req, res) => {
         try {
             const showDeleted = req.query.showDeleted ?? null;
@@ -280,7 +279,7 @@ module.exports = {
                 return {
                     id: user.id,
                     slug: user.slug,
-                    name: user.User_info?.name,
+                    nama: user.User_info?.nama,
                     nip: user.User_info?.nip,
                     role_id: user.Role?.id,
                     role_name: user.Role?.name,
@@ -305,7 +304,7 @@ module.exports = {
         }
     },
 
-    //mendapatkan data user berdasarkan slug
+    //get data user berdasarkan slug
     getuserByslug: async (req, res) => {
         try {
             const showDeleted = req.query.showDeleted ?? null;
@@ -326,7 +325,7 @@ module.exports = {
                         as: 'Role'
                     },
                     {
-                        model: Userinfo,
+                        model: User_info,
                         as: 'Userinfo'
                     },
                 ],
@@ -341,8 +340,8 @@ module.exports = {
 
             let formattedUsers = {
                 id: userGet.id,
-                name: userGet.Userinfo?.name,
-                nik: userGet.Userinfo?.nik,
+                nama: userGet.User_info?.nama,
+                nik: userGet.User_info?.nik,
                 role_id: userGet.Role?.id,
                 role_name: userGet.Role?.name,
                 createdAt: userGet.createdAt,
@@ -392,35 +391,34 @@ module.exports = {
 
             let formattedUsers = {
                 id: userGet.id,
-                name: userGet.Userinfo?.name,
+                nama: userGet.User_info?.nama,
                 slug: userGet.Userinfo?.slug,
-                nik: userGet.Userinfo?.nik,
-                email: userGet.Userinfo?.email,
-                telepon: userGet.Userinfo?.telepon,
-                alamat: userGet.Userinfo?.alamat,
-                agama: userGet.Userinfo?.agama,
-                tempat_lahir: userGet.Userinfo?.tempat_lahir,
-                tgl_lahir: userGet.Userinfo?.tgl_lahir,
-                status_kawin: userGet.Userinfo?.status_kawin,
-                gender: userGet.Userinfo?.gender,
-                pekerjaan: userGet.Userinfo?.pekerjaan,
-                goldar: userGet.Userinfo?.goldar,
-                pendidikan: userGet.Userinfo?.pendidikan,
-                filektp: userGet.Userinfo?.filektp,
-                filekk: userGet.Userinfo?.filekk,
-                foto: userGet.Userinfo?.foto,
-                aktalahir: userGet.Userinfo?.aktalahir,
-                fileijazahsd: userGet.Userinfo?.fileijazahsd,
-                fileijazahsmp: userGet.Userinfo?.fileijazahsmp,
-                fileijazahsma: userGet.Userinfo?.fileijazahsma,
-                fileijazahlain: userGet.Userinfo?.fileijazahlain,
+                nip: userGet.User_info?.nip,
+                nik: userGet.User_info?.nik,
+                email: userGet.User_info?.email,
+                telepon: userGet.User_info?.telepon,
+                alamat: userGet.User_info?.alamat,
+                agama: userGet.User_info?.agama,
+                tempat_lahir: userGet.User_info?.tempat_lahir,
+                tgl_lahir: userGet.User_info?.tgl_lahir,
+                status_kawin: userGet.User_info?.status_kawin,
+                gender: userGet.User_info?.gender,
+                pekerjaan: userGet.User_info?.pekerjaan,
+                goldar: userGet.User_info?.goldar,
+                pendidikan: userGet.User_info?.pendidikan,
+                filektp: userGet.User_info?.filektp,
+                filekk: userGet.User_info?.filekk,
+                foto: userGet.User_info?.foto,
+                aktalahir: userGet.User_info?.aktalahir,
+                fileijazahsd: userGet.User_info?.fileijazahsd,
+                fileijazahsmp: userGet.User_info?.fileijazahsmp,
+                fileijazahsma: userGet.User_info?.fileijazahsma,
+                fileijazahlain: userGet.User_info?.fileijazahlain,
                 role_id: userGet.Role?.id,
                 role_name: userGet.Role?.name,
                 createdAt: userGet.createdAt,
                 updatedAt: userGet.updatedAt
             };
-
-            //response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success get user by id', formattedUsers));
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
@@ -430,18 +428,13 @@ module.exports = {
 
     //menghapus user berdasarkan slug
     deleteuser: async (req, res) => {
-
         try {
-
-            //mendapatkan data user untuk pengecekan
             let userGet = await User.findOne({
                 where: {
                     slug: req.params.slug,
                     deletedAt: null
                 }
             })
-
-            //cek apakah data user ada
             if (!userGet) {
                 res.status(404).json(response(404, 'user not found'));
                 return;
@@ -452,8 +445,6 @@ module.exports = {
                     slug: req.params.slug
                 }
             });
-
-            //response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success delete user'));
 
         } catch (err) {
