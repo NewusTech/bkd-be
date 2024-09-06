@@ -25,7 +25,7 @@ const s3Client = new S3Client({
 module.exports = {
 
     //membuat bidang
-    createbidang: async (req, res) => {
+    createBidang: async (req, res) => {
         try {
             const schema = {
                 nama: { type: "string" },
@@ -67,7 +67,7 @@ module.exports = {
     },
 
     //mendapatkan semua data bidang
-    getbidang: async (req, res) => {
+    getBidang: async (req, res) => {
         try {
             let { search } = req.query;
             const showDeleted = req.query.showDeleted ?? null;
@@ -171,8 +171,8 @@ module.exports = {
         }
     },
 
-     //mendapatkan data bidang berdasarkan slug
-     getbidangBySlug: async (req, res) => {
+    //mendapatkan data bidang berdasarkan slug
+     getBidangBySlug: async (req, res) => {
         try {
             const showDeleted = req.query.showDeleted ?? null;
             const whereCondition = { slug: req.params.slug };
@@ -224,7 +224,7 @@ module.exports = {
     },
 
     //mengupdate bidang berdasarkan slug
-    updatebidang: async (req, res) => {
+    updateBidang: async (req, res) => {
         try {
             let bidangGet = await Bidang.findOne({
                 where: {
@@ -278,7 +278,8 @@ module.exports = {
         }
     },
 
-    deletebidang: async (req, res) => {
+    //delete bidang
+    deleteBidang: async (req, res) => {
         const transaction = await sequelize.transaction();
         try {
             let bidangGet = await Bidang.findOne({
@@ -322,7 +323,6 @@ module.exports = {
                 transaction
             });
 
-            // Commit transaksi jika semua operasi berhasil
             await transaction.commit();
 
             res.status(200).json(response(200, 'success delete bidang'));
