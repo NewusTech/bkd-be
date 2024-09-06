@@ -11,6 +11,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
  
 route.get('/user/term-condition/get', termconditionController.getTermCondition); 
-route.put('/user/term-condition/update', [mid.checkRolesAndLogout(['Super Admin'])], upload.fields([{ name: 'desc', maxCount: 1 }, { name: 'privacy', maxCount: 1 }]), termconditionController.updatetermcond); 
+route.put('/user/term-condition/update', [mid.checkRolesAndLogout(['Super Admin'])], upload.fields([{ name: 'desc', maxCount: 1 }, { name: 'privacy', maxCount: 1 }]), termconditionController.updateTermCondition); 
 
 module.exports = route;

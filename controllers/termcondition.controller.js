@@ -33,7 +33,7 @@ module.exports = {
     },
 
     //mengupdate berdasarkan id
-    updateTermCond: async (req, res) => {
+    updateTermCondition: async (req, res) => {
         try {
             let termcondGet = await Term_condition.findOne()
 
