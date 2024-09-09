@@ -13,6 +13,14 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'userinfo_id',
       });
 
+      User.belongsTo(models.User_kepangkatan, {
+        foreignKey: 'userkepangkatan_id',
+      });
+
+      User.belongsTo(models.User_jabatan, {
+        foreignKey: 'userjabatan_id',
+      });
+
       User.belongsToMany(models.Permission, {
         through: 'User_permissions',
         as: 'permissions',

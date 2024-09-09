@@ -3,22 +3,22 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class User_kepangkatan extends Model {
+  class User_jabatan extends Model {
     static associate(models) {
-      User_kepangkatan.hasOne(models.User, {
-        foreignKey: 'userkepangkatan_id',
+      User_jabatan.hasOne(models.User, {
+        foreignKey: 'userjabatan_id',
       });
     }
   }
-  User_kepangkatan.init({
-    jenjang_kepangkatan: DataTypes.STRING,
+  User_jabatan.init({
+    nama_jabatan: DataTypes.STRING,
     tmt: DataTypes.DATE,
     no_sk_pangkat: DataTypes.STRING,
     tgl_sk_pangkat: DataTypes.DATE,
     deletedAt: DataTypes.DATE
   }, {
     sequelize,
-    modelName: 'User_kepangkatan',
+    modelName: 'User_jabatan',
   });
-  return User_kepangkatan;
+  return User_jabatan;
 };
