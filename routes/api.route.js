@@ -14,6 +14,7 @@ const desaRoute = require('./desa.route');
 const termconditionRoute = require('./termcondition.route');
 const pengaduanRoute = require('./pengaduan.route');
 const galeriRoute = require('./galeri.route');
+const faqRoute = require('./faq.route');
 
 module.exports = function (app, urlApi) {
     app.use(urlApi, userRoute);
@@ -32,4 +33,5 @@ module.exports = function (app, urlApi) {
     app.use(urlApi, termconditionRoute);
     app.use(urlApi, pengaduanRoute);
     app.use(urlApi, galeriRoute);
+    app.use(urlApi, faqRoute);
 }
