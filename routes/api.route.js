@@ -13,7 +13,7 @@ const kecamatanRoute = require('./kecamatan.route');
 const desaRoute = require('./desa.route');
 const termconditionRoute = require('./termcondition.route');
 const pengaduanRoute = require('./pengaduan.route');
-
+const galeriRoute = require('./galeri.route');
 
 module.exports = function (app, urlApi) {
     app.use(urlApi, userRoute);
@@ -31,4 +31,5 @@ module.exports = function (app, urlApi) {
     app.use(urlApi, desaRoute);
     app.use(urlApi, termconditionRoute);
     app.use(urlApi, pengaduanRoute);
+    app.use(urlApi, galeriRoute);
 }
