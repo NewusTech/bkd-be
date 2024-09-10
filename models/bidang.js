@@ -11,6 +11,9 @@ module.exports = (sequelize, DataTypes) => {
       Bidang.hasMany(models.Layanan, {
         foreignKey: 'bidang_id',
       });
+      Bidang.hasMany(models.Survey_form, {
+        foreignKey: 'bidang_id',
+      });
     }
   }
   Bidang.init({
