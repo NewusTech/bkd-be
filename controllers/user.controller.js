@@ -231,7 +231,7 @@ module.exports = {
     },
 
     //get all data user
-    getuser: async (req, res) => {
+    getUser: async (req, res) => {
         try {
             const showDeleted = req.query.showDeleted ?? null;
             const page = parseInt(req.query.page) || 1;
@@ -302,7 +302,7 @@ module.exports = {
     },
 
     //get data user berdasarkan slug
-    getuserByslug: async (req, res) => {
+    getUserBySlug: async (req, res) => {
         try {
             const showDeleted = req.query.showDeleted ?? null;
             const whereCondition = { slug: req.params.slug };
@@ -353,7 +353,7 @@ module.exports = {
         }
     },
 
-    getforuser: async (req, res) => {
+    getForUser: async (req, res) => {
         try {
             const showDeleted = req.query.showDeleted ?? null;
             const whereCondition = { id: data.user_akun_id };
@@ -368,6 +368,11 @@ module.exports = {
                 where: whereCondition,
                 include: [
                     {
+                        model: Bidang,
+                        attributes: ['nama', 'id'],
+                        as: 'Bidang'
+                    },
+                    {
                         model: Role,
                         attributes: ['name', 'id'],
                         as: 'Role'
@@ -375,9 +380,21 @@ module.exports = {
                     {
                         model: User_info,
                         as: 'User_info',
+                        include: [
+                            {
+                                model: Kecamatan,
+                                attributes: ['nama', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['nama', 'id'],
+                                as: 'Desa'
+                            }
+                        ]
                     },
                 ],
-                attributes: { exclude: ['Role', 'User_info'] }
+                attributes: { exclude: ['Bidang', 'Role', 'Userinfo'] }
             });
 
             //cek jika user tidak ada
@@ -388,12 +405,17 @@ module.exports = {
 
             let formattedUsers = {
                 id: userGet.id,
-                nama: userGet.User_info?.nama,
-                slug: userGet.Userinfo?.slug,
-                nip: userGet.User_info?.nip,
+                name: userGet.User_info?.nama,
+                slug: userGet.User_info?.slug,
                 nik: userGet.User_info?.nik,
                 email: userGet.User_info?.email,
                 telepon: userGet.User_info?.telepon,
+                kecamatan_id: userGet.User_info?.Kecamatan?.id,
+                kecamatan_nama: userGet.User_info?.Kecamatan?.nama,
+                desa_id: userGet.User_info?.Desa?.id,
+                desa_nama: userGet.User_info?.Desa?.nama,
+                rt: userGet.User_info?.rt,
+                rw: userGet.User_info?.rw,
                 alamat: userGet.User_info?.alamat,
                 agama: userGet.User_info?.agama,
                 tempat_lahir: userGet.User_info?.tempat_lahir,
@@ -402,15 +424,18 @@ module.exports = {
                 gender: userGet.User_info?.gender,
                 pekerjaan: userGet.User_info?.pekerjaan,
                 goldar: userGet.User_info?.goldar,
-                pendidikan: userGet.User_info?.pendidikan,
+                pendidikan: userGet.Userinfo?.pendidikan,
                 filektp: userGet.User_info?.filektp,
                 filekk: userGet.User_info?.filekk,
                 foto: userGet.User_info?.foto,
+                fotoprofil: userGet.User_info?.fotoprofil,
                 aktalahir: userGet.User_info?.aktalahir,
                 fileijazahsd: userGet.User_info?.fileijazahsd,
                 fileijazahsmp: userGet.User_info?.fileijazahsmp,
                 fileijazahsma: userGet.User_info?.fileijazahsma,
                 fileijazahlain: userGet.User_info?.fileijazahlain,
+                bidang_id: userGet.Bidang?.id,
+                bidang_title: userGet.Bidang?.nama,
                 role_id: userGet.Role?.id,
                 role_name: userGet.Role?.name,
                 createdAt: userGet.createdAt,
@@ -424,7 +449,7 @@ module.exports = {
     },
 
     //menghapus user berdasarkan slug
-    deleteuser: async (req, res) => {
+    deleteUser: async (req, res) => {
         try {
             let userGet = await User.findOne({
                 where: {
