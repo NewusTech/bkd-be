@@ -4,12 +4,12 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     const Roles = [
       {
-        name: 'Super Admin',
+        name: 'User',
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        name: 'User',
+        name: 'Super Admin',
         createdAt: new Date(),
         updatedAt: new Date()
       },
