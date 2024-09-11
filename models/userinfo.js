@@ -38,6 +38,8 @@ module.exports = (sequelize, DataTypes) => {
       unique: true,
     },
     telepon: DataTypes.STRING,
+    kecamatan_id: DataTypes.INTEGER,
+    desa_id: DataTypes.INTEGER,
     alamat: DataTypes.STRING,
     agama: DataTypes.INTEGER,
     tempat_lahir: DataTypes.STRING,
