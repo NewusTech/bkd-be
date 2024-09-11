@@ -22,6 +22,7 @@ module.exports = (sequelize, DataTypes) => {
     layanan_id: DataTypes.INTEGER,
     date: DataTypes.STRING,
     feedback: DataTypes.TEXT,
+  }, {
     sequelize,
     modelName: 'Survey_form_num',
   });

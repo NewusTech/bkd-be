@@ -32,7 +32,6 @@ module.exports = {
             const schema = {
                 name: { type: "string", min: 3 },
                 nip: { type: "string", min: 3 },
-                nik: { type: "string", min: 3 },
                 email: { type: "string", min: 5, max: 50, pattern: /^\S+@\S+\.\S+$/, optional: true },
                 telepon: { type: "string", min: 7, max: 15, pattern: /^[0-9]+$/, optional: true },
                 password: { type: "string", min: 5, max: 16 },
@@ -44,7 +43,6 @@ module.exports = {
             const validate = v.validate({
                 name: req.body.name,
                 nip: req.body.nip,
-                nik: req.body.nik,
                 password: req.body.password,
                 role_id: req.body.role_id !== undefined ? Number(req.body.role_id) : undefined,
                 email: req.body.email,
@@ -80,7 +78,6 @@ module.exports = {
             let userinfoCreateObj = {
                 name: req.body.name,
                 nip: req.body.nip,
-                nik: req.body.nik,
                 email: req.body.email,
                 telepon: req.body.telepon,
                 alamat: req.body.alamat,
