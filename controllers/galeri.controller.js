@@ -7,7 +7,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const slugify = require('slugify');
 
 const s3Client = new S3Client({
-    region: process.env.AWS_REGION,
+    region: process.env.AWS_DEFAULT_REGION,
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -33,7 +33,7 @@ module.exports = {
                 const uniqueFileName = `${timestamp}-${req.file.originalname}`;
 
                 const uploadParams = {
-                    Bucket: process.env.AWS_S3_BUCKET,
+                    Bucket: process.env.AWS_BUCKET,
                     Key: `${process.env.PATH_AWS}/galeri/${uniqueFileName}`,
                     Body: req.file.buffer,
                     ACL: 'public-read',
@@ -44,7 +44,7 @@ module.exports = {
 
                 await s3Client.send(command);
 
-                imageKey = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${uploadParams.Key}`;
+                imageKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
             }
 
             //buat object Facilities
