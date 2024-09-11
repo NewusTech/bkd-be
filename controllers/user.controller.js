@@ -36,6 +36,10 @@ module.exports = {
                 telepon: { type: "string", min: 7, max: 15, pattern: /^[0-9]+$/, optional: true },
                 password: { type: "string", min: 5, max: 16 },
                 role_id: { type: "number", optional: true },
+                kecamatan_id: { type: "string", min: 1, optional: true },
+                desa_id: { type: "string", min: 1, optional: true },
+                rt: { type: "string", min: 1, optional: true },
+                rw: { type: "string", min: 1, optional: true },
                 alamat: { type: "string", min: 3, optional: true },
             };
 
@@ -47,6 +51,10 @@ module.exports = {
                 role_id: req.body.role_id !== undefined ? Number(req.body.role_id) : undefined,
                 email: req.body.email,
                 telepon: req.body.telepon,
+                kecamatan_id: req.body.kecamatan_id,
+                desa_id: req.body.desa_id,
+                rt: req.body.rt,
+                rw: req.body.rw,
                 alamat: req.body.alamat
             }, schema);
 
@@ -80,6 +88,10 @@ module.exports = {
                 nip: req.body.nip,
                 email: req.body.email,
                 telepon: req.body.telepon,
+                kecamatan_id: req.body.kecamatan_id,
+                desa_id: req.body.desa_id,
+                rt: req.body.rt,
+                rw: req.body.rw,
                 alamat: req.body.alamat,
                 slug: slug
             };
@@ -91,6 +103,8 @@ module.exports = {
             let userCreateObj = {
                 password: passwordHash.generate(req.body.password),
                 role_id: req.body.role_id !== undefined ? Number(req.body.role_id) : undefined,
+                bidang_id: req.body.bidang_id !== undefined ? Number(req.body.bidang_id) : undefined,
+                // layanan_id: req.body.layanan_id !== undefined ? Number(req.body.layanan_id) : undefined,
                 userinfo_id: userinfoCreate.id,
                 slug: slug
             };
