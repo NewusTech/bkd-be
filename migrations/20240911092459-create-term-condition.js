@@ -12,15 +12,6 @@ module.exports = {
       desc: {
         type: Sequelize.TEXT
       },
-      desc_text: {
-        type: Sequelize.TEXT
-      },
-      privacy: {
-        type: Sequelize.TEXT
-      },
-      privacy_text: {
-        type: Sequelize.TEXT
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

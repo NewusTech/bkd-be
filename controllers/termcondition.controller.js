@@ -25,7 +25,7 @@ module.exports = {
                 res.status(404).json(response(404, 'term condition not found'));
                 return;
             }
-            res.status(200).json(response(200, 'success get term condition by id', termcondGet));
+            res.status(200).json(response(200, 'success get term condition', termcondGet));
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
@@ -48,69 +48,10 @@ module.exports = {
                     min: 3,
                     optional: true
                 },
-                privacy: {
-                    type: "string",
-                    min: 3,
-                    optional: true
-                },
-                privacy_text: {
-                    type: "string",
-                    min: 3,
-                    optional: true
-                },
-                desc_text: {
-                    type: "string",
-                    min: 3,
-                    optional: true
-                },
             }
 
-            let descKey, privacyKey;
-
-            if (req.files && req.files.desc) {
-                const file = req.files.desc[0];
-                const timestamp = new Date().getTime();
-                const uniqueFileName = `${timestamp}-${file.originalname}`;
-
-                const uploadParams = {
-                    Bucket: process.env.AWS_S3_BUCKET,
-                    Key: `${process.env.PATH_AWS}/descterm/${uniqueFileName}`,
-                    Body: file.buffer,
-                    ACL: 'public-read',
-                    ContentType: file.mimetype
-                };
-
-                const command = new PutObjectCommand(uploadParams);
-
-                await s3Client.send(command);
-
-                descKey = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${uploadParams.Key}`;
-            }
-
-            if (req.files && req.files.privacy) {
-                const file = req.files.privacy[0];
-                const timestamp = new Date().getTime();
-                const uniqueFileName = `${timestamp}-${file.originalname}`;
-
-                const uploadParams = {
-                    Bucket: process.env.AWS_S3_BUCKET,
-                    Key: `${process.env.PATH_AWS}/privasiterm/${uniqueFileName}`,
-                    Body: file.buffer,
-                    ACL: 'public-read',
-                    ContentType: file.mimetype
-                };
-
-                const command = new PutObjectCommand(uploadParams);
-
-                await s3Client.send(command);
-
-                privacyKey = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${uploadParams.Key}`;
-            }
               let descUpdateObj = {
-                desc: req.files.desc ? descKey : undefined,
-                desc_text: req.body.desc_text,
-                privacy: req.files.privacy ? privacyKey : undefined,
-                privacy_text: req.body.privacy_text,
+                desc: req.body.desc
             };
 
             const validate = v.validate(descUpdateObj, schema);
