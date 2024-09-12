@@ -76,36 +76,39 @@ module.exports = {
             const offset = (page - 1) * limit;
             let bidangGets;
             let totalCount;
-
+    
             const whereCondition = {};
-
+    
             if (data?.role === "Admin Instansi" || data?.role === "Super Admin" || data?.role === "Bupati" || data?.role === "Admin Verifikasi") {
             } else {
                 whereCondition.deletedAt = null;
             }
+    
             let includeOptions = [];
-            let isrequired = false
+            let isrequired = false;
+    
             if (showDeleted !== null) {
                 whereCondition.deletedAt = { [Op.not]: null };
             } else {
                 whereCondition.deletedAt = null;
             }
+    
             if (search) {
                 whereCondition[Op.or] = [
-                    { nama: { [Op.like]: `%${search}%` } },
+                    { nama: { [Op.like]: `%${search}%` } }, // Ganti ILIKE dengan LIKE untuk MySQL
                     {
                         [Op.and]: Sequelize.literal(`
                             EXISTS (
                                 SELECT 1 
-                                FROM "Layanans" 
-                                WHERE "Layanans"."bidang_id" = "Bidang"."id" 
-                                AND "Layanans"."nama" ILIKE '%${search}%'
+                                FROM \`Layanans\` 
+                                WHERE \`Layanans\`.\`bidang_id\` = \`Bidang\`.\`id\` 
+                                AND \`Layanans\`.\`nama\` LIKE '%${search}%'
                             )
                         `)
                     }
                 ];
             }
-
+    
             [bidangGets, totalCount] = await Promise.all([
                 Bidang.findAll({
                     where: whereCondition,
@@ -115,7 +118,6 @@ module.exports = {
                             as: 'Layanans',
                             attributes: ['id', 'nama'],
                             where: {
-                                // status: true,
                                 deletedAt: null
                             },
                             include: includeOptions,
@@ -125,7 +127,6 @@ module.exports = {
                     offset: offset,
                     limit: limit,
                     order: [
-                        ['DESC'],
                         ['id', 'ASC']
                     ],
                 }),
@@ -137,7 +138,6 @@ module.exports = {
                             as: 'Layanans',
                             attributes: [],
                             where: {
-                                // status: true,
                                 deletedAt: null
                             },
                             include: includeOptions,
@@ -147,7 +147,7 @@ module.exports = {
                     distinct: true
                 })
             ]);
-
+    
             const formattedBidangGets = bidangGets.map(bidang => {
                 const { id, nama, slug, desc, pj, nip_pj, createdAt, updatedAt, deletedAt } = bidang.toJSON();
                 const jmlLayanan = bidang.Layanans.length;
@@ -155,21 +155,22 @@ module.exports = {
                     id, nama, slug, desc, pj, nip_pj, createdAt, updatedAt, deletedAt, jmlLayanan
                 };
             });
-
+    
             const pagination = generatePagination(totalCount, page, limit, '/api/user/bidang/get');
-
+    
             res.status(200).json({
                 status: 200,
                 message: 'success get bidang',
                 data: formattedBidangGets,
                 pagination: pagination
             });
-
+    
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
     },
+    
 
     //mendapatkan data bidang berdasarkan slug
      getBidangBySlug: async (req, res) => {
