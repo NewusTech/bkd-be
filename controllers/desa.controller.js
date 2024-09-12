@@ -22,7 +22,7 @@ module.exports = {
             let filter = {};
 
             if (search) {
-                filter.name = { [Op.iLike]: `%${search}%` };
+                filter.nama = { [Op.iLike]: `%${search}%` };
             }
     
             if (kecamatan_id) {
@@ -44,7 +44,7 @@ module.exports = {
 
             res.status(200).json({
                 status: 200,
-                message: 'success get artikel',
+                message: 'success get desa',
                 data: desaGets,
                 pagination: pagination
             });
