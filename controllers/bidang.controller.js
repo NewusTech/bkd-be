@@ -79,14 +79,8 @@ module.exports = {
     
             const whereCondition = {};
     
-            // Menggunakan req.user untuk akses data role
-            // const userRole = req.user?.role;
-    
-            // if (userRole === "Admin Instansi" || userRole === "Super Admin" || userRole === "Bupati" || userRole === "Admin Verifikasi") {
-            //     // Tidak ada perubahan pada whereCondition
-            // } else {
-            //     whereCondition.deletedAt = null;
-            // }
+            // Menghapus logika autentikasi karena tidak diperlukan
+            // Jika ada logika autentikasi, pastikan untuk menghapusnya
     
             let includeOptions = [];
             let isrequired = false;

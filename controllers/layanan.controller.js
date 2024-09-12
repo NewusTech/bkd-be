@@ -86,7 +86,7 @@ module.exports = {
             const offset = (page - 1) * limit;
             let layananGets;
             let totalCount;
-
+    
             const whereCondition = {};
             if (search) {
                 whereCondition[Op.or] = [{ name: { [Op.iLike]: `%${search}%` } }];
@@ -96,15 +96,10 @@ module.exports = {
             } else {
                 whereCondition.deletedAt = null;
             }
-
-            // const userRole = req.user?.role;
-
-            // if (userRole === "Admin Instansi" || userRole === "Super Admin" || userRole === "Bupati" || userRole === "Admin Verifikasi") {
-            //     // Tidak ada perubahan pada whereCondition
-            // } else {
-            //     whereCondition.deletedAt = null;
-            // }
-
+    
+            // Menghapus logika autentikasi karena tidak diperlukan
+            // Jika ada logika autentikasi, pastikan untuk menghapusnya
+    
             [layananGets, totalCount] = await Promise.all([
                 Layanan.findAll({
                     where: whereCondition,
@@ -112,32 +107,31 @@ module.exports = {
                     limit: limit,
                     offset: offset,
                     order: [
-                        ['DESC'],
-                        ['id', 'ASC']
+                        ['id', 'ASC'] // Perbaiki urutan kolom yang benar, biasanya ['id', 'ASC']
                     ]
                 }),
                 Layanan.count({
                     where: whereCondition
                 })
             ]);
-
+    
             const modifiedLayananGets = layananGets.map(layanan => {
                 const { Bidang, ...otherData } = layanan.dataValues;
                 return {
                     ...otherData,
-                    Bidang_name: Bidang?.name
+                    Bidang_name: Bidang?.nama // Sesuaikan jika nama kolom di Bidang berbeda
                 };
             });
-
+    
             const pagination = generatePagination(totalCount, page, limit, '/api/user/layanan/get');
-
+    
             res.status(200).json({
                 status: 200,
                 message: 'success get layanan',
                 data: modifiedLayananGets,
                 pagination: pagination
             });
-
+    
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
