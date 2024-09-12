@@ -22,7 +22,7 @@ module.exports = {
             let filter = {};
 
             if (search) {
-                filter.nama = { [Op.iLike]: `%${search}%` };
+                filter.nama = { [Op.like]: `%${search}%` };
             }
     
             if (kecamatan_id) {

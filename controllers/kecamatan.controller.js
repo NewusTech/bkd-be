@@ -21,7 +21,7 @@ module.exports = {
                 [kecamatanGets, totalCount] = await Promise.all([
                     Kecamatan.findAll({
                         where: {
-                           nama: { [Op.iLike]: `%${search}%` } 
+                           nama: { [Op.like]: `%${search}%` } 
                         },
                         limit: limit,
                         offset: offset

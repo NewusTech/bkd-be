@@ -92,14 +92,14 @@ module.exports = {
             }
             if (search) {
                 whereCondition[Op.or] = [
-                    { name: { [Op.iLike]: `%${search}%` } },
+                    { nama: { [Op.like]: `%${search}%` } },
                     {
                         [Op.and]: Sequelize.literal(`
                             EXISTS (
                                 SELECT 1 
                                 FROM "Layanans" 
                                 WHERE "Layanans"."bidang_id" = "Bidang"."id" 
-                                AND "Layanans"."name" ILIKE '%${search}%'
+                                AND "Layanans"."nama" ILIKE '%${search}%'
                             )
                         `)
                     }
