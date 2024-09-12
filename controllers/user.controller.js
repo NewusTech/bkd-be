@@ -146,6 +146,8 @@ module.exports = {
                 }
             };
 
+            let isAdmin = req.query.admin;
+            let isUser = req.query.user;
             let nip = req.body.nip;
             let password = req.body.password;
 
@@ -163,8 +165,8 @@ module.exports = {
             let whereClause = {
                 [Op.or]: [
                     { nip: nip },
-                    { email: nip },
-                    { telepon: nip }
+                    { email: nik },
+                    { telepon: nik }
                 ]
             };
 
@@ -172,23 +174,43 @@ module.exports = {
             adminCondition.deletedAt = null;
             whereClause.deletedAt = null;
 
+            if (isAdmin) {
+                adminCondition['$User.role_id$'] = {
+                    [Op.ne]: 1
+                };
+            }
+
+            if (isUser) {
+                adminCondition['$User.role_id$'] = {
+                    [Op.eq]: 1
+                };
+            }
+
             let userinfo = await User_info.findOne({
                 where: whereClause,
                 attributes: ['nip', 'email', 'id', 'telepon'],
                 include: [
                     {
                         model: User,
-                        attributes: ['password', 'id', 'role_id'],
+                        attributes: ['password', 'id', 'role_id', 'layanan_id', 'bidang_id'],
                         include: [
                             {
                                 model: Role,
                                 attributes: ['id', 'name']
                             },
                             {
+                                model: Bidang,
+                                attributes: ['id', 'nama']
+                            },
+                            {
                                 model: Permission,
                                 through: User_permission,
                                 as: 'permissions'
                             },
+                            {
+                                model: Layanan,
+                                attributes: ['id', 'nama', 'slug']
+                            }
                         ],
                         where: adminCondition
                     },
@@ -213,9 +235,15 @@ module.exports = {
                 user_akun_id: userinfo.User.id,
                 nip: userinfo.nip,
                 role: userinfo.User.Role.name,
+                bidang: userinfo?.User?.Bidang?.nama ?? undefined,
+                bidang_id: userinfo?.User?.Bidang?.id ?? undefined,
+                layanan: userinfo?.User?.Layanan?.nama ?? undefined,
+                layanan_id: userinfo?.User?.Layanan?.id ?? undefined,
+                layanan_slug: userinfo?.User?.Layanan?.slug ?? undefined,
+                // permissions: userinfo?.User?.permissions,
                 permission: userinfo.User.permissions.map(permission => permission.name)
-            }, baseConfig.auth_secret, {
-                expiresIn: 864000 // time expired 
+            }, baseConfig.auth_secret, { // auth secret
+                expiresIn: 864000 // expired 24 jam
             });
 
             res.status(200).json(response(200, 'login success', { token: token }));
