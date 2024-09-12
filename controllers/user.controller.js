@@ -165,8 +165,8 @@ module.exports = {
             let whereClause = {
                 [Op.or]: [
                     { nip: nip },
-                    { email: nik },
-                    { telepon: nik }
+                    { email: email },
+                    { telepon: telepon }
                 ]
             };
 
