@@ -17,6 +17,8 @@ const galeriRoute = require('./galeri.route');
 const faqRoute = require('./faq.route');
 const surveyformRoute = require('./surveyform.route');
 const bannerRoute = require('./banner.route');
+const bkdprofileRoute = require('./bkdprofile.route');
+
 
 module.exports = function (app, urlApi) {
     app.use(urlApi, userRoute);
@@ -38,4 +40,5 @@ module.exports = function (app, urlApi) {
     app.use(urlApi, faqRoute);
     app.use(urlApi, surveyformRoute);
     app.use(urlApi, bannerRoute);
+    app.use(urlApi, bkdprofileRoute);
 }
