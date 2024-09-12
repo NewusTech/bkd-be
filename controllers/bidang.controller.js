@@ -79,7 +79,11 @@ module.exports = {
     
             const whereCondition = {};
     
-            if (data?.role === "Admin Instansi" || data?.role === "Super Admin" || data?.role === "Bupati" || data?.role === "Admin Verifikasi") {
+            // Menggunakan req.user untuk akses data role
+            const userRole = req.user?.role;
+    
+            if (userRole === "Admin Instansi" || userRole === "Super Admin" || userRole === "Bupati" || userRole === "Admin Verifikasi") {
+                // Tidak ada perubahan pada whereCondition
             } else {
                 whereCondition.deletedAt = null;
             }

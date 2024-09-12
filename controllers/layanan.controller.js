@@ -97,9 +97,12 @@ module.exports = {
                 whereCondition.deletedAt = null;
             }
 
-            if (data?.role === "Admin Instansi" || data?.role === "Super Admin" || data?.role === "Bupati" || data?.role === "Admin Verifikasi") {
+            const userRole = req.user?.role;
+
+            if (userRole === "Admin Instansi" || userRole === "Super Admin" || userRole === "Bupati" || userRole === "Admin Verifikasi") {
+                // Tidak ada perubahan pada whereCondition
             } else {
-                whereCondition.status = true;
+                whereCondition.deletedAt = null;
             }
 
             [layananGets, totalCount] = await Promise.all([

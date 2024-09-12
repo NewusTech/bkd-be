@@ -6,7 +6,6 @@ const jwt = require('jsonwebtoken');
 const checkRolesAndLogout = (allowedRoles) => async (req, res, next) => {
     let token;
     try {
-        // Memastikan token ada di header Authorization
         if (req.headers.authorization && req.headers.authorization.split(' ')[1]) {
             token = req.headers.authorization.split(' ')[1];
         } else {
@@ -21,25 +20,21 @@ const checkRolesAndLogout = (allowedRoles) => async (req, res, next) => {
             return res.status(403).json(response(403, 'Unauthorized: token expired or invalid'));
         }
 
-        const data = decoded;
+        req.user = decoded; // Menyimpan data user di req
+        const tokenCheck = await Token.findOne({ where: { token } });
 
-        try {
-            const tokenCheck = await Token.findOne({ where: { token } });
+        if (tokenCheck) {
+            return res.status(403).json(response(403, 'Unauthorized: already logged out'));
+        }
 
-            if (tokenCheck) {
-                return res.status(403).json(response(403, 'Unauthorized: already logged out'));
-            }
-
-            if (allowedRoles.includes(data.role)) {
-                return next();
-            } else {
-                return res.status(403).json(response(403, 'Forbidden: insufficient access rights'));
-            }
-        } catch (error) {
-            return res.status(500).json(response(500, 'Internal Server Error'));
+        if (allowedRoles.includes(req.user.role)) {
+            next();
+        } else {
+            return res.status(403).json(response(403, 'Forbidden: insufficient access rights'));
         }
     });
 };
+
 
 const checkRoles = () => async (req, res, next) => {
     let token;
