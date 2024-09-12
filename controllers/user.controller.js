@@ -398,14 +398,21 @@ module.exports = {
     getForUser: async (req, res) => {
         try {
             const showDeleted = req.query.showDeleted ?? null;
-            const whereCondition = { id: data.user_akun_id };
-
+            // Menggunakan req.user untuk mendapatkan user_akun_id
+            const userId = req.user?.user_akun_id;
+    
+            if (!userId) {
+                return res.status(400).json(response(400, 'Bad Request: User ID is not available'));
+            }
+    
+            const whereCondition = { id: userId };
+    
             if (showDeleted !== null) {
                 whereCondition.deletedAt = { [Op.not]: null };
             } else {
                 whereCondition.deletedAt = null;
             }
-
+    
             let userGet = await User.findOne({
                 where: whereCondition,
                 include: [
@@ -438,13 +445,11 @@ module.exports = {
                 ],
                 attributes: { exclude: ['Bidang', 'Role', 'Userinfo'] }
             });
-
-            //cek jika user tidak ada
+    
             if (!userGet) {
-                res.status(404).json(response(404, 'user not found'));
-                return;
+                return res.status(404).json(response(404, 'user not found'));
             }
-
+    
             let formattedUsers = {
                 id: userGet.id,
                 name: userGet.User_info?.nama,
@@ -466,7 +471,7 @@ module.exports = {
                 gender: userGet.User_info?.gender,
                 pekerjaan: userGet.User_info?.pekerjaan,
                 goldar: userGet.User_info?.goldar,
-                pendidikan: userGet.Userinfo?.pendidikan,
+                pendidikan: userGet.User_info?.pendidikan,
                 filektp: userGet.User_info?.filektp,
                 filekk: userGet.User_info?.filekk,
                 foto: userGet.User_info?.foto,
@@ -483,13 +488,14 @@ module.exports = {
                 createdAt: userGet.createdAt,
                 updatedAt: userGet.updatedAt
             };
+    
             res.status(200).json(response(200, 'success get user by id', formattedUsers));
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
     },
-
+    
     //menghapus user berdasarkan slug
     deleteUser: async (req, res) => {
         try {
