@@ -97,13 +97,13 @@ module.exports = {
                 whereCondition.deletedAt = null;
             }
 
-            const userRole = req.user?.role;
+            // const userRole = req.user?.role;
 
-            if (userRole === "Admin Instansi" || userRole === "Super Admin" || userRole === "Bupati" || userRole === "Admin Verifikasi") {
-                // Tidak ada perubahan pada whereCondition
-            } else {
-                whereCondition.deletedAt = null;
-            }
+            // if (userRole === "Admin Instansi" || userRole === "Super Admin" || userRole === "Bupati" || userRole === "Admin Verifikasi") {
+            //     // Tidak ada perubahan pada whereCondition
+            // } else {
+            //     whereCondition.deletedAt = null;
+            // }
 
             [layananGets, totalCount] = await Promise.all([
                 Layanan.findAll({
