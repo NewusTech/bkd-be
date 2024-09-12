@@ -4,13 +4,6 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     const User_infos = [
       {
-        name: 'Super Admin',
-        nip: 'superadmin',
-        slug: "superadmin-20240620041615213",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
         name: 'Newus',
         nip: '1234567812345678',
         nik: '8765432187654321',
@@ -37,6 +30,13 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date()
       },
+      {
+        name: 'Super Admin',
+        nip: 'superadmin',
+        slug: "superadmin-20240620041615213",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
     ];
 
     await queryInterface.bulkInsert('User_infos', User_infos, {});
