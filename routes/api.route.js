@@ -15,7 +15,8 @@ const termconditionRoute = require('./termcondition.route');
 const pengaduanRoute = require('./pengaduan.route');
 const galeriRoute = require('./galeri.route');
 const faqRoute = require('./faq.route');
-const surveyformRoute = require('./surveyform.route')
+const surveyformRoute = require('./surveyform.route');
+const bannerRoute = require('./banner.route');
 
 module.exports = function (app, urlApi) {
     app.use(urlApi, userRoute);
@@ -36,4 +37,5 @@ module.exports = function (app, urlApi) {
     app.use(urlApi, galeriRoute);
     app.use(urlApi, faqRoute);
     app.use(urlApi, surveyformRoute);
+    app.use(urlApi, bannerRoute);
 }
