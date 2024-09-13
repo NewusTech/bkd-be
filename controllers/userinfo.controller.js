@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { User, Userinfo, Role, Instansi, Kecamatan, Desa, sequelize } = require('../models');
+const { User, User_info, Role, Bidang, Kecamatan, Desa, sequelize } = require('../models');
 
 const passwordHash = require('password-hash');
 const Validator = require("fastest-validator");
@@ -29,10 +29,13 @@ const s3Client = new S3Client({
 module.exports = {
 
     //mendapatkan semua data user
-    getuserdata: async (req, res) => {
+    //UTK ADMIN NGECEK DATA PEMOHON
+    getUserData: async (req, res) => {
         try {
             const search = req.query.search ?? null;
             const role = req.query.role ?? null;
+            const bidang = req.query.bidang ?? null;
+            const layanan = req.query.layanan ?? null;
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const showDeleted = req.query.showDeleted ?? null;
@@ -49,14 +52,20 @@ module.exports = {
             if (role) {
                 userWhereClause.role_id = role;
             }
+            if (bidang) {
+                userWhereClause.bidang_id = bidang;
+            }
+            if (layanan) {
+                userWhereClause.layanan_id = layanan;
+            }
 
             if (search) {
                 [userGets, totalCount] = await Promise.all([
-                    Userinfo.findAll({
+                    User_info.findAll({
                         where: {
                             [Op.or]: [
-                                { nik: { [Op.iLike]: `%${search}%` } },
-                                { name: { [Op.iLike]: `%${search}%` } }
+                                { nip: { [Op.like]: `%${search}%` } },
+                                { name: { [Op.like]: `%${search}%` } }
                             ]
                         },
                         include: [
@@ -69,17 +78,31 @@ module.exports = {
                                         model: Role,
                                         attributes: ['id', 'name'],
                                     },
+                                    {
+                                        model: Bidang,
+                                        attributes: ['id', 'nama'],
+                                    }
                                 ],
                             },
+                            {
+                                model: Kecamatan,
+                                attributes: ['nama', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['nama', 'id'],
+                                as: 'Desa'
+                            }
                         ],
                         limit: limit,
                         offset: offset
                     }),
-                    Userinfo.count({
+                    User_info.count({
                         where: {
                             [Op.or]: [
-                                { nik: { [Op.iLike]: `%${search}%` } },
-                                { name: { [Op.iLike]: `%${search}%` } }
+                                { nip: { [Op.like]: `%${search}%` } },
+                                { name: { [Op.like]: `%${search}%` } }
                             ]
                         },
                         include: [
@@ -92,14 +115,28 @@ module.exports = {
                                         model: Role,
                                         attributes: ['id', 'name'],
                                     },
+                                    {
+                                        model: Bidang,
+                                        attributes: ['id', 'nama'],
+                                    }
                                 ],
                             },
+                            {
+                                model: Kecamatan,
+                                attributes: ['nama', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['nama', 'id'],
+                                as: 'Desa'
+                            }
                         ],
                     })
                 ]);
             } else {
                 [userGets, totalCount] = await Promise.all([
-                    Userinfo.findAll({
+                    User_info.findAll({
                         limit: limit,
                         offset: offset,
                         include: [
@@ -112,11 +149,25 @@ module.exports = {
                                         model: Role,
                                         attributes: ['id', 'name'],
                                     },
+                                    {
+                                        model: Bidang,
+                                        attributes: ['id', 'nama'],
+                                    }
                                 ],
                             },
+                            {
+                                model: Kecamatan,
+                                attributes: ['nama', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['nama', 'id'],
+                                as: 'Desa'
+                            }
                         ],
                     }),
-                    Userinfo.count({
+                    User_info.count({
                         include: [
                             {
                                 model: User,
@@ -127,14 +178,28 @@ module.exports = {
                                         model: Role,
                                         attributes: ['id', 'name'],
                                     },
+                                    {
+                                        model: Bidang,
+                                        attributes: ['id', 'nama'],
+                                    }
                                 ],
                             },
+                            {
+                                model: Kecamatan,
+                                attributes: ['nama', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['nama', 'id'],
+                                as: 'Desa'
+                            }
                         ],
                     })
                 ]);
             }
 
-            const pagination = generatePagination(totalCount, page, limit, '/api/userinfo/get');
+            const pagination = generatePagination(totalCount, page, limit, '/api/user/alluserinfo/get');
 
             const formattedData = userGets.map(user => {
                 return {
@@ -142,29 +207,26 @@ module.exports = {
                     user_id: user?.User?.id,
                     name: user.name,
                     slug: user.slug,
+                    nip: user.nip,
                     nik: user.nik,
                     email: user.email,
                     telepon: user.telepon,
+                    kecamatan_id: user.kecamatan_id,
+                    kecamatan_nama: user.Kecamatan?.nama,
+                    desa_id: user.desa_id,
+                    desa_nama: user.Desa?.nama,
+                    rt: user.rt,
+                    rw: user.rw,
                     alamat: user.alamat,
                     agama: user.agama,
                     tempat_lahir: user.tempat_lahir,
                     tgl_lahir: user.tgl_lahir,
-                    status_kawin: user.status_kawin,
                     gender: user.gender,
-                    pekerjaan: user.pekerjaan,
                     goldar: user.goldar,
-                    pendidikan: user.pendidikan,
-                    foto: user.foto,
-                    aktalahir: user.aktalahir,
-                    filektp: user.filektp,
-                    filekk: user.filekk,
-                    fileijazahsd: user.fileijazahsd,
-                    fileijazahsmp: user.fileijazahsmp,
-                    fileijazahsma: user.fileijazahsma,
-                    fileijazahlain: user.fileijazahlain,
                     createdAt: user.createdAt,
                     updatedAt: user.updatedAt,
                     Role: user.User.Role ? user.User.Role.name : null,
+                    Bidang: user.User.Bidang ? user.User.Bidang.nama : null
                 };
             });
 
@@ -186,7 +248,8 @@ module.exports = {
     },
 
     //mendapatkan data user berdasarkan slug
-    getuserByslug: async (req, res) => {
+    //UTK ADMIN NGECEK DATA PEMOHON
+    getUserBySlug: async (req, res) => {
         try {
 
             const showDeleted = req.query.showDeleted ?? null;
@@ -198,9 +261,19 @@ module.exports = {
                 whereCondition.deletedAt = null;
             }
 
-            let userGet = await Userinfo.findOne({
+            let userGet = await User_info.findOne({
                 where: whereCondition,
                 include: [
+                    {
+                        model: Kecamatan,
+                        attributes: ['nama', 'id'],
+                        as: 'Kecamatan'
+                    },
+                    {
+                        model: Desa,
+                        attributes: ['nama', 'id'],
+                        as: 'Desa'
+                    },
                     {
                         model: User,
                         attributes: ['id'],
@@ -220,38 +293,41 @@ module.exports = {
         }
     },
 
-    //create data
-    createuserinfo: async (req, res) => {
+    //create data person
+    //dari sisi admin, jika user offline belum punya akun
+    createUserInfo: async (req, res) => {
         const transaction = await sequelize.transaction();
 
         try {
             const folderPaths = {
-                aktalahir: `${process.env.PATH_AWS}/datauser/aktalahir`,
-                foto: `${process.env.PATH_AWS}/datauser/foto`,
-                filektp: `${process.env.PATH_AWS}/datauser/filektp`,
-                filekk: `${process.env.PATH_AWS}/datauser/filekk`,
-                fileijazahsd: `${process.env.PATH_AWS}/datauser/fileijazahsd`,
-                fileijazahsmp: `${process.env.PATH_AWS}/datauser/fileijazahsmp`,
-                fileijazahsma: `${process.env.PATH_AWS}/datauser/fileijazahsma`,
-                fileijazahlain: `${process.env.PATH_AWS}/datauser/fileijazahlain`,
+                aktalahir: "dir_mpp/datauser/aktalahir",
+                foto: "dir_mpp/datauser/foto",
+                filektp: "dir_mpp/datauser/filektp",
+                filekk: "dir_mpp/datauser/filekk",
+                fileijazahsd: "dir_mpp/datauser/fileijazahsd",
+                fileijazahsmp: "dir_mpp/datauser/fileijazahsmp",
+                fileijazahsma: "dir_mpp/datauser/fileijazahsma",
+                fileijazahlain: "dir_mpp/datauser/fileijazahlain",
             };
 
             // Membuat schema untuk validasi
             const schema = {
                 name: { type: "string", min: 2 },
+                nip: { type: "string", min: 2 },
                 nik: { type: "string", length: 16 },
                 email: { type: "string", min: 5, max: 50, pattern: /^\S+@\S+\.\S+$/, optional: true },
                 telepon: { type: "string", min: 7, max: 15, pattern: /^[0-9]+$/, optional: true },
+                kecamatan_id: { type: "string", min: 1, optional: true },
+                desa_id: { type: "string", min: 1, optional: true },
+                rt: { type: "string", min: 1, optional: true },
+                rw: { type: "string", min: 1, optional: true },
                 alamat: { type: "string", min: 3, optional: true },
                 agama: { type: "number", optional: true },
                 tempat_lahir: { type: "string", min: 2, optional: true },
                 tgl_lahir: { type: "string", pattern: /^\d{4}-\d{2}-\d{2}$/, optional: true },
-                status_kawin: { type: "number", optional: true },
                 gender: { type: "number", optional: true },
-                pekerjaan: { type: "string", optional: true },
                 goldar: { type: "number", optional: true },
-                pendidikan: { type: "number", optional: true },
-                foto: { type: "string", optional: true },
+                image_profile: { type: "string", optional: true },
                 aktalahir: { type: "string", optional: true },
                 filekk: { type: "string", optional: true },
                 filektp: { type: "string", optional: true },
@@ -268,17 +344,19 @@ module.exports = {
             let userinfoObj = {
                 name: req.body.name,
                 nik: req.body.nik,
+                nip: req.body.nip,
                 email: req.body.email,
                 telepon: req.body.telepon,
+                kecamatan_id: req.body.kecamatan_id,
+                desa_id: req.body.desa_id,
+                rt: req.body.rt,
+                rw: req.body.rw,
                 alamat: req.body.alamat,
                 agama: req.body.agama ? Number(req.body.agama) : null,
                 tempat_lahir: req.body.tempat_lahir,
                 tgl_lahir: req.body.tgl_lahir,
-                status_kawin: req.body.status_kawin ? Number(req.body.status_kawin) : null,
                 gender: req.body.gender ? Number(req.body.gender) : null,
-                pekerjaan: req.body.pekerjaan,
                 goldar: req.body.goldar ? Number(req.body.goldar) : null,
-                pendidikan: req.body.pendidikan ? Number(req.body.pendidikan) : null,
                 slug: slug
             };
 
@@ -336,7 +414,7 @@ module.exports = {
             }
 
             // Update userinfo
-            let userinfoCreate = await Userinfo.create(userinfoObj)
+            let userinfoCreate = await User_info.create(userinfoObj)
 
             const firstName = req.body.name.split(' ')[0].toLowerCase();
             const generatedPassword = firstName + "123";
@@ -344,7 +422,7 @@ module.exports = {
             // Membuat object untuk create user
             let userCreateObj = {
                 password: passwordHash.generate(generatedPassword),
-                role_id: 1,
+                role_id: 5,
                 userinfo_id: userinfoCreate.id,
                 slug: slug
             };
@@ -395,7 +473,7 @@ module.exports = {
 
     //update data person
     //user update sendiri
-    updateuserinfo: async (req, res) => {
+    updateUserInfo: async (req, res) => {
         try {
             //mendapatkan data userinfo untuk pengecekan
             let userinfoGet = await Userinfo.findOne({
@@ -417,6 +495,10 @@ module.exports = {
                 nik: { type: "string", length: 16, optional: true },
                 email: { type: "string", min: 5, max: 50, pattern: /^\S+@\S+\.\S+$/, optional: true },
                 telepon: { type: "string", min: 7, max: 15, pattern: /^[0-9]+$/, optional: true },
+                kecamatan_id: { type: "string", min: 1, optional: true },
+                desa_id: { type: "string", min: 1, optional: true },
+                rt: { type: "string", min: 1, optional: true },
+                rw: { type: "string", min: 1, optional: true },
                 alamat: { type: "string", min: 3, optional: true },
                 agama: { type: "number", optional: true },
                 tempat_lahir: { type: "string", min: 2, optional: true },
@@ -434,6 +516,10 @@ module.exports = {
                 nik: req.body.nik,
                 email: req.body.email,
                 telepon: req.body.telepon,
+                kecamatan_id: req.body.kecamatan_id,
+                desa_id: req.body.desa_id,
+                rt: req.body.rt,
+                rw: req.body.rw,
                 alamat: req.body.alamat,
                 agama: req.body.agama ? Number(req.body.agama) : undefined,
                 tempat_lahir: req.body.tempat_lahir,
@@ -503,18 +589,18 @@ module.exports = {
 
     //update data person
     //user update sendiri
-    updateuserdocs: async (req, res) => {
+    updateUserDocs: async (req, res) => {
         const transaction = await sequelize.transaction();
         try {
             const folderPaths = {
-                aktalahir: `${process.env.PATH_AWS}/datauser/aktalahir`,
-                foto: `${process.env.PATH_AWS}/datauser/foto`,
-                filektp: `${process.env.PATH_AWS}/datauser/filektp`,
-                filekk: `${process.env.PATH_AWS}/datauser/filekk`,
-                fileijazahsd: `${process.env.PATH_AWS}/datauser/fileijazahsd`,
-                fileijazahsmp: `${process.env.PATH_AWS}/datauser/fileijazahsmp`,
-                fileijazahsma: `${process.env.PATH_AWS}/datauser/fileijazahsma`,
-                fileijazahlain: `${process.env.PATH_AWS}/datauser/fileijazahlain`,
+                aktalahir: "dir_mpp/datauser/aktalahir",
+                foto: "dir_mpp/datauser/foto",
+                filektp: "dir_mpp/datauser/filektp",
+                filekk: "dir_mpp/datauser/filekk",
+                fileijazahsd: "dir_mpp/datauser/fileijazahsd",
+                fileijazahsmp: "dir_mpp/datauser/fileijazahsmp",
+                fileijazahsma: "dir_mpp/datauser/fileijazahsma",
+                fileijazahlain: "dir_mpp/datauser/fileijazahlain",
             };
 
             // Mendapatkan data userinfo untuk pengecekan
@@ -632,13 +718,13 @@ module.exports = {
     },
 
     //menghapus user berdasarkan slug
-    deleteuser: async (req, res) => {
+    deleteUser: async (req, res) => {
         const transaction = await sequelize.transaction();
 
         try {
 
             //mendapatkan data user untuk pengecekan
-            let userinfoGet = await Userinfo.findOne({
+            let userinfoGet = await User_info.findOne({
                 where: {
                     slug: req.params.slug,
                     deletedAt: null
@@ -661,7 +747,7 @@ module.exports = {
             // Lakukan soft delete pada semua model terkait
             models.forEach(async modelName => {
                 const Model = sequelize.models[modelName];
-                if (Model.associations && Model.associations.Userinfo && Model.rawAttributes.deletedAt) {
+                if (Model.associations && Model.associations.User_info && Model.rawAttributes.deletedAt) {
                     updatePromises.push(
                         Model.update({ deletedAt: new Date() }, {
                             where: {
@@ -676,7 +762,7 @@ module.exports = {
             // Jalankan semua promise update secara bersamaan
             await Promise.all(updatePromises);
 
-            await Userinfo.update({ deletedAt: new Date() }, {
+            await User_info.update({ deletedAt: new Date() }, {
                 where: {
                     slug: req.params.slug
                 },
@@ -692,6 +778,79 @@ module.exports = {
             // Rollback transaksi jika terjadi kesalahan
             await transaction.rollback();
             res.status(500).json(response(500, 'Internal server error', err));
+            console.log(err);
+        }
+    },
+
+    //mengupdate berdasarkan user
+    updateProfil: async (req, res) => {
+        try {
+            //mendapatkan data fotoprofil untuk pengecekan
+
+            let fotoprofilGet = await User_info.findOne({
+                where: {
+                    slug: req.params.slug,
+                    deletedAt: null
+                },
+            });
+
+            //cek apakah data fotoprofil ada
+            if (!fotoprofilGet) {
+                res.status(404).json(response(404, 'fotoprofil not found'));
+                return;
+            }
+
+            //membuat schema untuk validasi
+            const schema = {
+                fotoprofil: {
+                    type: "string",
+                    optional: true
+                }
+            }
+
+            if (req.file) {
+                const timestamp = new Date().getTime();
+                const uniqueFileName = `${timestamp}-${req.file.originalname}`;
+
+                const uploadParams = {
+                    Bucket: process.env.AWS_S3_BUCKET,
+                    Key: `${process.env.PATH_AWS}/fotoprofil/${uniqueFileName}`,
+                    Body: req.file.buffer,
+                    ACL: 'public-read',
+                    ContentType: req.file.mimetype
+                };
+
+                const command = new PutObjectCommand(uploadParams);
+
+                await s3Client.send(command);
+
+                fotoprofilKey = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${uploadParams.Key}`;
+            }
+
+            //buat object fotoprofil
+            let fotoprofilUpdateObj = {
+                fotoprofil: req.file ? fotoprofilKey : undefined,
+            }
+
+            //validasi menggunakan module fastest-validator
+            const validate = v.validate(fotoprofilUpdateObj, schema);
+            if (validate.length > 0) {
+                res.status(400).json(response(400, 'validation failed', validate));
+                return;
+            }
+
+            //update fotoprofil
+            await Userinfo.update(fotoprofilUpdateObj, {
+                where: {
+                    slug: fotoprofilGet.slug,
+                },
+            });
+
+            //response menggunakan helper response.formatter
+            res.status(200).json(response(200, 'success update fotoprofil'));
+
+        } catch (err) {
+            res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
     },
