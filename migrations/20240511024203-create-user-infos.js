@@ -31,7 +31,16 @@ module.exports = {
       telepon: {
         type: Sequelize.STRING
       },
+      image_profile: {
+        type: Sequelize.STRING
+      },
       alamat: {
+        type: Sequelize.STRING
+      },
+      rt: {
+        type: Sequelize.STRING
+      },
+      rw: {
         type: Sequelize.STRING
       },
       agama: {
@@ -43,47 +52,11 @@ module.exports = {
       tgl_lahir: {
         type: Sequelize.DATEONLY
       },
-      status_kawin: {
-        type: Sequelize.SMALLINT
-      },
       gender: {
         type: Sequelize.SMALLINT
       },
-      pekerjaan: {
-        type: Sequelize.STRING
-      },
       goldar: {
         type: Sequelize.SMALLINT
-      },
-      pendidikan: {
-        type: Sequelize.SMALLINT
-      },
-      pas_photo: {
-        type: Sequelize.STRING
-      },
-      sk_cpns: {
-        type: Sequelize.STRING
-      },
-      sk_pns: {
-        type: Sequelize.STRING
-      },
-      akta_kelahiran: {
-        type: Sequelize.STRING
-      },
-      file_ktp: {
-        type: Sequelize.STRING
-      },
-      file_kk: {
-        type: Sequelize.STRING
-      },
-      sk_konversi_nip: {
-        type: Sequelize.STRING
-      },
-      kartu_bpjs: {
-        type: Sequelize.STRING
-      },
-      kartu_npwp: {
-        type: Sequelize.STRING
       },
       createdAt: {
         allowNull: false,
