@@ -24,7 +24,7 @@ route.post('/userinfo/create', [mid.checkRolesAndLogout(['Super Admin'])], uploa
     { name: 'fileijazahsma', maxCount: 1 },
     { name: 'fileijazahlain', maxCount: 1 }
 ]), userinfoController.createUserInfo); 
-route.put('/userinfo/update/:slug', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userinfoController.updateUserInfo);
+route.put('/userinfo/update/:slug', [mid.checkRolesAndLogout(['Super Admin', 'User'])], upload.single('image_profile'), userinfoController.updateUserInfo);
 route.put('/userinfo/updatedocs/:slug', [mid.checkRolesAndLogout(['Super Admin', 'User'])], upload.fields([
     { name: 'foto', maxCount: 1 },
     { name: 'aktalahir', maxCount: 1 },
