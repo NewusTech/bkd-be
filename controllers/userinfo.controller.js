@@ -18,7 +18,7 @@ const redisClient = new Redis({
 });
 
 const s3Client = new S3Client({
-    region: process.env.AWS_REGION,
+    region: process.env.AWS_DEFAULT_REGION,
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -313,7 +313,7 @@ module.exports = {
             // Membuat schema untuk validasi
             const schema = {
                 name: { type: "string", min: 2 },
-                nip: { type: "string", min: 2 },
+                nip: { type: "string", min: 18 },
                 nik: { type: "string", length: 16 },
                 email: { type: "string", min: 5, max: 50, pattern: /^\S+@\S+\.\S+$/, optional: true },
                 telepon: { type: "string", min: 7, max: 15, pattern: /^[0-9]+$/, optional: true },
@@ -475,24 +475,25 @@ module.exports = {
     //user update sendiri
     updateUserInfo: async (req, res) => {
         try {
-            //mendapatkan data userinfo untuk pengecekan
-            let userinfoGet = await Userinfo.findOne({
+            // Mendapatkan data userinfo untuk pengecekan
+            let userinfoGet = await User_info.findOne({
                 where: {
                     slug: req.params.slug,
                     deletedAt: null
                 }
-            })
-
-            //cek apakah data userinfo ada
+            });
+    
+            // Cek apakah data userinfo ada
             if (!userinfoGet) {
                 res.status(404).json(response(404, 'userinfo not found'));
                 return;
             }
-
-            //membuat schema untuk validasi
+    
+            // Membuat schema untuk validasi
             const schema = {
                 name: { type: "string", min: 2, optional: true },
                 nik: { type: "string", length: 16, optional: true },
+                nip: { type: "string", length: 18, optional: true },
                 email: { type: "string", min: 5, max: 50, pattern: /^\S+@\S+\.\S+$/, optional: true },
                 telepon: { type: "string", min: 7, max: 15, pattern: /^[0-9]+$/, optional: true },
                 kecamatan_id: { type: "string", min: 1, optional: true },
@@ -503,17 +504,35 @@ module.exports = {
                 agama: { type: "number", optional: true },
                 tempat_lahir: { type: "string", min: 2, optional: true },
                 tgl_lahir: { type: "string", pattern: /^\d{4}-\d{2}-\d{2}$/, optional: true },
-                status_kawin: { type: "number", optional: true },
                 gender: { type: "number", optional: true },
-                pekerjaan: { type: "string", optional: true },
                 goldar: { type: "number", optional: true },
-                pendidikan: { type: "number", optional: true },
+                image_profile: { type: "string", optional: true },
+            };
+    
+            let imageKey;
+            if (req.file) {
+                const timestamp = new Date().getTime();
+                const uniqueFileName = `${timestamp}-${req.file.originalname}`;
+    
+                const uploadParams = {
+                    Bucket: process.env.AWS_BUCKET,
+                    Key: `${process.env.PATH_AWS}/user/${uniqueFileName}`,
+                    Body: req.file.buffer,
+                    ACL: 'public-read',
+                    ContentType: req.file.mimetype
+                };
+    
+                const command = new PutObjectCommand(uploadParams);
+                await s3Client.send(command);
+                
+                imageKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
             }
-
-            //buat object userinfo
+    
+            // Buat object userinfo
             let userinfoUpdateObj = {
                 name: req.body.name,
                 nik: req.body.nik,
+                nip: req.body.nip,
                 email: req.body.email,
                 telepon: req.body.telepon,
                 kecamatan_id: req.body.kecamatan_id,
@@ -524,14 +543,12 @@ module.exports = {
                 agama: req.body.agama ? Number(req.body.agama) : undefined,
                 tempat_lahir: req.body.tempat_lahir,
                 tgl_lahir: req.body.tgl_lahir,
-                status_kawin: req.body.status_kawin ? Number(req.body.status_kawin) : undefined,
                 gender: req.body.gender ? Number(req.body.gender) : undefined,
-                pekerjaan: req.body.pekerjaan,
                 goldar: req.body.goldar ? Number(req.body.goldar) : undefined,
-                pendidikan: req.body.pendidikan ? Number(req.body.pendidikan) : undefined,
+                image_profile: req.file ? imageKey : userinfoGet.image_profile,
             };
-
-            //validasi menggunakan module fastest-validator
+    
+            // Validasi menggunakan fastest-validator
             const validate = v.validate(userinfoUpdateObj, schema);
             if (validate.length > 0) {
                 // Format pesan error dalam bahasa Indonesia
@@ -546,32 +563,32 @@ module.exports = {
                         return `Field ${error.field} tidak valid`;
                     }
                 });
-
+    
                 res.status(400).json({
                     status: 400,
                     message: errorMessages.join(', ')
                 });
                 return;
             }
-
-            //update userinfo
-            await Userinfo.update(userinfoUpdateObj, {
+    
+            // Update userinfo
+            await User_info.update(userinfoUpdateObj, {
                 where: {
                     slug: req.params.slug,
                     deletedAt: null
                 }
-            })
-
-            //mendapatkan data userinfo setelah update
-            let userinfoAfterUpdate = await Userinfo.findOne({
+            });
+    
+            // Mendapatkan data userinfo setelah update
+            let userinfoAfterUpdate = await User_info.findOne({
                 where: {
                     slug: req.params.slug,
                 }
-            })
-
-            //response menggunakan helper response.formatter
+            });
+    
+            // Response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success update userinfo', userinfoAfterUpdate));
-
+    
         } catch (err) {
             if (err.name === 'SequelizeUniqueConstraintError') {
                 // Menangani error khusus untuk constraint unik
@@ -604,7 +621,7 @@ module.exports = {
             };
 
             // Mendapatkan data userinfo untuk pengecekan
-            let userinfoGet = await Userinfo.findOne({
+            let userinfoGet = await User_info.findOne({
                 where: {
                     slug: req.params.slug,
                     deletedAt: null
@@ -667,7 +684,7 @@ module.exports = {
             }
 
             // Update userinfo
-            await Userinfo.update(userinfoUpdateObj, {
+            await User_info.update(userinfoUpdateObj, {
                 where: {
                     slug: req.params.slug,
                 },
@@ -675,7 +692,7 @@ module.exports = {
             });
 
             // Mendapatkan data userinfo setelah update
-            let userinfoAfterUpdate = await Userinfo.findOne({
+            let userinfoAfterUpdate = await User_info.findOne({
                 where: {
                     slug: req.params.slug,
                 },
@@ -814,7 +831,7 @@ module.exports = {
 
                 const uploadParams = {
                     Bucket: process.env.AWS_S3_BUCKET,
-                    Key: `${process.env.PATH_AWS}/fotoprofil/${uniqueFileName}`,
+                    Key: `${process.env.PATH_AWS}/profile-user/${uniqueFileName}`,
                     Body: req.file.buffer,
                     ACL: 'public-read',
                     ContentType: req.file.mimetype
