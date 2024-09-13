@@ -16,7 +16,7 @@ module.exports = {
         tgl_lahir: '1999-08-07',
         gender: 1,
         goldar: 1,
-        pendidikan: 1,
+        image_profile: null,
         createdAt: new Date(),
         updatedAt: new Date()
       },
