@@ -182,10 +182,10 @@ module.exports = {
                 whereCondition.deletedAt = null;
             }
 
-            if (data?.role === "Admin Instansi" || data?.role === "Super Admin" || data?.role === "Bupati" || data?.role === "Admin Verifikasi") {
-            } else {
-                whereCondition.status = true;
-            }
+            // if (data?.role === "Admin Instansi" || data?.role === "Super Admin" || data?.role === "Bupati" || data?.role === "Admin Verifikasi") {
+            // } else {
+            //     whereCondition.status = true;
+            // }
 
             let bidangGet = await Bidang.findOne({
                 where: whereCondition,

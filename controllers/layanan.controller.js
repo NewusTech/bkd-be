@@ -159,10 +159,10 @@ module.exports = {
                 bidang_id: bidang_id
             };
 
-            if (data?.role === "Admin Instansi" || data?.role === "Super Admin" || data?.role === "Bupati" || data?.role === "Admin Verifikasi") {
-            } else {
-                whereCondition.status = true;
-            }
+            // if (data?.role === "Admin Instansi" || data?.role === "Super Admin" || data?.role === "Bupati" || data?.role === "Admin Verifikasi") {
+            // } else {
+            //     whereCondition.status = true;
+            // }
 
             if (search) {
                 whereCondition[Op.and] = [
@@ -235,10 +235,10 @@ module.exports = {
                 whereCondition.deletedAt = null;
             }
 
-            if (data?.role === "Admin Instansi" || data?.role === "Super Admin" || data?.role === "Bupati" || data?.role === "Admin Verifikasi") {
-            } else {
-                whereCondition.status = true;
-            }
+            // if (data?.role === "Admin Instansi" || data?.role === "Super Admin" || data?.role === "Bupati" || data?.role === "Admin Verifikasi") {
+            // } else {
+            //     whereCondition.status = true;
+            // }
 
             let layananGet = await Layanan.findOne({
                 where: whereCondition,
