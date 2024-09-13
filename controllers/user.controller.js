@@ -590,7 +590,7 @@ module.exports = {
             const user = await User.findOne({
                 include: [
                     {
-                        model: Userinfo,
+                        model: User_info,
                         attributes: ['email'],
                         where: { email },
                     }
