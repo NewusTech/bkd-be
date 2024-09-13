@@ -17,11 +17,11 @@ route.delete('/user/delete/:slug', [mid.checkRolesAndLogout(['Super Admin'])], u
 //API BUAT USER
 route.get('/user/get', [mid.checkRolesAndLogout(['User', 'Super Admin'])], userController.getForUser); 
 
-route.post('/changepassword/:slug', [mid.checkRolesAndLogout(['Admin Verifikasi', 'Admin Layanan', 'Super Admin', 'User'])], userController.changePassword); 
+route.post('/change/password/:slug', [mid.checkRolesAndLogout(['Admin Verifikasi', 'Admin Layanan', 'Super Admin', 'User'])], userController.changePassword); 
 
 route.post('/changepwadmin/:slug', [mid.checkRolesAndLogout(['Admin Verifikasi', 'Admin Layanan', 'Super Admin', 'User'])], userController.changePasswordFromAdmin); 
 
-route.post('/forgotpassword', userController.forgotPassword); 
+route.post('/forgot/password', userController.forgotPassword); 
 
 route.post('/reset/:token', userController.resetPassword); 
 
