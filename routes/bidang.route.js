@@ -12,7 +12,7 @@ const upload = multer({ storage: storage });
 
 route.post('/user/bidang/create', [mid.checkRolesAndLogout(['Super Admin'])], bidangController.createBidang);
 route.get('/user/bidang/get', bidangController.getBidang);
-route.get('/user/bidang/get/:slug', [mid.checkRoles()], bidangController.getBidangBySlug); 
+route.get('/user/bidang/get/:slug', bidangController.getBidangBySlug); 
 route.put('/user/bidang/update/:slug', [mid.checkRolesAndLogout(['Super Admin'])], bidangController.updateBidang); 
 route.delete('/user/bidang/delete/:slug', [mid.checkRolesAndLogout(['Super Admin'])], bidangController.deleteBidang);
 
