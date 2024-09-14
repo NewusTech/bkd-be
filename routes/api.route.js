@@ -1,5 +1,8 @@
 const userRoute = require('./user.route');
 const userinfoRoute = require('./userinfo.route');
+const userjabatanRoute = require('./userjabatan.route');
+const userkepangkatanRoute = require('./userkepangkatan.route');
+const userpendidikanRoute = require('./userpendidikan.route');
 const roleRoute = require('./role.route');
 const permissionRoute = require('./permission.route');
 const bidangRoute = require('./bidang.route');
@@ -23,6 +26,9 @@ const bkdprofileRoute = require('./bkdprofile.route');
 module.exports = function (app, urlApi) {
     app.use(urlApi, userRoute);
     app.use(urlApi, userinfoRoute);
+    app.use(urlApi, userjabatanRoute);
+    app.use(urlApi, userkepangkatanRoute);
+    app.use(urlApi, userpendidikanRoute);
     app.use(urlApi, roleRoute);
     app.use(urlApi, permissionRoute);
     app.use(urlApi, bidangRoute);
