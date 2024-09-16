@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   User_pendidikan.init({
+    user_id: DataTypes.INTEGER,
     tingkat_pendidikan: DataTypes.STRING,
     program_study: DataTypes.STRING,
     institut: DataTypes.STRING,
