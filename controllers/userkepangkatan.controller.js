@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { User, User_kepangkatan, Role, Bidang, Kecamatan, Desa, sequelize } = require('../models');
+const { User, User_kepangkatan, Role, Bidang, sequelize } = require('../models');
 
 const passwordHash = require('password-hash');
 const Validator = require("fastest-validator");
@@ -229,167 +229,90 @@ module.exports = {
         }
     },
 
-    //create data person
-    //dari sisi admin, jika user offline belum punya akun
+    //create data user pangkat
+    //dari user jika sudah memiliki akun
     createUserPangkat: async (req, res) => {
         const transaction = await sequelize.transaction();
         try {
-            // Membuat schema untuk validasi
-            const schema = {
-                name: { type: "string", min: 2 },
-                nip: { type: "string", min: 18 },
-                nik: { type: "string", length: 16 },
-                email: { type: "string", min: 5, max: 50, pattern: /^\S+@\S+\.\S+$/, optional: true },
-                telepon: { type: "string", min: 7, max: 15, pattern: /^[0-9]+$/, optional: true },
-                kecamatan_id: { type: "string", min: 1, optional: true },
-                desa_id: { type: "string", min: 1, optional: true },
-                rt: { type: "string", min: 1, optional: true },
-                rw: { type: "string", min: 1, optional: true },
-                alamat: { type: "string", min: 3, optional: true },
-                agama: { type: "number", optional: true },
-                tempat_lahir: { type: "string", min: 2, optional: true },
-                tgl_lahir: { type: "string", pattern: /^\d{4}-\d{2}-\d{2}$/, optional: true },
-                gender: { type: "number", optional: true },
-                goldar: { type: "number", optional: true },
-                image_profile: { type: "string", optional: true },
-                aktalahir: { type: "string", optional: true },
-                filekk: { type: "string", optional: true },
-                filektp: { type: "string", optional: true },
-                fileijazahsd: { type: "string", optional: true },
-                fileijazahsmp: { type: "string", optional: true },
-                fileijazahsma: { type: "string", optional: true },
-                fileijazahlain: { type: "string", optional: true },
-            }
-
-            const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, "");
-            const slug = `${req.body.name}-${timestamp}`;
-
-            // Buat object userinfo
-            let userinfoObj = {
-                name: req.body.name,
-                nik: req.body.nik,
-                nip: req.body.nip,
-                email: req.body.email,
-                telepon: req.body.telepon,
-                kecamatan_id: req.body.kecamatan_id,
-                desa_id: req.body.desa_id,
-                rt: req.body.rt,
-                rw: req.body.rw,
-                alamat: req.body.alamat,
-                agama: req.body.agama ? Number(req.body.agama) : null,
-                tempat_lahir: req.body.tempat_lahir,
-                tgl_lahir: req.body.tgl_lahir,
-                gender: req.body.gender ? Number(req.body.gender) : null,
-                goldar: req.body.goldar ? Number(req.body.goldar) : null,
-                slug: slug
-            };
-
-            // Process image upload
-            const files = req.files;
-            let imageUrls = {};
-
-            const uploadPromises = Object.keys(files).map(async (key) => {
-                if (files[key] && files[key][0]) {
-                    const file = files[key][0];
-                    const { mimetype, buffer, originalname } = file;
-
-                    const now = new Date();
-                    const timestamp = now.toISOString().replace(/[-:.]/g, '');
-                    const uniqueFilename = `${originalname.split('.')[0]}_${timestamp}`;
-
-                    const redisKey = `upload:${slug}:${key}`;
-                    await redisClient.set(redisKey, JSON.stringify({
-                        buffer,
-                        mimetype,
-                        originalname,
-                        uniqueFilename,
-                        folderPath: folderPaths[key]
-                    }), 'EX', 60 * 60); // Expire in 1 hour
-
-                    const fileUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${folderPaths[key]}/${uniqueFilename}`;
-                    imageUrls[key] = fileUrl;
-                    userinfoObj[key] = fileUrl;
-                }
-            });
-
-            await Promise.all(uploadPromises);
-
-            // Validasi menggunakan module fastest-validator
-            const validate = v.validate(userinfoObj, schema);
-            if (validate.length > 0) {
-                // Format pesan error dalam bahasa Indonesia
-                const errorMessages = validate.map(error => {
-                    if (error.type === 'stringMin') {
-                        return `Field ${error.field} minimal ${error.expected} karakter`;
-                    } else if (error.type === 'stringMax') {
-                        return `Field ${error.field} maksimal ${error.expected} karakter`;
-                    } else if (error.type === 'stringPattern') {
-                        return `Field ${error.field} format tidak valid`;
-                    } else {
-                        return `Field ${error.field} tidak valid`;
-                    }
-                });
-
-                res.status(400).json({
+            // Mengambil user_akun_id dari req.user
+            const userId = req.user?.user_akun_id;
+    
+            if (!userId) {
+                return res.status(400).json({
                     status: 400,
-                    message: errorMessages.join(', ')
+                    message: 'User ID tidak tersedia'
                 });
-                return;
             }
-
-            // Update userinfo
-            let userinfoCreate = await User_info.create(userinfoObj)
-
-            const firstName = req.body.name.split(' ')[0].toLowerCase();
-            const generatedPassword = firstName + "123";
-
-            // Membuat object untuk create user
-            let userCreateObj = {
-                password: passwordHash.generate(generatedPassword),
-                role_id: 5,
-                userinfo_id: userinfoCreate.id,
-                slug: slug
+    
+            // Mengambil array dari body request
+            const userPangkats = req.body;
+    
+            if (!Array.isArray(userPangkats) || userPangkats.length === 0) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'Input harus berupa array dan tidak boleh kosong'
+                });
+            }
+    
+            // Schema untuk validasi setiap objek di dalam array
+            const schema = {
+                jenjang_kepangkatan: { type: "string", min: 2 },
+                tmt: { type: "string" },
+                no_sk_pangkat: { type: "string", optional: true },
+                tgl_sk_pangkat: { type: "date", convert: true }
             };
-
-            // Membuat user baru
-            await User.create(userCreateObj);
-
-            // Mulai proses background untuk mengunggah ke S3
-            setTimeout(async () => {
-                for (const key in files) {
-                    const redisKey = `upload:${slug}:${key}`;
-                    const fileData = await redisClient.get(redisKey);
-
-                    if (fileData) {
-                        const { buffer, mimetype, originalname, uniqueFilename, folderPath } = JSON.parse(fileData);
-                        const uploadParams = {
-                            Bucket: process.env.AWS_S3_BUCKET,
-                            Key: `${folderPath}/${uniqueFilename}`,
-                            Body: Buffer.from(buffer),
-                            ACL: 'public-read',
-                            ContentType: mimetype
-                        };
-                        const command = new PutObjectCommand(uploadParams);
-                        await s3Client.send(command);
-                        await redisClient.del(redisKey); // Hapus dari Redis setelah berhasil diunggah
-                    }
+    
+            // Array untuk menyimpan hasil dari proses create
+            const createdPangkats = [];
+    
+            // Proses setiap item dalam array userPangkats
+            for (let userPangkat of userPangkats) {
+                // Masukkan user_id dari req.user ke dalam setiap objek user pangkat
+                userPangkat.user_id = userId;
+    
+                // Validasi setiap objek dalam array
+                const validate = v.validate(userPangkat, schema);
+                if (validate.length > 0) {
+                    const errorMessages = validate.map(error => {
+                        if (error.type === 'stringMin') {
+                            return `Field ${error.field} minimal ${error.expected} karakter`;
+                        } else if (error.type === 'date') {
+                            return `Field ${error.field} harus berupa tanggal yang valid`;
+                        } else {
+                            return `Field ${error.field} tidak valid`;
+                        }
+                    });
+    
+                    return res.status(400).json({
+                        status: 400,
+                        message: `Error untuk kepangkatan ${userPangkat.jenjang_kepangkatan}: ${errorMessages.join(', ')}`
+                    });
                 }
-            }, 0); // Jalankan segera dalam background
-
-            // Response menggunakan helper response.formatter
+                let userpangkatCreate = await User_kepangkatan.create(userPangkat);
+                createdPangkats.push(userpangkatCreate);
+            }
+    
+            // Commit transaksi jika semua data berhasil disimpan
             await transaction.commit();
-            res.status(200).json(response(200, 'success create userinfo', userinfoCreate));
+            res.status(200).json({
+                status: 200,
+                message: 'User kepangkatan created successfully',
+                data: createdPangkats
+            });
+    
         } catch (err) {
             await transaction.rollback();
             if (err.name === 'SequelizeUniqueConstraintError') {
-                // Menangani error khusus untuk constraint unik
                 res.status(400).json({
                     status: 400,
                     message: `${err.errors[0].path} sudah terdaftar`
                 });
             } else {
-                // Menangani error lainnya
-                res.status(500).json(response(500, 'terjadi kesalahan pada server', err));
+                res.status(500).json({
+                    status: 500,
+                    message: 'Terjadi kesalahan pada server',
+                    error: err.message
+                });
             }
             console.log(err);
         }
@@ -524,136 +447,6 @@ module.exports = {
                 // Menangani error lainnya
                 res.status(500).json(response(500, 'terjadi kesalahan pada server', err));
             }
-            console.log(err);
-        }
-    },
-
-    //update data person
-    //user update sendiri
-    updateUserDocs: async (req, res) => {
-        const transaction = await sequelize.transaction();
-        try {
-            const folderPaths = {
-                aktalahir: "dir_mpp/datauser/aktalahir",
-                foto: "dir_mpp/datauser/foto",
-                filektp: "dir_mpp/datauser/filektp",
-                filekk: "dir_mpp/datauser/filekk",
-                fileijazahsd: "dir_mpp/datauser/fileijazahsd",
-                fileijazahsmp: "dir_mpp/datauser/fileijazahsmp",
-                fileijazahsma: "dir_mpp/datauser/fileijazahsma",
-                fileijazahlain: "dir_mpp/datauser/fileijazahlain",
-            };
-
-            // Mendapatkan data userinfo untuk pengecekan
-            let userinfoGet = await User_info.findOne({
-                where: {
-                    slug: req.params.slug,
-                    deletedAt: null
-                },
-                transaction
-            });
-
-            // Cek apakah data userinfo ada
-            if (!userinfoGet) {
-                await transaction.rollback();
-                res.status(404).json(response(404, 'userinfo not found'));
-                return;
-            }
-
-            const oldImageUrls = {
-                aktalahir: userinfoGet.aktalahir,
-                foto: userinfoGet.foto,
-                filektp: userinfoGet.filektp,
-                filekk: userinfoGet.filekk,
-                fileijazahsd: userinfoGet.fileijazahsd,
-                fileijazahsmp: userinfoGet.fileijazahsmp,
-                fileijazahsma: userinfoGet.fileijazahsma,
-                fileijazahlain: userinfoGet.fileijazahlain,
-            };
-
-            const files = req.files;
-            let uploadResults = {};
-
-            const uploadPromises = Object.keys(files).map(async (key) => {
-                if (files[key] && files[key][0]) {
-                    const file = files[key][0];
-                    const { mimetype, buffer, originalname } = file;
-                    const base64 = Buffer.from(buffer).toString('base64');
-                    const dataURI = `data:${mimetype};base64,${base64}`;
-
-                    const now = new Date();
-                    const timestamp = now.toISOString().replace(/[-:.]/g, '');
-                    const uniqueFilename = `${originalname.split('.')[0]}_${timestamp}`;
-
-                    const redisKey = `upload:${req.params.slug}:${key}`;
-                    await redisClient.set(redisKey, JSON.stringify({
-                        buffer,
-                        mimetype,
-                        originalname,
-                        uniqueFilename,
-                        folderPath: folderPaths[key]
-                    }), 'EX', 60 * 60); // Expire in 1 hour
-
-                    const fileUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${folderPaths[key]}/${uniqueFilename}`;
-                    uploadResults[key] = fileUrl;
-                }
-            });
-
-            await Promise.all(uploadPromises);
-
-            let userinfoUpdateObj = {};
-
-            for (const key in folderPaths) {
-                userinfoUpdateObj[key] = uploadResults[key] || oldImageUrls[key];
-            }
-
-            // Update userinfo
-            await User_info.update(userinfoUpdateObj, {
-                where: {
-                    slug: req.params.slug,
-                },
-                transaction
-            });
-
-            // Mendapatkan data userinfo setelah update
-            let userinfoAfterUpdate = await User_info.findOne({
-                where: {
-                    slug: req.params.slug,
-                },
-                transaction
-            });
-
-            await transaction.commit();
-
-
-            // Mulai proses background untuk mengunggah ke S3
-            setTimeout(async () => {
-                for (const key in files) {
-                    const redisKey = `upload:${req.params.slug}:${key}`;
-                    const fileData = await redisClient.get(redisKey);
-
-                    if (fileData) {
-                        const { buffer, mimetype, originalname, uniqueFilename, folderPath } = JSON.parse(fileData);
-                        const uploadParams = {
-                            Bucket: process.env.AWS_S3_BUCKET,
-                            Key: `${folderPath}/${uniqueFilename}`,
-                            Body: Buffer.from(buffer),
-                            ACL: 'public-read',
-                            ContentType: mimetype
-                        };
-                        const command = new PutObjectCommand(uploadParams);
-                        await s3Client.send(command);
-                        await redisClient.del(redisKey); // Hapus dari Redis setelah berhasil diunggah
-                    }
-                }
-            }, 0); // Jalankan segera dalam background
-
-            // Response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success update userinfo', userinfoAfterUpdate));
-
-        } catch (err) {
-            await transaction.rollback();
-            res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
     },
