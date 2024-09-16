@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   User_kepangkatan.init({
+    user_id: DataTypes.INTEGER,
     jenjang_kepangkatan: DataTypes.STRING,
     tmt: DataTypes.DATE,
     no_sk_pangkat: DataTypes.STRING,
