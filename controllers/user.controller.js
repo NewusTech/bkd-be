@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { User, Token, Bidang, Layanan, Role, User_info, Kecamatan, Desa, User_permission, Permission, sequelize } = require('../models');
+const { User, Token, Bidang, Layanan, Role, User_info, User_jabatan, User_kepangkatan, User_pendidikan, Kecamatan, Desa, User_permission, Permission, sequelize } = require('../models');
 const baseConfig = require('../config/base.config');
 const passwordHash = require('password-hash');
 const jwt = require('jsonwebtoken');
@@ -400,7 +400,7 @@ module.exports = {
             const showDeleted = req.query.showDeleted ?? null;
             // Menggunakan req.user untuk mendapatkan user_akun_id
             const userId = req.user?.user_akun_id;
-    
+
             if (!userId) {
                 return res.status(400).json(response(400, 'Bad Request: User ID is not available'));
             }
@@ -449,6 +449,45 @@ module.exports = {
             if (!userGet) {
                 return res.status(404).json(response(404, 'user not found'));
             }
+
+            const userJabatans = await User_jabatan.findAll({
+                where: { user_id: userId }
+            });
+            const userPangkats = await User_kepangkatan.findAll({
+                where: { user_id: userId }
+            });
+            const userPendidikans = await User_pendidikan.findAll({
+                where: { user_id: userId }
+            });
+
+
+
+        // Format data jabatan untuk user (jika ada banyak jabatan)
+            const formattedJabatans = userJabatans.map(jabatan => ({
+                nama_jabatan: jabatan.nama_jabatan,
+                tmt: jabatan.tmt,
+                no_sk_pangkat: jabatan.no_sk_pangkat,
+                tgl_sk_pangkat: jabatan.tgl_sk_pangkat,
+                createdAt: jabatan.createdAt,
+                updatedAt: jabatan.updatedAt
+            }));
+    
+        // Format data pangkat untuk user (jika ada banyak kepangakatan)
+        const formattedPangkats = userPangkats.map(pangkat => ({
+            jenjang_kepangkatan: pangkat.jenjang_kepangkatan,
+            tmt: pangkat.tmt,
+            no_sk_pangkat: pangkat.no_sk_pangkat,
+            tgl_sk_pangkat: pangkat.tgl_sk_pangkat,
+        }));
+
+        // Format data pendidikan untuk user (jika ada banyak pendidikan)
+        const formattedPendidikans = userPendidikans.map(pendidikan => ({
+            tingkat_pendidikan: pendidikan.tingkat_pendidikan,
+            program_study: pendidikan.program_study,
+            institut: pendidikan.institut,
+            no_ijazah: pendidikan.no_ijazah,
+            tgl_ijazah: pendidikan.tgl_ijazah
+        }));
     
             let formattedUsers = {
                 id: userGet.id,
@@ -467,26 +506,18 @@ module.exports = {
                 agama: userGet.User_info?.agama,
                 tempat_lahir: userGet.User_info?.tempat_lahir,
                 tgl_lahir: userGet.User_info?.tgl_lahir,
-                status_kawin: userGet.User_info?.status_kawin,
                 gender: userGet.User_info?.gender,
-                pekerjaan: userGet.User_info?.pekerjaan,
                 goldar: userGet.User_info?.goldar,
-                pendidikan: userGet.User_info?.pendidikan,
-                filektp: userGet.User_info?.filektp,
-                filekk: userGet.User_info?.filekk,
-                foto: userGet.User_info?.foto,
-                fotoprofil: userGet.User_info?.fotoprofil,
-                aktalahir: userGet.User_info?.aktalahir,
-                fileijazahsd: userGet.User_info?.fileijazahsd,
-                fileijazahsmp: userGet.User_info?.fileijazahsmp,
-                fileijazahsma: userGet.User_info?.fileijazahsma,
-                fileijazahlain: userGet.User_info?.fileijazahlain,
                 bidang_id: userGet.Bidang?.id,
                 bidang_title: userGet.Bidang?.nama,
                 role_id: userGet.Role?.id,
                 role_name: userGet.Role?.name,
+
+                jabatans: formattedJabatans,
+                pangkats: formattedPangkats,
+                pendidikans: formattedPendidikans,
                 createdAt: userGet.createdAt,
-                updatedAt: userGet.updatedAt
+                updatedAt: userGet.updatedAt,
             };
     
             res.status(200).json(response(200, 'success get user by id', formattedUsers));
