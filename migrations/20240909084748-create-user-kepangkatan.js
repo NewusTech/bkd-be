@@ -17,15 +17,12 @@ module.exports = {
       },
       tmt: {
         type: Sequelize.DATE,
-        unique: true
       },
       no_sk_pangkat: {
         type: Sequelize.STRING,
-        unique: true
       },
       tgl_sk_pangkat: {
         type: Sequelize.DATE,
-        unique: true
       },
       createdAt: {
         allowNull: false,

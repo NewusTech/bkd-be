@@ -17,19 +17,15 @@ module.exports = {
       },
       program_study: {
         type: Sequelize.STRING,
-        unique: true
       },
       institut: {
         type: Sequelize.STRING,
-        unique: true
       },
       no_ijazah: {
         type: Sequelize.STRING,
-        unique: true
       },
       tgl_ijazah: {
         type: Sequelize.DATE,
-        unique: true
       },
       createdAt: {
         allowNull: false,
