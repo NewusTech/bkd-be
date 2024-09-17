@@ -15,6 +15,6 @@ route.get('/user/kepangkatan/get/:slug', [mid.checkRolesAndLogout(['Super Admin'
 route.delete('/user/kepangkatan/delete/:slug', [mid.checkRolesAndLogout(['Super Admin'])], userkepangkatanController.deleteUserPangkat);
 
 route.post('/user/kepangkatan/create', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userkepangkatanController.createUserPangkat); 
-route.put('/user/kepangkatan/update/:slug', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userkepangkatanController.updateUserPangkat);
+route.post('/user/kepangkatan/update', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userkepangkatanController.updateUserPangkat);
 
 module.exports = route;
