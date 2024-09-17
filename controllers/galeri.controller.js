@@ -63,8 +63,10 @@ module.exports = {
             //buat Galeri
             let GaleriCreate = await Galeri.create(GaleriCreateObj);
 
-            res.status(201).json(response(201, 'success create Galeri', GaleriCreate));
+            res.status(201).json(response(201, 'success create galeri', GaleriCreate));
         } catch (err) {
+            logger.error(`Error : ${err}`);
+            logger.error(`Error message: ${err.message}`);
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
