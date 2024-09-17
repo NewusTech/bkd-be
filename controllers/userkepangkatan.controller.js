@@ -321,131 +321,92 @@ module.exports = {
     //update data person
     //user update sendiri
     updateUserPangkat: async (req, res) => {
+        const transaction = await sequelize.transaction();
         try {
-            // Mendapatkan data userinfo untuk pengecekan
-            let userinfoGet = await User_info.findOne({
-                where: {
-                    slug: req.params.slug,
-                    deletedAt: null
-                }
-            });
+            // Mengambil user_akun_id dari req.user
+            const userId = req.user?.user_akun_id;
     
-            // Cek apakah data userinfo ada
-            if (!userinfoGet) {
-                res.status(404).json(response(404, 'userinfo not found'));
-                return;
-            }
-    
-            // Membuat schema untuk validasi
-            const schema = {
-                name: { type: "string", min: 2, optional: true },
-                nik: { type: "string", length: 16, optional: true },
-                nip: { type: "string", length: 18, optional: true },
-                email: { type: "string", min: 5, max: 50, pattern: /^\S+@\S+\.\S+$/, optional: true },
-                telepon: { type: "string", min: 7, max: 15, pattern: /^[0-9]+$/, optional: true },
-                kecamatan_id: { type: "string", min: 1, optional: true },
-                desa_id: { type: "string", min: 1, optional: true },
-                rt: { type: "string", min: 1, optional: true },
-                rw: { type: "string", min: 1, optional: true },
-                alamat: { type: "string", min: 3, optional: true },
-                agama: { type: "number", optional: true },
-                tempat_lahir: { type: "string", min: 2, optional: true },
-                tgl_lahir: { type: "string", pattern: /^\d{4}-\d{2}-\d{2}$/, optional: true },
-                gender: { type: "number", optional: true },
-                goldar: { type: "number", optional: true },
-                image_profile: { type: "string", optional: true },
-            };
-    
-            let imageKey;
-            if (req.file) {
-                const timestamp = new Date().getTime();
-                const uniqueFileName = `${timestamp}-${req.file.originalname}`;
-    
-                const uploadParams = {
-                    Bucket: process.env.AWS_BUCKET,
-                    Key: `${process.env.PATH_AWS}/user/${uniqueFileName}`,
-                    Body: req.file.buffer,
-                    ACL: 'public-read',
-                    ContentType: req.file.mimetype
-                };
-    
-                const command = new PutObjectCommand(uploadParams);
-                await s3Client.send(command);
-                
-                imageKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
-            }
-    
-            // Buat object userinfo
-            let userinfoUpdateObj = {
-                name: req.body.name,
-                nik: req.body.nik,
-                nip: req.body.nip,
-                email: req.body.email,
-                telepon: req.body.telepon,
-                kecamatan_id: req.body.kecamatan_id,
-                desa_id: req.body.desa_id,
-                rt: req.body.rt,
-                rw: req.body.rw,
-                alamat: req.body.alamat,
-                agama: req.body.agama ? Number(req.body.agama) : undefined,
-                tempat_lahir: req.body.tempat_lahir,
-                tgl_lahir: req.body.tgl_lahir,
-                gender: req.body.gender ? Number(req.body.gender) : undefined,
-                goldar: req.body.goldar ? Number(req.body.goldar) : undefined,
-                image_profile: req.file ? imageKey : userinfoGet.image_profile,
-            };
-    
-            // Validasi menggunakan fastest-validator
-            const validate = v.validate(userinfoUpdateObj, schema);
-            if (validate.length > 0) {
-                // Format pesan error dalam bahasa Indonesia
-                const errorMessages = validate.map(error => {
-                    if (error.type === 'stringMin') {
-                        return `Field ${error.field} minimal ${error.expected} karakter`;
-                    } else if (error.type === 'stringMax') {
-                        return `Field ${error.field} maksimal ${error.expected} karakter`;
-                    } else if (error.type === 'stringPattern') {
-                        return `Field ${error.field} format tidak valid`;
-                    } else {
-                        return `Field ${error.field} tidak valid`;
-                    }
-                });
-    
-                res.status(400).json({
+            if (!userId) {
+                return res.status(400).json({
                     status: 400,
-                    message: errorMessages.join(', ')
+                    message: 'User ID tidak tersedia'
                 });
-                return;
+            }
+
+            await User_kepangkatan.destroy({
+                where: { user_id: userId },
+                force: true 
+            });
+    
+            // Mengambil array dari body request
+            const userPangkats = req.body;
+    
+            if (!Array.isArray(userPangkats) || userPangkats.length === 0) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'Input harus berupa array dan tidak boleh kosong'
+                });
             }
     
-            // Update userinfo
-            await User_info.update(userinfoUpdateObj, {
-                where: {
-                    slug: req.params.slug,
-                    deletedAt: null
-                }
-            });
+            // Schema untuk validasi setiap objek di dalam array
+            const schema = {
+                jenjang_kepangkatan: { type: "string", min: 2 },
+                tmt: { type: "string" },
+                no_sk_pangkat: { type: "string", optional: true },
+                tgl_sk_pangkat: { type: "date", convert: true }
+            };
     
-            // Mendapatkan data userinfo setelah update
-            let userinfoAfterUpdate = await User_info.findOne({
-                where: {
-                    slug: req.params.slug,
-                }
-            });
+            // Array untuk menyimpan hasil dari proses create
+            const createdPangkats = [];
     
-            // Response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success update userinfo', userinfoAfterUpdate));
+            // Proses setiap item dalam array userPangkats
+            for (let userPangkat of userPangkats) {
+                // Masukkan user_id dari req.user ke dalam setiap objek Pangkat
+                userPangkat.user_id = userId;
+    
+                // Validasi setiap objek dalam array
+                const validate = v.validate(userPangkat, schema);
+                if (validate.length > 0) {
+                    const errorMessages = validate.map(error => {
+                        if (error.type === 'stringMin') {
+                            return `Field ${error.field} minimal ${error.expected} karakter`;
+                        } else if (error.type === 'date') {
+                            return `Field ${error.field} harus berupa tanggal yang valid`;
+                        } else {
+                            return `Field ${error.field} tidak valid`;
+                        }
+                    });
+    
+                    return res.status(400).json({
+                        status: 400,
+                        message: `Error untuk pangkat ${userPangkat.jenjang_kepangkatan}: ${errorMessages.join(', ')}`
+                    });
+                }
+                let userpangkatCreate = await User_kepangkatan.create(userPangkat);
+                createdPangkats.push(userpangkatCreate);
+            }
+    
+            // Commit transaksi jika semua data berhasil disimpan
+            await transaction.commit();
+            res.status(200).json({
+                status: 200,
+                message: 'User Pangkats updated successfully',
+                data: createdPangkats
+            });
     
         } catch (err) {
+            await transaction.rollback();
             if (err.name === 'SequelizeUniqueConstraintError') {
-                // Menangani error khusus untuk constraint unik
                 res.status(400).json({
                     status: 400,
                     message: `${err.errors[0].path} sudah terdaftar`
                 });
             } else {
-                // Menangani error lainnya
-                res.status(500).json(response(500, 'terjadi kesalahan pada server', err));
+                res.status(500).json({
+                    status: 500,
+                    message: 'Terjadi kesalahan pada server',
+                    error: err.message
+                });
             }
             console.log(err);
         }
