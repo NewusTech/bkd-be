@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('BkdProfiles', {
+    await queryInterface.createTable('Bkd_profiles', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -10,6 +10,12 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       about_bkd: {
+        type: Sequelize.TEXT
+      },
+      visi: {
+        type: Sequelize.TEXT
+      },
+      misi: {
         type: Sequelize.TEXT
       },
       kontak: {
@@ -33,6 +39,6 @@ module.exports = {
 
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('BkdProfiles');
+    await queryInterface.dropTable('Bkd_profiles');
   }
 };
