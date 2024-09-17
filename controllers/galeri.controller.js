@@ -5,6 +5,7 @@ const v = new Validator();
 const { generatePagination } = require('../pagination/pagination');
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const slugify = require('slugify');
+const logger = require('../errorHandler/logger');
 
 const s3Client = new S3Client({
     region: process.env.AWS_DEFAULT_REGION,
