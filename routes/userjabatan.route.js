@@ -14,5 +14,6 @@ route.get('/user/jabatan/get', [mid.checkRolesAndLogout(['Super Admin', 'User'])
 route.get('/user/jabatan/get/:slug', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userjabatanController.getUserJabatanByID); 
 route.delete('/user/jabatan/delete/:slug', [mid.checkRolesAndLogout(['Super Admin'])], userjabatanController.deleteUserJabatan);
 route.post('/user/jabatan/create', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userjabatanController.createUserJabatan); 
+route.post('/user/jabatan/update', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userjabatanController.updateUserJabatan);
 
 module.exports = route;
