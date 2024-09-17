@@ -1,5 +1,5 @@
 const { response } = require('../helpers/response.formatter');
-const { BkdProfile } = require('../models');
+const { Bkd_profile } = require('../models');
 const Validator = require("fastest-validator");
 const v = new Validator();
 const { generatePagination } = require('../pagination/pagination');
@@ -21,6 +21,8 @@ module.exports = {
         try {
             const schema = {
                 about_bkd: { type: "string", min: 3 },
+                visi: { type: "string", min: 3 },
+                misi: { type: "string", min: 3 },
                 kontak: { type: "string", min: 3 },
                 long: { type: "string", min: 3 },
                 lang: { type: "string", min: 3 },
@@ -29,6 +31,8 @@ module.exports = {
             //buat object Facilities
             let ProfileCreateObj = {
                 about_bkd: req.body.about_bkd,
+                visi: req.body.visi,
+                misi: req.body.misi,
                 kontak: req.body.kontak,
                 long: req.body.long,
                 lang: req.body.lang,
@@ -41,9 +45,9 @@ module.exports = {
             }
 
             //buat Profile
-            let ProfileCreate = await BkdProfile.create(ProfileCreateObj);
+            let ProfileCreate = await Bkd_profile.create(ProfileCreateObj);
 
-            res.status(201).json(response(201, 'success create Profile', ProfileCreate));
+            res.status(201).json(response(201, 'success create Profile BKD', ProfileCreate));
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
@@ -60,18 +64,18 @@ module.exports = {
             let totalCount;
 
             [ProfileGets, totalCount] = await Promise.all([
-                BkdProfile.findAll({
+                Bkd_profile.findAll({
                     limit: limit,
                     offset: offset
                 }),
-                BkdProfile.count()
+                Bkd_profile.count()
             ]);
 
-            const pagination = generatePagination(totalCount, page, limit, '/api/user/profile/get');
+            const pagination = generatePagination(totalCount, page, limit, '/api/user/bkd/profile/get');
 
             res.status(200).json({
                 status: 200,
-                message: 'success get profile',
+                message: 'success get profile bkd',
                 data: ProfileGets,
                 pagination: pagination
             });
@@ -86,7 +90,7 @@ module.exports = {
     getProfileById: async (req, res) => {
         try {
             //mendapatkan data profile berdasarkan slug
-            let ProfileGet = await BkdProfile.findOne({
+            let ProfileGet = await Bkd_profile.findOne({
                 where: {
                     id: req.params.id
                 },
@@ -94,12 +98,12 @@ module.exports = {
 
             //cek jika Profile tidak ada
             if (!ProfileGet) {
-                res.status(404).json(response(404, 'Profile not found'));
+                res.status(404).json(response(404, 'BKD Profile not found'));
                 return;
             }
 
             //response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success get profile by id', ProfileGet));
+            res.status(200).json(response(200, 'success get bkd profile by id', ProfileGet));
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
@@ -110,7 +114,7 @@ module.exports = {
     updateProfile: async (req, res) => {
         try {
             //mendapatkan data Profile untuk pengecekan
-            let ProfileGet = await BkdProfile.findOne({
+            let ProfileGet = await Bkd_profile.findOne({
                 where: {
                     id: req.params.id
                 }
@@ -118,13 +122,15 @@ module.exports = {
 
             //cek apakah data Profile ada
             if (!ProfileGet) {
-                res.status(404).json(response(404, 'Profile not found'));
+                res.status(404).json(response(404, 'BKD Profile not found'));
                 return;
             }
 
             //membuat schema untuk validasi
             const schema = {
                 about_bkd: { type: "string", min: 3, optional: true },
+                visi: { type: "string", min: 3, optional: true },
+                misi: { type: "string", min: 3, optional: true },
                 kontak: { type: "string", min: 3, optional: true },
                 long: { type: "string", min: 3, optional: true },
                 lang: { type: "string", min: 3, optional: true },
@@ -133,6 +139,8 @@ module.exports = {
             //buat object Galeri
             let ProfileUpdateObj = {
                 about_bkd: req.body.about_bkd,
+                visi: req.body.visi,
+                misi: req.body.misi,
                 kontak: req.body.kontak,
                 long: req.body.long,
                 lang: req.body.lang,
@@ -146,14 +154,14 @@ module.exports = {
             }
 
             //update Profile
-            await BkdProfile.update(ProfileUpdateObj, {
+            await Bkd_profile.update(ProfileUpdateObj, {
                 where: {
                     id: req.params.id,
                 }
             })
 
             //mendapatkan data Profile setelah update
-            let ProfileAfterUpdate = await BkdProfile.findOne({
+            let ProfileAfterUpdate = await Bkd_profile.findOne({
                 where: {
                     id: req.params.id,
                 }
@@ -173,7 +181,7 @@ module.exports = {
         try {
 
             //mendapatkan data Profile untuk pengecekan
-            let ProfileGet = await BkdProfile.findOne({
+            let ProfileGet = await Bkd_profile.findOne({
                 where: {
                     id: req.params.id
                 }
@@ -181,17 +189,17 @@ module.exports = {
 
             //cek apakah data Profile ada
             if (!ProfileGet) {
-                res.status(404).json(response(404, 'profile not found'));
+                res.status(404).json(response(404, 'bkd profile not found'));
                 return;
             }
 
-            await BkdProfile.destroy({
+            await Bkd_profile.destroy({
                 where: {
                     id: req.params.id,
                 }
             })
 
-            res.status(200).json(response(200, 'success delete profile'));
+            res.status(200).json(response(200, 'success delete bkd profile'));
 
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));

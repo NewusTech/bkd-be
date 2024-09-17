@@ -3,18 +3,20 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class BkdProfile extends Model {
+  class Bkd_profile extends Model {
     static associate(models) {
     }
   }
-  BkdProfile.init({
+  Bkd_profile.init({
     about_bkd: DataTypes.TEXT,
+    visi: DataTypes.TEXT,
+    misi: DataTypes.TEXT,
     kontak: DataTypes.STRING,
     long: DataTypes.STRING,
     lang: DataTypes.STRING,
   }, {
     sequelize,
-    modelName: 'BkdProfile',
+    modelName: 'Bkd_profile',
   });
-  return BkdProfile;
+  return Bkd_profile;
 };
