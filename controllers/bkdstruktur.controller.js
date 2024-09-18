@@ -94,16 +94,33 @@ module.exports = {
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
+            const showDeleted = req.query.showDeleted ?? null;
+            let { search } = req.query;
             const offset = (page - 1) * limit;
             let BkdstrukturGets;
             let totalCount;
 
+            const whereCondition = {};
+
+            if (showDeleted !== null) {
+                whereCondition.deletedAt = { [Op.not]: null };
+            } else {
+                whereCondition.deletedAt = null;
+            }
+
+            if (search) {
+                whereCondition[Op.or] = [{ nama: { [Op.iLike]: `%${search}%` } }];
+            }
+
             [BkdstrukturGets, totalCount] = await Promise.all([
                 Bkd_struktur.findAll({
+                    where: whereCondition,
                     limit: limit,
                     offset: offset
                 }),
-                Bkd_struktur.count()
+                Bkd_struktur.count({
+                    where: whereCondition
+                })
             ]);
 
             const pagination = generatePagination(totalCount, page, limit, '/api/user/bkd/struktur/get');
