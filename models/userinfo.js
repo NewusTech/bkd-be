@@ -49,7 +49,7 @@ module.exports = (sequelize, DataTypes) => {
     tgl_lahir: DataTypes.DATEONLY,
     gender: DataTypes.SMALLINT,
     goldar: DataTypes.SMALLINT,
-
+    user_id: DataTypes.INTEGER,
     deletedAt: DataTypes.DATE
   }, {
     sequelize,
