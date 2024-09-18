@@ -10,20 +10,11 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-route.get('/userinfo/get', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userinfoController.getUserData); 
-route.get('/userinfo/get/:slug', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userinfoController.getUserBySlug); 
-route.delete('/userinfo/delete/:slug', [mid.checkRolesAndLogout(['Super Admin'])], userinfoController.deleteUser);
+route.get('/user/info/get', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userinfoController.getUserData); 
+route.get('/user/info/get/:slug', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userinfoController.getUserBySlug); 
+route.delete('/user/info/delete/:slug', [mid.checkRolesAndLogout(['Super Admin'])], userinfoController.deleteUser);
 
-route.post('/userinfo/create', [mid.checkRolesAndLogout(['Super Admin'])], upload.fields([
-    { name: 'foto', maxCount: 1 },
-    { name: 'aktalahir', maxCount: 1 },
-    { name: 'filektp', maxCount: 1 },
-    { name: 'filekk', maxCount: 1 },
-    { name: 'fileijazahsd', maxCount: 1 },
-    { name: 'fileijazahsmp', maxCount: 1 },
-    { name: 'fileijazahsma', maxCount: 1 },
-    { name: 'fileijazahlain', maxCount: 1 }
-]), userinfoController.createUserInfo); 
-route.put('/userinfo/update/:slug', [mid.checkRolesAndLogout(['Super Admin', 'User'])], upload.single('image_profile'), userinfoController.updateUserInfo);
+route.post('/user/info/create', [mid.checkRolesAndLogout(['Super Admin'])],  upload.single('image_profile'), userinfoController.createUserInfo); 
+route.put('/user/info/update', [mid.checkRolesAndLogout(['Super Admin', 'User'])], upload.single('image_profile'), userinfoController.updateUserInfo);
 
 module.exports = route;
