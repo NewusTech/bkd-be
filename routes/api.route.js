@@ -4,6 +4,7 @@ const userjabatanRoute = require('./userjabatan.route');
 const userkepangkatanRoute = require('./userkepangkatan.route');
 const userpendidikanRoute = require('./userpendidikan.route');
 const userkgbRoute = require('./userkgb.route');
+const userpenghargaanRoute = require('./userpenghargaan.route');
 const roleRoute = require('./role.route');
 const permissionRoute = require('./permission.route');
 const bidangRoute = require('./bidang.route');
@@ -32,6 +33,7 @@ module.exports = function (app, urlApi) {
     app.use(urlApi, userkepangkatanRoute);
     app.use(urlApi, userpendidikanRoute);
     app.use(urlApi, userkgbRoute);
+    app.use(urlApi, userpenghargaanRoute);
     app.use(urlApi, roleRoute);
     app.use(urlApi, permissionRoute);
     app.use(urlApi, bidangRoute);
