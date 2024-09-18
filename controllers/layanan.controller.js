@@ -88,18 +88,22 @@ module.exports = {
             let totalCount;
     
             const whereCondition = {};
+    
+            // Tambahkan pencarian berdasarkan nama layanan
             if (search) {
-                whereCondition[Op.or] = [{ name: { [Op.iLike]: `%${search}%` } }];
+                whereCondition[Op.or] = [
+                    { nama: { [Op.like]: `%${search}%` } } // Menggunakan 'LIKE' untuk MySQL, gunakan 'ILIKE' untuk PostgreSQL
+                ];
             }
+    
+            // Menampilkan data yang dihapus jika parameter showDeleted true
             if (showDeleted) {
                 whereCondition.deletedAt = { [Op.not]: null };
             } else {
                 whereCondition.deletedAt = null;
             }
     
-            // Menghapus logika autentikasi karena tidak diperlukan
-            // Jika ada logika autentikasi, pastikan untuk menghapusnya
-    
+            // Query untuk mendapatkan layanan dan jumlah total layanan
             [layananGets, totalCount] = await Promise.all([
                 Layanan.findAll({
                     where: whereCondition,
@@ -107,7 +111,7 @@ module.exports = {
                     limit: limit,
                     offset: offset,
                     order: [
-                        ['id', 'ASC'] // Perbaiki urutan kolom yang benar, biasanya ['id', 'ASC']
+                        ['id', 'ASC'] // Mengurutkan berdasarkan ID
                     ]
                 }),
                 Layanan.count({
@@ -115,16 +119,19 @@ module.exports = {
                 })
             ]);
     
+            // Modifikasi hasil untuk mencocokkan struktur yang diinginkan
             const modifiedLayananGets = layananGets.map(layanan => {
                 const { Bidang, ...otherData } = layanan.dataValues;
                 return {
                     ...otherData,
-                    Bidang_name: Bidang?.nama // Sesuaikan jika nama kolom di Bidang berbeda
+                    Bidang_name: Bidang?.nama // Menampilkan nama bidang yang terkait
                 };
             });
     
+            // Generate pagination
             const pagination = generatePagination(totalCount, page, limit, '/api/user/layanan/get');
     
+            // Kirimkan response
             res.status(200).json({
                 status: 200,
                 message: 'success get layanan',
@@ -133,12 +140,18 @@ module.exports = {
             });
     
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            // Tangani error
+            res.status(500).json({
+                status: 500,
+                message: 'internal server error',
+                error: err.message
+            });
             console.log(err);
             logger.error(`Error : ${err}`);
             logger.error(`Error message: ${err.message}`);
         }
     },
+    
 
     //get semua data layanan by bidang
     getLayananByBidang: async (req, res) => {
