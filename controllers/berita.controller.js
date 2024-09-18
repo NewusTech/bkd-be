@@ -93,17 +93,42 @@ module.exports = {
     getBerita: async (req, res) => {
         try {
             const page = parseInt(req.query.page) || 1;
+            let { start_date, end_date, search } = req.query;
             const limit = parseInt(req.query.limit) || 10;
+            const showDeleted = req.query.showDeleted ?? null;
             const offset = (page - 1) * limit;
             let BeritaGets;
             let totalCount;
 
+            const whereCondition = {};
+
+            if (showDeleted !== null) {
+                whereCondition.deletedAt = { [Op.not]: null };
+            } else {
+                whereCondition.deletedAt = null;
+            }
+
+            if (search) {
+                whereCondition[Op.or] = [{ title: { [Op.iLike]: `%${search}%` } }];
+            }
+
+            if (start_date && end_date) {
+                whereCondition.createdAt = { [Op.between]: [moment(start_date).startOf('day').toDate(), moment(end_date).endOf('day').toDate()] };
+            } else if (start_date) {
+                whereCondition.createdAt = { [Op.gte]: moment(start_date).startOf('day').toDate() };
+            } else if (end_date) {
+                whereCondition.createdAt = { [Op.lte]: moment(end_date).endOf('day').toDate() };
+            }
+
             [BeritaGets, totalCount] = await Promise.all([
                 Beritas.findAll({
+                    where: whereCondition,
                     limit: limit,
                     offset: offset
                 }),
-                Beritas.count()
+                Beritas.count({
+                    where: whereCondition
+                })
             ]);
 
             const pagination = generatePagination(totalCount, page, limit, '/api/user/berita/get');
