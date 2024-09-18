@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { User, Token, Bidang, Layanan, Role, User_info, User_jabatan, User_kepangkatan, User_pendidikan, Kecamatan, Desa, User_permission, Permission, sequelize } = require('../models');
+const { User, Token, Bidang, Layanan, Role, User_info, User_jabatan, User_kepangkatan, User_pendidikan, User_KGB, Kecamatan, Desa, User_permission, Permission, sequelize } = require('../models');
 const baseConfig = require('../config/base.config');
 const passwordHash = require('password-hash');
 const jwt = require('jsonwebtoken');
@@ -459,6 +459,9 @@ module.exports = {
             const userPendidikans = await User_pendidikan.findAll({
                 where: { user_id: userId }
             });
+            const userKgbs = await User_KGB.findAll({
+                where: { user_id: userId }
+            });
 
 
 
@@ -487,6 +490,13 @@ module.exports = {
             institut: pendidikan.institut,
             no_ijazah: pendidikan.no_ijazah,
             tgl_ijazah: pendidikan.tgl_ijazah
+        }));
+
+        const formattedKgbs = userKgbs.map(kgb => ({
+            uraian_berkala: kgb.uraian_berkala,
+            tmt: kgb.tmt,
+            no_sk_pangkat: kgb.no_sk_pangkat,
+            tgl_sk_pangkat: kgb.tgl_sk_pangkat,
         }));
     
             let formattedUsers = {
@@ -518,6 +528,7 @@ module.exports = {
                 jabatans: formattedJabatans,
                 pangkats: formattedPangkats,
                 pendidikans: formattedPendidikans,
+                kgb: formattedKgbs,
                 createdAt: userGet.createdAt,
                 updatedAt: userGet.updatedAt,
             };
