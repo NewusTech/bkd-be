@@ -32,6 +32,10 @@ module.exports = (sequelize, DataTypes) => {
       User.belongsTo(models.User_pendidikan, {
         foreignKey: 'userpendidikan_id',
       });
+
+      User.belongsTo(models.User_KGB, {
+        foreignKey: 'userkgb_id',
+      });
       // User.belongsTo(models.User_dokumen, {
       //   foreignKey: 'userdokumen_id',
       // });
@@ -52,6 +56,7 @@ module.exports = (sequelize, DataTypes) => {
     userkepangkatan_id: DataTypes.INTEGER,
     userpendidikan_id: DataTypes.INTEGER,
     userjabatan_id: DataTypes.INTEGER,
+    userkgb_id: DataTypes.INTEGER,
     // userdokumen_id: DataTypes.INTEGER,
     deletedAt: DataTypes.DATE,
     resetpasswordtoken: DataTypes.STRING,
