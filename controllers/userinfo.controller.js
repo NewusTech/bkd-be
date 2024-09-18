@@ -299,16 +299,15 @@ module.exports = {
         const transaction = await sequelize.transaction();
 
         try {
-            const folderPaths = {
-                aktalahir: "dir_mpp/datauser/aktalahir",
-                foto: "dir_mpp/datauser/foto",
-                filektp: "dir_mpp/datauser/filektp",
-                filekk: "dir_mpp/datauser/filekk",
-                fileijazahsd: "dir_mpp/datauser/fileijazahsd",
-                fileijazahsmp: "dir_mpp/datauser/fileijazahsmp",
-                fileijazahsma: "dir_mpp/datauser/fileijazahsma",
-                fileijazahlain: "dir_mpp/datauser/fileijazahlain",
-            };
+
+            const userId = req.user?.user_akun_id;
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
+            }
 
             // Membuat schema untuk validasi
             const schema = {
@@ -329,19 +328,33 @@ module.exports = {
                 goldar: { type: "number", optional: true },
                 image_profile: { type: "string", optional: true },
                 aktalahir: { type: "string", optional: true },
-                filekk: { type: "string", optional: true },
-                filektp: { type: "string", optional: true },
-                fileijazahsd: { type: "string", optional: true },
-                fileijazahsmp: { type: "string", optional: true },
-                fileijazahsma: { type: "string", optional: true },
-                fileijazahlain: { type: "string", optional: true },
             }
 
             const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, "");
             const slug = `${req.body.name}-${timestamp}`;
 
-            // Buat object userinfo
-            let userinfoObj = {
+
+            if (req.file) {
+                const timestamp = new Date().getTime();
+                const uniqueFileName = `${timestamp}-${req.file.originalname}`;
+
+                const uploadParams = {
+                    Bucket: process.env.AWS_BUCKET,
+                    Key: `${process.env.PATH_AWS}/user/profile/${uniqueFileName}`,
+                    Body: req.file.buffer,
+                    ACL: 'public-read',
+                    ContentType: req.file.mimetype
+                };
+
+                const command = new PutObjectCommand(uploadParams);
+
+                await s3Client.send(command);
+
+                imageKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
+            }
+
+             // Buat object userinfo
+             let userinfoObj = {
                 name: req.body.name,
                 nik: req.body.nik,
                 nip: req.body.nip,
@@ -357,38 +370,9 @@ module.exports = {
                 tgl_lahir: req.body.tgl_lahir,
                 gender: req.body.gender ? Number(req.body.gender) : null,
                 goldar: req.body.goldar ? Number(req.body.goldar) : null,
+                image_profile: req.file ? imageKey : null,
                 slug: slug
             };
-
-            // Process image upload
-            const files = req.files;
-            let imageUrls = {};
-
-            const uploadPromises = Object.keys(files).map(async (key) => {
-                if (files[key] && files[key][0]) {
-                    const file = files[key][0];
-                    const { mimetype, buffer, originalname } = file;
-
-                    const now = new Date();
-                    const timestamp = now.toISOString().replace(/[-:.]/g, '');
-                    const uniqueFilename = `${originalname.split('.')[0]}_${timestamp}`;
-
-                    const redisKey = `upload:${slug}:${key}`;
-                    await redisClient.set(redisKey, JSON.stringify({
-                        buffer,
-                        mimetype,
-                        originalname,
-                        uniqueFilename,
-                        folderPath: folderPaths[key]
-                    }), 'EX', 60 * 60); // Expire in 1 hour
-
-                    const fileUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${folderPaths[key]}/${uniqueFilename}`;
-                    imageUrls[key] = fileUrl;
-                    userinfoObj[key] = fileUrl;
-                }
-            });
-
-            await Promise.all(uploadPromises);
 
             // Validasi menggunakan module fastest-validator
             const validate = v.validate(userinfoObj, schema);
@@ -416,41 +400,6 @@ module.exports = {
             // Update userinfo
             let userinfoCreate = await User_info.create(userinfoObj)
 
-            const firstName = req.body.name.split(' ')[0].toLowerCase();
-            const generatedPassword = firstName + "123";
-
-            // Membuat object untuk create user
-            let userCreateObj = {
-                password: passwordHash.generate(generatedPassword),
-                role_id: 5,
-                userinfo_id: userinfoCreate.id,
-                slug: slug
-            };
-
-            // Membuat user baru
-            await User.create(userCreateObj);
-
-            // Mulai proses background untuk mengunggah ke S3
-            setTimeout(async () => {
-                for (const key in files) {
-                    const redisKey = `upload:${slug}:${key}`;
-                    const fileData = await redisClient.get(redisKey);
-
-                    if (fileData) {
-                        const { buffer, mimetype, originalname, uniqueFilename, folderPath } = JSON.parse(fileData);
-                        const uploadParams = {
-                            Bucket: process.env.AWS_S3_BUCKET,
-                            Key: `${folderPath}/${uniqueFilename}`,
-                            Body: Buffer.from(buffer),
-                            ACL: 'public-read',
-                            ContentType: mimetype
-                        };
-                        const command = new PutObjectCommand(uploadParams);
-                        await s3Client.send(command);
-                        await redisClient.del(redisKey); // Hapus dari Redis setelah berhasil diunggah
-                    }
-                }
-            }, 0); // Jalankan segera dalam background
 
             // Response menggunakan helper response.formatter
             await transaction.commit();
@@ -475,18 +424,30 @@ module.exports = {
     //user update sendiri
     updateUserInfo: async (req, res) => {
         try {
-            // Mendapatkan data userinfo untuk pengecekan
+            // Mendapatkan user_id dari user yang sedang login (misalnya, dari token JWT)
+            const userId = req.user?.user_akun_id;
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
+            }
+    
+            // Mendapatkan data userinfo untuk pengecekan berdasarkan user_id
             let userinfoGet = await User_info.findOne({
                 where: {
-                    slug: req.params.slug,
-                    deletedAt: null
+                    user_id: userId,
+                    deletedAt: null // Jika menggunakan soft delete
                 }
             });
     
             // Cek apakah data userinfo ada
             if (!userinfoGet) {
-                res.status(404).json(response(404, 'userinfo not found'));
-                return;
+                return res.status(404).json({
+                    status: 404,
+                    message: 'userinfo not found'
+                });
             }
     
             // Membuat schema untuk validasi
@@ -506,7 +467,7 @@ module.exports = {
                 tgl_lahir: { type: "string", pattern: /^\d{4}-\d{2}-\d{2}$/, optional: true },
                 gender: { type: "number", optional: true },
                 goldar: { type: "number", optional: true },
-                image_profile: { type: "string", optional: true },
+                image_profile: { type: "string", optional: true }
             };
     
             let imageKey;
@@ -516,7 +477,7 @@ module.exports = {
     
                 const uploadParams = {
                     Bucket: process.env.AWS_BUCKET,
-                    Key: `${process.env.PATH_AWS}/user/${uniqueFileName}`,
+                    Key: `${process.env.PATH_AWS}/user/profile/${uniqueFileName}`,
                     Body: req.file.buffer,
                     ACL: 'public-read',
                     ContentType: req.file.mimetype
@@ -524,7 +485,7 @@ module.exports = {
     
                 const command = new PutObjectCommand(uploadParams);
                 await s3Client.send(command);
-                
+    
                 imageKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
             }
     
@@ -545,13 +506,12 @@ module.exports = {
                 tgl_lahir: req.body.tgl_lahir,
                 gender: req.body.gender ? Number(req.body.gender) : undefined,
                 goldar: req.body.goldar ? Number(req.body.goldar) : undefined,
-                image_profile: req.file ? imageKey : userinfoGet.image_profile,
+                image_profile: req.file ? imageKey : userinfoGet.image_profile
             };
     
             // Validasi menggunakan fastest-validator
             const validate = v.validate(userinfoUpdateObj, schema);
             if (validate.length > 0) {
-                // Format pesan error dalam bahasa Indonesia
                 const errorMessages = validate.map(error => {
                     if (error.type === 'stringMin') {
                         return `Field ${error.field} minimal ${error.expected} karakter`;
@@ -564,17 +524,16 @@ module.exports = {
                     }
                 });
     
-                res.status(400).json({
+                return res.status(400).json({
                     status: 400,
                     message: errorMessages.join(', ')
                 });
-                return;
             }
     
             // Update userinfo
             await User_info.update(userinfoUpdateObj, {
                 where: {
-                    slug: req.params.slug,
+                    user_id: userId,
                     deletedAt: null
                 }
             });
@@ -582,27 +541,34 @@ module.exports = {
             // Mendapatkan data userinfo setelah update
             let userinfoAfterUpdate = await User_info.findOne({
                 where: {
-                    slug: req.params.slug,
+                    user_id: userId
                 }
             });
     
-            // Response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success update userinfo', userinfoAfterUpdate));
+            // Response
+            res.status(200).json({
+                status: 200,
+                message: 'success update userinfo',
+                data: userinfoAfterUpdate
+            });
     
         } catch (err) {
             if (err.name === 'SequelizeUniqueConstraintError') {
-                // Menangani error khusus untuk constraint unik
                 res.status(400).json({
                     status: 400,
                     message: `${err.errors[0].path} sudah terdaftar`
                 });
             } else {
-                // Menangani error lainnya
-                res.status(500).json(response(500, 'terjadi kesalahan pada server', err));
+                res.status(500).json({
+                    status: 500,
+                    message: 'Terjadi kesalahan pada server',
+                    error: err.message
+                });
             }
             console.log(err);
         }
     },
+    
 
     //menghapus user berdasarkan slug
     deleteUser: async (req, res) => {
@@ -665,79 +631,6 @@ module.exports = {
             // Rollback transaksi jika terjadi kesalahan
             await transaction.rollback();
             res.status(500).json(response(500, 'Internal server error', err));
-            console.log(err);
-        }
-    },
-
-    //mengupdate berdasarkan user
-    updateProfil: async (req, res) => {
-        try {
-            //mendapatkan data fotoprofil untuk pengecekan
-
-            let fotoprofilGet = await User_info.findOne({
-                where: {
-                    slug: req.params.slug,
-                    deletedAt: null
-                },
-            });
-
-            //cek apakah data fotoprofil ada
-            if (!fotoprofilGet) {
-                res.status(404).json(response(404, 'fotoprofil not found'));
-                return;
-            }
-
-            //membuat schema untuk validasi
-            const schema = {
-                fotoprofil: {
-                    type: "string",
-                    optional: true
-                }
-            }
-
-            if (req.file) {
-                const timestamp = new Date().getTime();
-                const uniqueFileName = `${timestamp}-${req.file.originalname}`;
-
-                const uploadParams = {
-                    Bucket: process.env.AWS_S3_BUCKET,
-                    Key: `${process.env.PATH_AWS}/profile-user/${uniqueFileName}`,
-                    Body: req.file.buffer,
-                    ACL: 'public-read',
-                    ContentType: req.file.mimetype
-                };
-
-                const command = new PutObjectCommand(uploadParams);
-
-                await s3Client.send(command);
-
-                fotoprofilKey = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${uploadParams.Key}`;
-            }
-
-            //buat object fotoprofil
-            let fotoprofilUpdateObj = {
-                fotoprofil: req.file ? fotoprofilKey : undefined,
-            }
-
-            //validasi menggunakan module fastest-validator
-            const validate = v.validate(fotoprofilUpdateObj, schema);
-            if (validate.length > 0) {
-                res.status(400).json(response(400, 'validation failed', validate));
-                return;
-            }
-
-            //update fotoprofil
-            await Userinfo.update(fotoprofilUpdateObj, {
-                where: {
-                    slug: fotoprofilGet.slug,
-                },
-            });
-
-            //response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success update fotoprofil'));
-
-        } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
     },
