@@ -5,6 +5,7 @@ module.exports = {
     const Term_conditions = [
       {
         desc: "<h2>Syarat dan Ketentuan Badan Kepegawaian Daerah (BKD)</h2> <h3>1. Pendahuluan</h3> <p>Selamat datang di Badan Kepegawaian Daerah (BKD). Dengan mengakses dan menggunakan layanan kami, Anda setuju untuk mematuhi dan terikat oleh Syarat dan Ketentuan yang ditetapkan di bawah ini. Mohon baca dengan seksama sebelum menggunakan layanan kami.</p>",
+        privacy_policy: "<h2>Privacy policy Badan Kepegawaian Daerah yang merupakan",
         createdAt: new Date(),
         updatedAt: new Date()
       },
