@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Term_condition.init({
     desc: DataTypes.TEXT,
+    privacy_policy: DataTypes.TEXT,
   }, {
     sequelize,
     modelName: 'Term_condition',
