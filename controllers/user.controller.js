@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { User, Token, Bidang, Layanan, Role, User_info, User_jabatan, User_kepangkatan, User_pendidikan, User_penghargaan, User_pelatihan, User_KGB, Kecamatan, Desa, User_permission, Permission, sequelize } = require('../models');
+const { User, Token, Bidang, Layanan, Role, User_info, User_jabatan, User_kepangkatan, User_pendidikan, User_penghargaan, User_pelatihan, User_kgb, Kecamatan, Desa, User_permission, Permission, sequelize } = require('../models');
 const baseConfig = require('../config/base.config');
 const passwordHash = require('password-hash');
 const jwt = require('jsonwebtoken');
@@ -468,7 +468,7 @@ module.exports = {
             const userPendidikans = await User_pendidikan.findAll({
                 where: { user_id: userId }
             });
-            const userKgbs = await User_KGB.findAll({
+            const userKgbs = await User_kgb.findAll({
                 where: { user_id: userId }
             });
             const userPenghargaans = await User_penghargaan.findAll({
