@@ -3,14 +3,14 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class User_KGB extends Model {
+  class User_kgb extends Model {
     static associate(models) {
-      User_KGB.hasOne(models.User, {
+      User_kgb.hasOne(models.User, {
         foreignKey: 'userkgb_id',
       });
     }
   }
-  User_KGB.init({
+  User_kgb.init({
     user_id: DataTypes.INTEGER,
     uraian_berkala: DataTypes.STRING,
     tmt: DataTypes.DATE,
@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
     deletedAt: DataTypes.DATE
   }, {
     sequelize,
-    modelName: 'User_KGB',
+    modelName: 'User_kgb',
   });
-  return User_KGB;
+  return User_kgb;
 };

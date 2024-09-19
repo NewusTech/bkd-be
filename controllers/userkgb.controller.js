@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { User, User_KGB, Role, Bidang, sequelize } = require('../models');
+const { User, User_kgb, Role, Bidang, sequelize } = require('../models');
 
 const passwordHash = require('password-hash');
 const Validator = require("fastest-validator");
@@ -59,10 +59,10 @@ module.exports = {
                 userWhereClause.layanan_id = layanan;
             }
     
-            // Query untuk mendapatkan data User_KGB
+            // Query untuk mendapatkan data User_kgb
             if (search) {
                 [userGets, totalCount] = await Promise.all([
-                    User_KGB.findAll({
+                    User_kgb.findAll({
                         where: {
                             [Op.or]: [
                                 { nip: { [Op.like]: `%${search}%` } },
@@ -72,7 +72,7 @@ module.exports = {
                         limit: limit,
                         offset: offset
                     }),
-                    User_KGB.count({
+                    User_kgb.count({
                         where: {
                             [Op.or]: [
                                 { nip: { [Op.like]: `%${search}%` } },
@@ -83,11 +83,11 @@ module.exports = {
                 ]);
             } else {
                 [userGets, totalCount] = await Promise.all([
-                    User_KGB.findAll({
+                    User_kgb.findAll({
                         limit: limit,
                         offset: offset
                     }),
-                    User_KGB.count()
+                    User_kgb.count()
                 ]);
             }
     
@@ -180,7 +180,7 @@ module.exports = {
                 whereCondition.deletedAt = null;
             }
 
-            let userGet = await User_KGB.findOne({
+            let userGet = await User_kgb.findOne({
                 where: whereCondition,
                 include: [
                     {
@@ -261,7 +261,7 @@ module.exports = {
                         message: `Error untuk jabatan ${userKenaikangaji.uraian_berkala}: ${errorMessages.join(', ')}`
                     });
                 }
-                let userkenaikangajiCreate = await User_KGB.create(userKenaikangaji);
+                let userkenaikangajiCreate = await User_kgb.create(userKenaikangaji);
                 createdkenaikanGajis.push(userkenaikangajiCreate);
             }
     
@@ -306,7 +306,7 @@ module.exports = {
                 });
             }
 
-            await User_KGB.destroy({
+            await User_kgb.destroy({
                 where: { user_id: userId },
                 force: true
             });
@@ -355,7 +355,7 @@ module.exports = {
                         message: `Error untuk kenaikan gaji berkala ${userkenaikanGaji.uraian_berkala}: ${errorMessages.join(', ')}`
                     });
                 }
-                let userkenaikangajiCreate = await User_KGB.create(userkenaikanGaji);
+                let userkenaikangajiCreate = await User_kgb.create(userkenaikanGaji);
                 createdkenaikanGajis.push(userkenaikangajiCreate);
             }
     
@@ -392,7 +392,7 @@ module.exports = {
         try {
 
             //mendapatkan data user untuk pengecekan
-            let userinfoGet = await User_info.findOne({
+            let userinfoGet = await User_kgb.findOne({
                 where: {
                     slug: req.params.slug,
                     deletedAt: null
@@ -430,7 +430,7 @@ module.exports = {
             // Jalankan semua promise update secara bersamaan
             await Promise.all(updatePromises);
 
-            await User_info.update({ deletedAt: new Date() }, {
+            await User_kgb.update({ deletedAt: new Date() }, {
                 where: {
                     slug: req.params.slug
                 },
