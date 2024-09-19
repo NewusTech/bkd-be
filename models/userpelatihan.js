@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     uraian_pelatihan: DataTypes.STRING,
     lama_pelatihan: DataTypes.STRING,
     no_surat_pelatihan: DataTypes.STRING,
-    tanggal_pelatihan: DataTypes.STRING,
+    tanggal_pelatihan: DataTypes.DATE,
     tempat_pelatihan: DataTypes.STRING,
     deletedAt: DataTypes.DATE
   }, {
