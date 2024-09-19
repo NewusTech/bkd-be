@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { User, Token, Bidang, Layanan, Role, User_info, User_jabatan, User_kepangkatan, User_pendidikan, User_KGB, Kecamatan, Desa, User_permission, Permission, sequelize } = require('../models');
+const { User, Token, Bidang, Layanan, Role, User_info, User_jabatan, User_kepangkatan, User_pendidikan, User_penghargaan, User_pelatihan, User_KGB, Kecamatan, Desa, User_permission, Permission, sequelize } = require('../models');
 const baseConfig = require('../config/base.config');
 const passwordHash = require('password-hash');
 const jwt = require('jsonwebtoken');
@@ -110,13 +110,14 @@ module.exports = {
             let userinfoCreate = await User_info.create(userinfoCreateObj, { transaction });
 
             let userUpdateObj = {
-                userinfo_id: userCreate.id,
+                userinfo_id: userinfoCreate.id, // menggunakan userinfoCreate.id, bukan userCreate.id
             };
-    
+            
             await User.update(userUpdateObj, {
                 where: { id: userCreate.id }, // Update berdasarkan id user yang baru dibuat
                 transaction
             });
+            
 
             // Commit transaksi jika semuanya berhasil
             await transaction.commit();
@@ -470,7 +471,12 @@ module.exports = {
             const userKgbs = await User_KGB.findAll({
                 where: { user_id: userId }
             });
-
+            const userPenghargaans = await User_penghargaan.findAll({
+                where: { user_id: userId }
+            });
+            const userPelatihans = await User_pelatihan.findAll({
+                where: { user_id: userId }
+            });
 
 
         // Format data jabatan untuk user (jika ada banyak jabatan)
@@ -506,6 +512,20 @@ module.exports = {
             no_sk_pangkat: kgb.no_sk_pangkat,
             tgl_sk_pangkat: kgb.tgl_sk_pangkat,
         }));
+
+        const formattedPenghargaans = userPenghargaans.map(penghargaan => ({
+            uraian_penghargaan: penghargaan.uraian_penghargaan,
+            tanggal_penghargaan: penghargaan.tanggal_penghargaan,
+            instansi_penghargaan: penghargaan.instansi_penghargaan,
+        }));
+
+        const formattedPelatihans = userPelatihans.map(pelatihan => ({
+            uraian_pelatihan: pelatihan.uraian_pelatihan,
+            lama_pelatihan: pelatihan.lama_pelatihan,
+            no_surat_pelatihan: pelatihan.no_surat_pelatihan,
+            tanggal_pelatihan: pelatihan.tanggal_pelatihan,
+            tempat_pelatihan: pelatihan.tempat_pelatihan,
+        }));
     
             let formattedUsers = {
                 id: userGet.id,
@@ -537,6 +557,8 @@ module.exports = {
                 pangkats: formattedPangkats,
                 pendidikans: formattedPendidikans,
                 kgb: formattedKgbs,
+                penghargaan: formattedPenghargaans,
+                pelatihan: formattedPelatihans,
                 createdAt: userGet.createdAt,
                 updatedAt: userGet.updatedAt,
             };
