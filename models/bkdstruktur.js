@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     slug: DataTypes.STRING,
     jabatan: DataTypes.STRING,
     image: DataTypes.STRING,
+    deletedAt: DataTypes.DATE
   }, {
     sequelize,
     modelName: 'Bkd_struktur',
