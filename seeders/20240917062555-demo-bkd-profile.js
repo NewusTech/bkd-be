@@ -8,6 +8,8 @@ module.exports = {
         kontak: "082112345673",
         long: "106.827183", // Koordinat lokasi
         lang: "-6.175394",  // Koordinat lokasi
+        image_bkd: null,
+        logo: null,
         createdAt: new Date(),
         updatedAt: new Date()
       },

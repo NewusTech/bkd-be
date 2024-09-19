@@ -9,11 +9,13 @@ module.exports = (sequelize, DataTypes) => {
   }
   Bkd_profile.init({
     about_bkd: DataTypes.TEXT,
+    image_bkd: DataTypes.STRING,
     visi: DataTypes.TEXT,
     misi: DataTypes.TEXT,
     kontak: DataTypes.STRING,
     long: DataTypes.STRING,
     lang: DataTypes.STRING,
+    logo: DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'Bkd_profile',
