@@ -25,9 +25,8 @@ module.exports = {
     //membuat user baru
     createUser: async (req, res) => {
         const transaction = await sequelize.transaction();
-
+    
         try {
-
             // Membuat schema untuk validasi
             const schema = {
                 name: { type: "string", min: 3 },
@@ -42,8 +41,8 @@ module.exports = {
                 rw: { type: "string", min: 1, optional: true },
                 alamat: { type: "string", min: 3, optional: true },
             };
-
-            // Validasi
+    
+            // Validasi data input
             const validate = v.validate({
                 name: req.body.name,
                 nip: req.body.nip,
@@ -57,9 +56,8 @@ module.exports = {
                 rw: req.body.rw,
                 alamat: req.body.alamat
             }, schema);
-
+    
             if (validate.length > 0) {
-                // Format pesan error dalam bahasa Indonesia
                 const errorMessages = validate.map(error => {
                     if (error.type === 'stringMin') {
                         return `${error.field} minimal ${error.expected} karakter`;
@@ -71,20 +69,32 @@ module.exports = {
                         return `${error.field} tidak valid`;
                     }
                 });
-
-                res.status(400).json({
+    
+                return res.status(400).json({
                     status: 400,
                     message: errorMessages.join(', ')
                 });
-                return;
             }
-
+    
+            // Generate slug unik
             const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, "");
             const slug = `${req.body.name}-${timestamp}`;
-
+    
+            // Membuat user baru
+            let userCreateObj = {
+                password: passwordHash.generate(req.body.password),
+                role_id: req.body.role_id !== undefined ? Number(req.body.role_id) : undefined,
+                bidang_id: req.body.bidang_id !== undefined ? Number(req.body.bidang_id) : undefined,
+                slug: slug
+            };
+    
+            // Simpan user
+            let userCreate = await User.create(userCreateObj, { transaction });
+    
             // Membuat object untuk create userinfo
             let userinfoCreateObj = {
                 name: req.body.name,
+                user_id: userCreate.id, // Referensi ke user yang baru dibuat
                 nip: req.body.nip,
                 email: req.body.email,
                 telepon: req.body.telepon,
@@ -95,28 +105,25 @@ module.exports = {
                 alamat: req.body.alamat,
                 slug: slug
             };
-
+    
             // Membuat entri baru di tabel userinfo
-            let userinfoCreate = await User_info.create(userinfoCreateObj);
+            let userinfoCreate = await User_info.create(userinfoCreateObj, { transaction });
 
-            // Membuat object untuk create user
-            let userCreateObj = {
-                password: passwordHash.generate(req.body.password),
-                role_id: req.body.role_id !== undefined ? Number(req.body.role_id) : undefined,
-                bidang_id: req.body.bidang_id !== undefined ? Number(req.body.bidang_id) : undefined,
-                // layanan_id: req.body.layanan_id !== undefined ? Number(req.body.layanan_id) : undefined,
-                userinfo_id: userinfoCreate.id,
-                slug: slug
+            let userUpdateObj = {
+                userinfo_id: userCreate.id,
             };
+    
+            await User.update(userUpdateObj, {
+                where: { id: userCreate.id }, // Update berdasarkan id user yang baru dibuat
+                transaction
+            });
 
-            // Membuat user baru
-            let userCreate = await User.create(userCreateObj);
-
-            // Mengirim response dengan bantuan helper response.formatter
+            // Commit transaksi jika semuanya berhasil
             await transaction.commit();
-            res.status(201).json(response(201, 'user created', userCreate));
-
+            res.status(201).json(response(201, 'user created', { user: userCreate, userinfo: userinfoCreate }));
+    
         } catch (err) {
+            // Rollback transaksi jika ada error
             await transaction.rollback();
             if (err.name === 'SequelizeUniqueConstraintError') {
                 // Menangani error khusus untuk constraint unik
@@ -131,6 +138,7 @@ module.exports = {
             console.log(err);
         }
     },
+    
 
     //login user
     loginUser: async (req, res) => {
