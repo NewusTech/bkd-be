@@ -48,10 +48,16 @@ module.exports = {
                     min: 3,
                     optional: true
                 },
+                privacy_policy: {
+                    type: "string",
+                    min: 3,
+                    optional: true
+                },
             }
 
               let descUpdateObj = {
-                desc: req.body.desc
+                desc: req.body.desc,
+                privacy_policy: req.body.privacy_policy
             };
 
             const validate = v.validate(descUpdateObj, schema);
