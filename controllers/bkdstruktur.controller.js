@@ -94,24 +94,22 @@ module.exports = {
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
-            const showDeleted = req.query.showDeleted ?? null;
             let { search } = req.query;
             const offset = (page - 1) * limit;
             let BkdstrukturGets;
             let totalCount;
-
-            const whereCondition = {};
-
-            if (showDeleted !== null) {
-                whereCondition.deletedAt = { [Op.not]: null };
-            } else {
-                whereCondition.deletedAt = null;
-            }
-
+    
+            // Kondisi untuk hanya mengambil data yang belum dihapus (deletedAt = null)
+            const whereCondition = {
+                deletedAt: null
+            };
+    
+            // Menambahkan kondisi search jika ada
             if (search) {
                 whereCondition[Op.or] = [{ nama: { [Op.iLike]: `%${search}%` } }];
             }
-
+    
+            // Mengambil data struktur BKD dan menghitung total count
             [BkdstrukturGets, totalCount] = await Promise.all([
                 Bkd_struktur.findAll({
                     where: whereCondition,
@@ -122,21 +120,27 @@ module.exports = {
                     where: whereCondition
                 })
             ]);
-
+    
+            // Membuat pagination
             const pagination = generatePagination(totalCount, page, limit, '/api/user/bkd/struktur/get');
-
+    
             res.status(200).json({
                 status: 200,
                 message: 'success get struktur organisasi',
                 data: BkdstrukturGets,
                 pagination: pagination
             });
-
+    
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
+            res.status(500).json({
+                status: 500,
+                message: 'internal server error',
+                error: err.message
+            });
             console.log(err);
         }
     },
+    
 
     //mendapatkan data bkd struktur berdasarkan slug
     getBkdStrukturBySlug: async (req, res) => {
