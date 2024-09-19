@@ -233,7 +233,7 @@ module.exports = {
                 uraian_pelatihan: { type: "string", optional: true },
                 lama_pelatihan: { type: "string", optional: true },
                 no_surat_pelatihan: { type: "string", optional: true },
-                tanggal_pelatihan: { type: "date", optional: true },
+                tanggal_pelatihan: { type: "string", optional: true },
                 tempat_pelatihan: { type: "string", optional: true },
             };
     
