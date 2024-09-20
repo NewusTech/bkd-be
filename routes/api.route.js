@@ -25,6 +25,7 @@ const surveyformRoute = require('./surveyform.route');
 const bannerRoute = require('./banner.route');
 const bkdprofileRoute = require('./bkdprofile.route');
 const bkdstrukturRoute = require('./bkdstruktur.route');
+const selectedstrukturRoute = require('./selectedstruktur.route');
 const beritaRoute = require('./berita.route');
 
 module.exports = function (app, urlApi) {
@@ -55,5 +56,6 @@ module.exports = function (app, urlApi) {
     app.use(urlApi, bannerRoute);
     app.use(urlApi, bkdprofileRoute);
     app.use(urlApi, bkdstrukturRoute);
+    app.use(urlApi, selectedstrukturRoute);
     app.use(urlApi, beritaRoute);
 }
