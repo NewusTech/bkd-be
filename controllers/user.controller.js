@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { User, Token, Bidang, Layanan, Role, User_info, User_jabatan, User_kepangkatan, User_pendidikan, User_penghargaan, User_pelatihan, User_kgb, Kecamatan, Desa, User_permission, Permission, sequelize } = require('../models');
+const { User, Token, Bidang, Layanan, Role, User_info, User_jabatan, User_kepangkatan, User_pendidikan, User_penghargaan, User_pelatihan, User_kgb, User_descendant, User_spouse, Kecamatan, Desa, User_permission, Permission, sequelize } = require('../models');
 const baseConfig = require('../config/base.config');
 const passwordHash = require('password-hash');
 const jwt = require('jsonwebtoken');
@@ -477,6 +477,12 @@ module.exports = {
             const userPelatihans = await User_pelatihan.findAll({
                 where: { user_id: userId }
             });
+            const userSpouses = await User_spouse.findAll({
+                where: { user_id: userId }
+            });
+            const userChildrens = await User_descendant.findAll({
+                where: { user_id: userId }
+            });
 
 
         // Format data jabatan untuk user (jika ada banyak jabatan)
@@ -526,6 +532,24 @@ module.exports = {
             tanggal_pelatihan: pelatihan.tanggal_pelatihan,
             tempat_pelatihan: pelatihan.tempat_pelatihan,
         }));
+
+        const formattedSposes = userSpouses.map(spouse => ({
+            nama: spouse.nama,
+            tempat_lahir: spouse.tempat_lahir,
+            tanggal_lahir: spouse.tanggal_lahir,
+            tanggal_pernikahan: spouse.tanggal_pernikahan,
+            pekerjaan: spouse.pekerjaan,
+            status: spouse.status,
+        }));
+
+        const formattedChildrens = userChildrens.map(children => ({
+            nama: children.nama,
+            tempat_lahir: children.tempat_lahir,
+            tanggal_lahir: children.tanggal_lahir,
+            jenis_kelamin: children.jenis_kelamin,
+            pekerjaan: children.pekerjaan,
+            status: children.status,
+        }));
     
             let formattedUsers = {
                 id: userGet.id,
@@ -553,6 +577,8 @@ module.exports = {
                 role_id: userGet.Role?.id,
                 role_name: userGet.Role?.name,
 
+                pasangan: formattedSposes,
+                anak: formattedChildrens,
                 jabatans: formattedJabatans,
                 pangkats: formattedPangkats,
                 pendidikans: formattedPendidikans,
