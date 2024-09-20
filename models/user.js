@@ -45,6 +45,14 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'userpelatihan_id',
       });
 
+      User.belongsTo(models.User_spouse, {
+        foreignKey: 'userspouse_id',
+      });
+
+      User.belongsTo(models.User_descendant, {
+        foreignKey: 'userdescendant_id',
+      });
+
       // User.belongsTo(models.User_dokumen, {
       //   foreignKey: 'userdokumen_id',
       // });
@@ -68,6 +76,8 @@ module.exports = (sequelize, DataTypes) => {
     userkgb_id: DataTypes.INTEGER,
     userpenghargaan_id: DataTypes.INTEGER,
     userpelatihan_id: DataTypes.INTEGER,
+    userspouse_id: DataTypes.INTEGER,
+    userdescendant_id: DataTypes.INTEGER,
     // userdokumen_id: DataTypes.INTEGER,
     deletedAt: DataTypes.DATE,
     resetpasswordtoken: DataTypes.STRING,
