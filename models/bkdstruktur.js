@@ -5,6 +5,10 @@ const {
 module.exports = (sequelize, DataTypes) => {
   class Bkd_struktur extends Model {
     static associate(models) {
+      Bkd_struktur.hasOne(models.Selected_struktur, {
+        foreignKey: 'bkdstruktur_id',
+       
+      });
     }
   }
   Bkd_struktur.init({
