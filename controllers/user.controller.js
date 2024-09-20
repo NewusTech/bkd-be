@@ -529,7 +529,7 @@ module.exports = {
     
             let formattedUsers = {
                 id: userGet.id,
-                name: userGet.User_info?.nama,
+                name: userGet.User_info?.name,
                 slug: userGet.User_info?.slug,
                 nip: userGet.User_info?.nip,
                 nik: userGet.User_info?.nik,
