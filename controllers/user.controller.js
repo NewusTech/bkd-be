@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { User, Token, Bidang, Layanan, Role, User_info, User_jabatan, User_kepangkatan, User_pendidikan, User_penghargaan, User_pelatihan, User_kgb, User_descendant, User_spouse, Kecamatan, Desa, User_permission, Permission, sequelize } = require('../models');
+const { User, Token, Bidang, Layanan, Role, User_info, User_jabatan, User_kepangkatan, User_pendidikan, User_penghargaan, User_pelatihan, User_kgb, User_descendant, User_spouse, Kecamatan, Desa, Pangkat, User_permission, Permission, sequelize } = require('../models');
 const baseConfig = require('../config/base.config');
 const passwordHash = require('password-hash');
 const jwt = require('jsonwebtoken');
@@ -463,7 +463,14 @@ module.exports = {
                 where: { user_id: userId }
             });
             const userPangkats = await User_kepangkatan.findAll({
-                where: { user_id: userId }
+                where: { user_id: userId },
+                include: [
+                    {
+                        model: Pangkat, // Include model Pangkat
+                        attributes: ['nama'], // Ambil kolom nama dari tabel Pangkat
+                        as: 'Pangkat' // Alias sesuai dengan yang didefinisikan di relasi
+                    }
+                ]
             });
             const userPendidikans = await User_pendidikan.findAll({
                 where: { user_id: userId }
@@ -487,6 +494,7 @@ module.exports = {
 
         // Format data jabatan untuk user (jika ada banyak jabatan)
             const formattedJabatans = userJabatans.map(jabatan => ({
+                id: jabatan.id,
                 nama_jabatan: jabatan.nama_jabatan,
                 tmt: jabatan.tmt,
                 no_sk_pangkat: jabatan.no_sk_pangkat,
@@ -497,7 +505,9 @@ module.exports = {
     
         // Format data pangkat untuk user (jika ada banyak kepangakatan)
         const formattedPangkats = userPangkats.map(pangkat => ({
-            jenjang_kepangkatan: pangkat.jenjang_kepangkatan,
+            id: pangkat.id,
+            pangkat_id: pangkat.pangkat_id,
+            nama_pangkat: pangkat.Pangkat ? pangkat.Pangkat.nama : null,
             tmt: pangkat.tmt,
             no_sk_pangkat: pangkat.no_sk_pangkat,
             tgl_sk_pangkat: pangkat.tgl_sk_pangkat,
@@ -505,6 +515,7 @@ module.exports = {
 
         // Format data pendidikan untuk user (jika ada banyak pendidikan)
         const formattedPendidikans = userPendidikans.map(pendidikan => ({
+            id: pendidikan.id,
             tingkat_pendidikan: pendidikan.tingkat_pendidikan,
             program_study: pendidikan.program_study,
             institut: pendidikan.institut,
@@ -513,6 +524,7 @@ module.exports = {
         }));
 
         const formattedKgbs = userKgbs.map(kgb => ({
+            id: kgb.id,
             uraian_berkala: kgb.uraian_berkala,
             tmt: kgb.tmt,
             no_sk_pangkat: kgb.no_sk_pangkat,
@@ -520,12 +532,14 @@ module.exports = {
         }));
 
         const formattedPenghargaans = userPenghargaans.map(penghargaan => ({
+            id: penghargaan.id,
             uraian_penghargaan: penghargaan.uraian_penghargaan,
             tanggal_penghargaan: penghargaan.tanggal_penghargaan,
             instansi_penghargaan: penghargaan.instansi_penghargaan,
         }));
 
         const formattedPelatihans = userPelatihans.map(pelatihan => ({
+            id: pelatihan.id,
             uraian_pelatihan: pelatihan.uraian_pelatihan,
             lama_pelatihan: pelatihan.lama_pelatihan,
             no_surat_pelatihan: pelatihan.no_surat_pelatihan,
@@ -534,6 +548,7 @@ module.exports = {
         }));
 
         const formattedSposes = userSpouses.map(spouse => ({
+            id: spouse.id,
             nama: spouse.nama,
             tempat_lahir: spouse.tempat_lahir,
             tanggal_lahir: spouse.tanggal_lahir,
@@ -543,6 +558,7 @@ module.exports = {
         }));
 
         const formattedChildrens = userChildrens.map(children => ({
+            id: children.id,
             nama: children.nama,
             tempat_lahir: children.tempat_lahir,
             tanggal_lahir: children.tanggal_lahir,

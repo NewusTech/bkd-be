@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       });
       User_kepangkatan.belongsTo(models.Pangkat, {
         foreignKey: 'pangkat_id',
+        as: 'Pangkat'
       });
     }
   }

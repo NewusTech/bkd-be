@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { User, User_kepangkatan, Role, Bidang, sequelize } = require('../models');
+const { User, User_kepangkatan, Pangkat, Role, Bidang, sequelize } = require('../models');
 
 const passwordHash = require('password-hash');
 const Validator = require("fastest-validator");
@@ -69,21 +69,42 @@ module.exports = {
                             ]
                         },
                         limit: limit,
-                        offset: offset
+                        offset: offset,
+                        include: [
+                            {
+                                model: Pangkat,
+                                attributes: ['nama', 'id'], // Pastikan kolom 'nama' ada di tabel Pangkat
+                                as: 'Pangkat' // Sesuaikan alias dengan relasi yang sudah didefinisikan
+                            },
+                        ],
                     }),
                     User_kepangkatan.count({
                         where: {
                             [Op.or]: [
                                 { jenjang_kepangkatan: { [Op.like]: `%${search}%` } },
                             ]
-                        }
+                        },
+                        include: [
+                            {
+                                model: Pangkat,
+                                attributes: ['nama', 'id'], // Pastikan kolom 'nama' ada di tabel Pangkat
+                                as: 'Pangkat' // Sesuaikan alias dengan relasi yang sudah didefinisikan
+                            },
+                        ],
                     })
                 ]);
             } else {
                 [userGets, totalCount] = await Promise.all([
                     User_kepangkatan.findAll({
                         limit: limit,
-                        offset: offset
+                        offset: offset,
+                        include: [
+                            {
+                                model: Pangkat,
+                                attributes: ['nama', 'id'], // Sama seperti di atas
+                                as: 'Pangkat'
+                            },
+                        ]
                     }),
                     User_kepangkatan.count()
                 ]);
@@ -128,11 +149,12 @@ module.exports = {
                 const relatedUser = users.find(u => u.id === user.user_id);
                 const relatedRole = roles.find(r => r.id === relatedUser?.role_id);
                 const relatedBidang = bidangData.find(b => b.id === relatedUser?.bidang_id);
-    
+                
                 return {
                     id: user.id,
                     user_id: user?.user_id,
-                    jenjang_kepangkatan: user.jenjang_kepangkatan,
+                    pangkat_id: user.pangkat_id,
+                    pangkat_nama: user.Pangkat ? user.Pangkat.nama : null, // Cek apakah user.Pangkat ada
                     tmt: user.tmt,
                     no_sk_pangkat: user.no_sk_pangkat,
                     tgl_sk_pangkat: user.tgl_sk_pangkat,
