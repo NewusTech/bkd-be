@@ -170,33 +170,36 @@ module.exports = {
     //UTK ADMIN NGECEK DATA PEMOHON
     getUserKGBByID: async (req, res) => {
         try {
-
-            const showDeleted = req.query.showDeleted ?? null;
-            const whereCondition = { id: req.params.id };
-
-            if (showDeleted !== null) {
-                whereCondition.deletedAt = { [Op.not]: null };
-            } else {
-                whereCondition.deletedAt = null;
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id;
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
             }
-
+    
+            const whereCondition = { 
+                id: req.params.id, 
+                user_id: userId,
+                deletedAt: null 
+            };
+    
+            // Mencari data User_kepangkatan dengan kondisi where
             let userGet = await User_kgb.findOne({
                 where: whereCondition,
-                include: [
-                    {
-                        model: User,
-                        attributes: ['id'],
-                    }
-                ]
             });
-
+    
+            // Cek apakah data ditemukan
             if (!userGet) {
-                res.status(404).json(response(404, 'user data not found'));
-                return;
+                return res.status(404).json(response(404, 'user data kenaikan gaji not found'));
             }
-
-            res.status(200).json(response(200, 'success get user by id', userGet));
+    
+            // Kirimkan response sukses dengan data User_kepangkatan
+            res.status(200).json(response(200, 'success get user kenaikan gaji by id', userGet));
         } catch (err) {
+            // Menangani error server
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -296,8 +299,8 @@ module.exports = {
     updateUserKGB: async (req, res) => {
         const transaction = await sequelize.transaction();
         try {
-            // Mengambil user_akun_id dari req.user
-            const userId = req.user?.user_akun_id;
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id; // Pastikan req.user sudah diisi dari middleware autentikasi
     
             if (!userId) {
                 return res.status(400).json({
@@ -305,83 +308,85 @@ module.exports = {
                     message: 'User ID tidak tersedia'
                 });
             }
-
-            await User_kgb.destroy({
-                where: { user_id: userId },
-                force: true
+    
+            // Mengambil id kgb dari parameter URL
+            const kgbId = req.params.id;
+    
+            // Cek apakah data kgb ada
+            let userKgb = await User_kgb.findOne({
+                where: {
+                    id: kgbId,
+                    user_id: userId,
+                    deletedAt: null 
+                }
             });
     
-            // Mengambil array dari body request
-            const userkenaikanGajis = req.body;
-    
-            if (!Array.isArray(userkenaikanGajis) || userkenaikanGajis.length === 0) {
-                return res.status(400).json({
-                    status: 400,
-                    message: 'Input harus berupa array dan tidak boleh kosong'
+            if (!userKgb) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User kenaikan gaji tidak ditemukan'
                 });
             }
     
-            // Schema untuk validasi setiap objek di dalam array
+            // Membuat schema untuk validasi input
             const schema = {
-                uraian_berkala: { type: "string", min: 2 },
+                uraian_berkala: { type: "string" },
                 tmt: { type: "string" },
                 no_sk_pangkat: { type: "string", optional: true },
                 tgl_sk_pangkat: { type: "date", convert: true }
             };
     
-            // Array untuk menyimpan hasil dari proses create
-            const createdkenaikanGajis = [];
+            // Validasi input dari request body
+            const validate = v.validate(req.body, schema);
+            if (validate.length > 0) {
+                const errorMessages = validate.map(error => {
+                    if (error.type === 'stringMin') {
+                        return `Field ${error.field} minimal ${error.expected} karakter`;
+                    } else if (error.type === 'date') {
+                        return `Field ${error.field} harus berupa tanggal yang valid`;
+                    } else {
+                        return `Field ${error.field} tidak valid`;
+                    }
+                });
     
-            // Proses setiap item dalam array userJabatans
-            for (let userkenaikanGaji of userkenaikanGajis) {
-                // Masukkan user_id dari req.user ke dalam setiap objek jabatan
-                userkenaikanGaji.user_id = userId;
-    
-                // Validasi setiap objek dalam array
-                const validate = v.validate(userkenaikanGaji, schema);
-                if (validate.length > 0) {
-                    const errorMessages = validate.map(error => {
-                        if (error.type === 'stringMin') {
-                            return `Field ${error.field} minimal ${error.expected} karakter`;
-                        } else if (error.type === 'date') {
-                            return `Field ${error.field} harus berupa tanggal yang valid`;
-                        } else {
-                            return `Field ${error.field} tidak valid`;
-                        }
-                    });
-    
-                    return res.status(400).json({
-                        status: 400,
-                        message: `Error untuk kenaikan gaji berkala ${userkenaikanGaji.uraian_berkala}: ${errorMessages.join(', ')}`
-                    });
-                }
-                let userkenaikangajiCreate = await User_kgb.create(userkenaikanGaji);
-                createdkenaikanGajis.push(userkenaikangajiCreate);
+                return res.status(400).json({
+                    status: 400,
+                    message: errorMessages.join(', ')
+                });
             }
     
-            // Commit transaksi jika semua data berhasil disimpan
+            // Update data kepangkatan
+            await User_kgb.update({
+                uraian_berkala: req.body.uraian_berkala,
+                tmt: req.body.tmt,
+                no_sk_pangkat: req.body.no_sk_pangkat,
+                tgl_sk_pangkat: req.body.tgl_sk_pangkat
+            }, {
+                where: {
+                    id: kgbId,
+                    user_id: userId
+                },
+                transaction
+            });
+    
+            // Commit transaksi
             await transaction.commit();
+    
+            // Mengirimkan response sukses
             res.status(200).json({
                 status: 200,
-                message: 'User kenaikan gaji updated successfully',
-                data: createdkenaikanGajis
+                message: 'User kenaikan gaji berhasil diupdate'
             });
     
         } catch (err) {
+            // Rollback jika terjadi kesalahan
             await transaction.rollback();
-            if (err.name === 'SequelizeUniqueConstraintError') {
-                res.status(400).json({
-                    status: 400,
-                    message: `${err.errors[0].path} sudah terdaftar`
-                });
-            } else {
-                res.status(500).json({
-                    status: 500,
-                    message: 'Terjadi kesalahan pada server',
-                    error: err.message
-                });
-            }
             console.log(err);
+            res.status(500).json({
+                status: 500,
+                message: 'Terjadi kesalahan pada server',
+                error: err.message
+            });
         }
     },
 
@@ -390,63 +395,62 @@ module.exports = {
         const transaction = await sequelize.transaction();
 
         try {
-
-            //mendapatkan data user untuk pengecekan
-            let userinfoGet = await User_kgb.findOne({
-                where: {
-                    slug: req.params.slug,
-                    deletedAt: null
-                },
-                transaction
-            })
-
-            //cek apakah data user ada
-            if (!userinfoGet) {
-                await transaction.rollback();
-                res.status(404).json(response(404, 'data not found'));
-                return;
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id;
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
             }
-
-            const models = Object.keys(sequelize.models);
-
-            // Array untuk menyimpan promise update untuk setiap model terkait
-            const updatePromises = [];
-
-            // Lakukan soft delete pada semua model terkait
-            models.forEach(async modelName => {
-                const Model = sequelize.models[modelName];
-                if (Model.associations && Model.associations.User_info && Model.rawAttributes.deletedAt) {
-                    updatePromises.push(
-                        Model.update({ deletedAt: new Date() }, {
-                            where: {
-                                userinfo_id: userinfoGet.id
-                            },
-                            transaction
-                        })
-                    );
+    
+            // Mengambil id kgb dari parameter URL
+            const kgbId = req.params.id;
+    
+            // Cek apakah data kgb ada
+            let userKgb = await User_kgb.findOne({
+                where: {
+                    id: kgbId,
+                    user_id: userId,
+                    deletedAt: null
                 }
             });
-
-            // Jalankan semua promise update secara bersamaan
-            await Promise.all(updatePromises);
-
-            await User_kgb.update({ deletedAt: new Date() }, {
+    
+            if (!userKgb) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User data kenaikan gaji tidak ditemukan'
+                });
+            }
+    
+            // Soft delete data kenaikan gaji
+            await User_kgb.destroy({
                 where: {
-                    slug: req.params.slug
+                    id: kgbId,
+                    user_id: userId
                 },
                 transaction
             });
-
+    
+            // Commit transaksi
             await transaction.commit();
-
-            //response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success delete user'));
-
+    
+            // Mengirimkan response sukses
+            res.status(200).json({
+                status: 200,
+                message: 'User data kenaikan gaji berhasil dihapus'
+            });
+    
         } catch (err) {
-            // Rollback transaksi jika terjadi kesalahan
+            // Rollback jika terjadi kesalahan
             await transaction.rollback();
-            res.status(500).json(response(500, 'Internal server error', err));
             console.log(err);
+            res.status(500).json({
+                status: 500,
+                message: 'Terjadi kesalahan pada server',
+                error: err.message
+            });
         }
     },
 
