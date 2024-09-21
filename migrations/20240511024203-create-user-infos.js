@@ -44,7 +44,7 @@ module.exports = {
         type: Sequelize.STRING
       },
       agama: {
-        type: Sequelize.SMALLINT
+        type: Sequelize.STRING
       },
       tempat_lahir: {
         type: Sequelize.STRING
@@ -53,10 +53,10 @@ module.exports = {
         type: Sequelize.DATEONLY
       },
       gender: {
-        type: Sequelize.SMALLINT
+        type: Sequelize.STRING
       },
       goldar: {
-        type: Sequelize.SMALLINT
+        type: Sequelize.STRING
       },
       createdAt: {
         allowNull: false,

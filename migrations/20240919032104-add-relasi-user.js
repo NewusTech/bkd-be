@@ -3,13 +3,13 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.addColumn('Users', 'userkgb_id', {
-      type: Sequelize.TEXT
+      type: Sequelize.INTEGER
     });
     await queryInterface.addColumn('Users', 'userpenghargaan_id', {
-      type: Sequelize.STRING
+      type: Sequelize.INTEGER
     });
     await queryInterface.addColumn('Users', 'userpelatihan_id', {
-      type: Sequelize.TEXT
+      type: Sequelize.INTEGER
     });
   },
   async down(queryInterface, Sequelize) {

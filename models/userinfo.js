@@ -44,11 +44,11 @@ module.exports = (sequelize, DataTypes) => {
     rt: DataTypes.STRING,
     rw: DataTypes.STRING,
     alamat: DataTypes.STRING,
-    agama: DataTypes.INTEGER,
+    agama: DataTypes.STRING,
     tempat_lahir: DataTypes.STRING,
     tgl_lahir: DataTypes.DATEONLY,
-    gender: DataTypes.SMALLINT,
-    goldar: DataTypes.SMALLINT,
+    gender: DataTypes.STRING,
+    goldar: DataTypes.STRING,
     user_id: DataTypes.INTEGER,
     deletedAt: DataTypes.DATE
   }, {

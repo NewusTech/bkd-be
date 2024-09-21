@@ -11,9 +11,9 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 route.get('/user/pelatihan/get', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userpelatihanController.getUserDataPelatihan); 
-route.get('/user/pelatihan/get/:slug', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userpelatihanController.getUserPelatihanByID); 
-route.delete('/user/pelatihan/delete/:slug', [mid.checkRolesAndLogout(['Super Admin'])], userpelatihanController.deleteUserPelatihan);
+route.get('/user/pelatihan/get/:id', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userpelatihanController.getUserPelatihanByID); 
+route.delete('/user/pelatihan/delete/:id', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userpelatihanController.deleteUserPelatihan);
 route.post('/user/pelatihan/create', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userpelatihanController.createUserPelatihan); 
-route.post('/user/pelatihan/update', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userpelatihanController.updateUserPelatihan);
+route.put('/user/pelatihan/update/:id', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userpelatihanController.updateUserPelatihan);
 
 module.exports = route;

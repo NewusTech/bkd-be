@@ -134,18 +134,21 @@ module.exports = {
                 return {
                     id: user.id,
                     user_id: user?.user_id,
-                    uraian_penghargaan: user.uraian_penghargaan,
-                    tanggal_penghargaan: user.tanggal_penghargaan,
-                    instansi_penghargaan: user.instansi_penghargaan,
+                    nama: user.nama,
+                    tempat_lahir: user.tempat_lahir,
+                    tanggal_lahir: user.tanggal_lahir,
+                    jenis_kelamin: user.jenis_kelamin,
+                    pekerjaan: user.pekerjaan,
+                    status: user.status,
                     createdAt: user.createdAt,
                     updatedAt: user.updatedAt,
-                    Role: relatedRole ? relatedRole.name : null,
-                    Bidang: relatedBidang ? relatedBidang.nama : null
+                    // Role: relatedRole ? relatedRole.name : null,
+                    // Bidang: relatedBidang ? relatedBidang.nama : null
                 };
             });
     
             // Membuat pagination
-            const pagination = generatePagination(totalCount, page, limit, '/api/user/kepangkatan/get');
+            const pagination = generatePagination(totalCount, page, limit, '/api/user/descendant/get');
     
             // Mengirimkan response
             res.status(200).json({
@@ -169,33 +172,36 @@ module.exports = {
     //UTK ADMIN NGECEK DATA PEMOHON
     getUserDescendantByID: async (req, res) => {
         try {
-
-            const showDeleted = req.query.showDeleted ?? null;
-            const whereCondition = { slug: req.params.slug };
-
-            if (showDeleted !== null) {
-                whereCondition.deletedAt = { [Op.not]: null };
-            } else {
-                whereCondition.deletedAt = null;
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id;
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
             }
-
+    
+            const whereCondition = { 
+                id: req.params.id, 
+                user_id: userId,
+                deletedAt: null 
+            };
+    
+            // Mencari data User_descendant dengan kondisi where
             let userGet = await User_descendant.findOne({
                 where: whereCondition,
-                include: [
-                    {
-                        model: User,
-                        attributes: ['id'],
-                    }
-                ]
             });
-
+    
+            // Cek apakah data ditemukan
             if (!userGet) {
-                res.status(404).json(response(404, 'user data not found'));
-                return;
+                return res.status(404).json(response(404, 'user data anak not found'));
             }
-
-            res.status(200).json(response(200, 'success get user by slug', userGet));
+    
+            // Kirimkan response sukses dengan data User_descendant
+            res.status(200).json(response(200, 'success get user anak by id', userGet));
         } catch (err) {
+            // Menangani error server
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -297,33 +303,36 @@ module.exports = {
     updateUserDescendant: async (req, res) => {
         const transaction = await sequelize.transaction();
         try {
-            const userId = req.user?.user_akun_id;
-    
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id; 
+
             if (!userId) {
-                await transaction.rollback();  // Tambahkan rollback jika userId tidak ditemukan
                 return res.status(400).json({
                     status: 400,
                     message: 'User ID tidak tersedia'
                 });
             }
     
-            // Hapus data lama terkait user_id
-            await User_descendant.destroy({
-                where: { user_id: userId },
-                force: true,
-                transaction // Transaksi dimasukkan dalam destroy
+            // Mengambil id descendant dari parameter URL
+            const descendantId = req.params.id;
+    
+            // Cek apakah data descendant ada
+            let userDescendant = await User_descendant.findOne({
+                where: {
+                    id: descendantId,
+                    user_id: userId,
+                    deletedAt: null 
+                }
             });
     
-            const userChildrens = req.body;
-    
-            if (!Array.isArray(userChildrens) || userChildrens.length === 0) {
-                await transaction.rollback();  // Rollback transaksi jika body kosong
-                return res.status(400).json({
-                    status: 400,
-                    message: 'Input harus berupa array dan tidak boleh kosong'
+            if (!userDescendant) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User data anak tidak ditemukan'
                 });
             }
     
+            // Membuat schema untuk validasi input
             const schema = {
                 nama: { type: "string" },
                 tempat_lahir: { type: "string", optional: true },
@@ -333,59 +342,59 @@ module.exports = {
                 status: { type: "string", optional: true },
             };
     
-            const createdChildrens = [];
+            // Validasi input dari request body
+            const validate = v.validate(req.body, schema);
+            if (validate.length > 0) {
+                const errorMessages = validate.map(error => {
+                    if (error.type === 'stringMin') {
+                        return `Field ${error.field} minimal ${error.expected} karakter`;
+                    } else if (error.type === 'date') {
+                        return `Field ${error.field} harus berupa tanggal yang valid`;
+                    } else {
+                        return `Field ${error.field} tidak valid`;
+                    }
+                });
     
-            for (let userChildren of userChildrens) {
-                userChildren.user_id = userId;
-    
-                const validate = v.validate(userChildren, schema);
-                if (validate.length > 0) {
-                    const errorMessages = validate.map(error => {
-                        if (error.type === 'stringMin') {
-                            return `Field ${error.field} minimal ${error.expected} karakter`;
-                        } else if (error.type === 'date') {
-                            return `Field ${error.field} harus berupa tanggal yang valid`;
-                        } else {
-                            return `Field ${error.field} tidak valid`;
-                        }
-                    });
-    
-                    await transaction.rollback();  // Rollback jika validasi gagal
-                    return res.status(400).json({
-                        status: 400,
-                        message: `Error untuk data anak ${userChildren.nama}: ${errorMessages.join(', ')}`
-                    });
-                }
-    
-                let userchildrensCreate = await User_descendant.create(userChildren, { transaction });
-                createdChildrens.push(userchildrensCreate);
+                return res.status(400).json({
+                    status: 400,
+                    message: errorMessages.join(', ')
+                });
             }
     
-            await transaction.commit();  // Commit jika semua proses berhasil
+            // Update data descendant
+            await User_descendant.update({
+                nama: req.body.nama,
+                tempat_lahir: req.body.tempat_lahir,
+                tanggal_lahir: req.body.tanggal_lahir,
+                jenis_kelamin: req.body.jenis_kelamin,
+                pekerjaan: req.body.pekerjaan,
+                status: req.body.status
+            }, {
+                where: {
+                    id: descendantId,
+                    user_id: userId
+                },
+                transaction
+            });
+    
+            // Commit transaksi
+            await transaction.commit();
+    
+            // Mengirimkan response sukses
             res.status(200).json({
                 status: 200,
-                message: 'User data anak updated successfully',
-                data: createdChildrens
+                message: 'User data anak berhasil diupdate'
             });
     
         } catch (err) {
-            if (!transaction.finished) {
-                await transaction.rollback();  // Rollback hanya jika transaksi belum selesai
-            }
-    
-            if (err.name === 'SequelizeUniqueConstraintError') {
-                res.status(400).json({
-                    status: 400,
-                    message: `${err.errors[0].path} sudah terdaftar`
-                });
-            } else {
-                res.status(500).json({
-                    status: 500,
-                    message: 'Terjadi kesalahan pada server',
-                    error: err.message
-                });
-            }
+            // Rollback jika terjadi kesalahan
+            await transaction.rollback();
             console.log(err);
+            res.status(500).json({
+                status: 500,
+                message: 'Terjadi kesalahan pada server',
+                error: err.message
+            });
         }
     },
     
@@ -395,63 +404,62 @@ module.exports = {
         const transaction = await sequelize.transaction();
 
         try {
-
-            //mendapatkan data user untuk pengecekan
-            let userchildrenGet = await User_descendant.findOne({
-                where: {
-                    slug: req.params.slug,
-                    deletedAt: null
-                },
-                transaction
-            })
-
-            //cek apakah data user ada
-            if (!userchildrenGet) {
-                await transaction.rollback();
-                res.status(404).json(response(404, 'data not found'));
-                return;
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id;
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
             }
-
-            const models = Object.keys(sequelize.models);
-
-            // Array untuk menyimpan promise update untuk setiap model terkait
-            const updatePromises = [];
-
-            // Lakukan soft delete pada semua model terkait
-            models.forEach(async modelName => {
-                const Model = sequelize.models[modelName];
-                if (Model.associations && Model.associations.User_descendant && Model.rawAttributes.deletedAt) {
-                    updatePromises.push(
-                        Model.update({ deletedAt: new Date() }, {
-                            where: {
-                                userchildren_id: userchildrenGet.id
-                            },
-                            transaction
-                        })
-                    );
+    
+            // Mengambil id descendant dari parameter URL
+            const descendantId = req.params.id;
+    
+            // Cek apakah data descendant ada
+            let userDescendant = await User_descendant.findOne({
+                where: {
+                    id: descendantId,
+                    user_id: userId,
+                    deletedAt: null
                 }
             });
-
-            // Jalankan semua promise update secara bersamaan
-            await Promise.all(updatePromises);
-
-            await User_descendant.update({ deletedAt: new Date() }, {
+    
+            if (!userDescendant) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User data anak tidak ditemukan'
+                });
+            }
+    
+            // Soft delete data descendant
+            await User_descendant.destroy({
                 where: {
-                    slug: req.params.slug
+                    id: descendantId,
+                    user_id: userId
                 },
                 transaction
             });
-
+    
+            // Commit transaksi
             await transaction.commit();
-
-            //response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success delete user'));
-
+    
+            // Mengirimkan response sukses
+            res.status(200).json({
+                status: 200,
+                message: 'User data anak berhasil dihapus'
+            });
+    
         } catch (err) {
-            // Rollback transaksi jika terjadi kesalahan
+            // Rollback jika terjadi kesalahan
             await transaction.rollback();
-            res.status(500).json(response(500, 'Internal server error', err));
             console.log(err);
+            res.status(500).json({
+                status: 500,
+                message: 'Terjadi kesalahan pada server',
+                error: err.message
+            });
         }
     },
 

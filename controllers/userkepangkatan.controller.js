@@ -42,7 +42,7 @@ module.exports = {
             const offset = (page - 1) * limit;
             let userGets;
             let totalCount;
-
+    
             const userWhereClause = {};
             if (showDeleted !== null) {
                 userWhereClause.deletedAt = { [Op.not]: null };
@@ -58,131 +58,102 @@ module.exports = {
             if (layanan) {
                 userWhereClause.layanan_id = layanan;
             }
-
+    
+            // Query untuk mendapatkan data User_kepangkatan
             if (search) {
                 [userGets, totalCount] = await Promise.all([
                     User_kepangkatan.findAll({
                         where: {
                             [Op.or]: [
-                                { nip: { [Op.like]: `%${search}%` } },
-                                { name: { [Op.like]: `%${search}%` } }
+                                { jenjang_kepangkatan: { [Op.like]: `%${search}%` } },
                             ]
                         },
-                        include: [
-                            {
-                                model: User,
-                                where: userWhereClause,
-                                attributes: ['id'],
-                                include: [
-                                    {
-                                        model: Role,
-                                        attributes: ['id', 'name'],
-                                    },
-                                    {
-                                        model: Bidang,
-                                        attributes: ['id', 'nama'],
-                                    }
-                                ],
-                            },
-                        ],
                         limit: limit,
                         offset: offset
                     }),
                     User_kepangkatan.count({
                         where: {
                             [Op.or]: [
-                                { nip: { [Op.like]: `%${search}%` } },
-                                { name: { [Op.like]: `%${search}%` } }
+                                { jenjang_kepangkatan: { [Op.like]: `%${search}%` } },
                             ]
-                        },
-                        include: [
-                            {
-                                model: User,
-                                where: userWhereClause,
-                                attributes: ['id'],
-                                include: [
-                                    {
-                                        model: Role,
-                                        attributes: ['id', 'name'],
-                                    },
-                                    {
-                                        model: Bidang,
-                                        attributes: ['id', 'nama'],
-                                    }
-                                ],
-                            },
-                        ],
+                        }
                     })
                 ]);
             } else {
                 [userGets, totalCount] = await Promise.all([
                     User_kepangkatan.findAll({
                         limit: limit,
-                        offset: offset,
-                        include: [
-                            {
-                                model: User,
-                                where: userWhereClause,
-                                attributes: ['id'],
-                                include: [
-                                    {
-                                        model: Role,
-                                        attributes: ['id', 'name'],
-                                    },
-                                    {
-                                        model: Bidang,
-                                        attributes: ['id', 'nama'],
-                                    }
-                                ],
-                            },
-                        ],
+                        offset: offset
                     }),
-                    User_kepangkatan.count({
-                        include: [
-                            {
-                                model: User,
-                                where: userWhereClause,
-                                attributes: ['id'],
-                                include: [
-                                    {
-                                        model: Role,
-                                        attributes: ['id', 'name'],
-                                    },
-                                    {
-                                        model: Bidang,
-                                        attributes: ['id', 'nama'],
-                                    }
-                                ],
-                            },
-                        ],
-                    })
+                    User_kepangkatan.count()
                 ]);
             }
-
-            const pagination = generatePagination(totalCount, page, limit, '/api/user/alluserinfo/get');
-
+    
+            // Ambil semua user IDs dari hasil userGets
+            const userIds = userGets.map(user => user.user_id);
+    
+            // Query manual untuk mendapatkan data dari tabel User
+            const users = await User.findAll({
+                where: {
+                    id: { [Op.in]: userIds },
+                    ...userWhereClause
+                },
+                attributes: ['id'],
+            });
+    
+            // Ambil semua role IDs dari hasil users
+            const roleIds = users.map(user => user.role_id);
+    
+            // Query manual untuk mendapatkan data dari tabel Role
+            const roles = await Role.findAll({
+                where: {
+                    id: { [Op.in]: roleIds }
+                },
+                attributes: ['id', 'name']
+            });
+    
+            // Ambil semua bidang IDs dari hasil users
+            const bidangIds = users.map(user => user.bidang_id);
+    
+            // Query manual untuk mendapatkan data dari tabel Bidang
+            const bidangData = await Bidang.findAll({
+                where: {
+                    id: { [Op.in]: bidangIds }
+                },
+                attributes: ['id', 'nama']
+            });
+    
+            // Format hasil dengan menggabungkan data dari tabel User, Role, dan Bidang
             const formattedData = userGets.map(user => {
+                const relatedUser = users.find(u => u.id === user.user_id);
+                const relatedRole = roles.find(r => r.id === relatedUser?.role_id);
+                const relatedBidang = bidangData.find(b => b.id === relatedUser?.bidang_id);
+    
                 return {
                     id: user.id,
-                    user_id: user?.User?.id,
+                    user_id: user?.user_id,
                     jenjang_kepangkatan: user.jenjang_kepangkatan,
                     tmt: user.tmt,
                     no_sk_pangkat: user.no_sk_pangkat,
                     tgl_sk_pangkat: user.tgl_sk_pangkat,
                     createdAt: user.createdAt,
                     updatedAt: user.updatedAt,
-                    Role: user.User.Role ? user.User.Role.name : null,
-                    Bidang: user.User.Bidang ? user.User.Bidang.nama : null
+                    Role: relatedRole ? relatedRole.name : null,
+                    // Bidang: relatedBidang ? relatedBidang.nama : null
                 };
             });
-
+    
+            // Membuat pagination
+            const pagination = generatePagination(totalCount, page, limit, '/api/user/kepangkatan/get');
+    
+            // Mengirimkan response
             res.status(200).json({
                 status: 200,
-                message: 'success get user jabatan',
+                message: 'success get user pangkat',
                 data: formattedData,
                 pagination: pagination
             });
-
+    
         } catch (err) {
             res.status(500).json({
                 status: 500,
@@ -197,33 +168,36 @@ module.exports = {
     //UTK ADMIN NGECEK DATA PEMOHON
     getUserPangkatByID: async (req, res) => {
         try {
-
-            const showDeleted = req.query.showDeleted ?? null;
-            const whereCondition = { slug: req.params.slug };
-
-            if (showDeleted !== null) {
-                whereCondition.deletedAt = { [Op.not]: null };
-            } else {
-                whereCondition.deletedAt = null;
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id;
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
             }
-
-            let userGet = await User_info.findOne({
+    
+            const whereCondition = { 
+                id: req.params.id, 
+                user_id: userId,
+                deletedAt: null 
+            };
+    
+            // Mencari data User_kepangkatan dengan kondisi where
+            let userGet = await User_kepangkatan.findOne({
                 where: whereCondition,
-                include: [
-                    {
-                        model: User,
-                        attributes: ['id'],
-                    }
-                ]
             });
-
+    
+            // Cek apakah data ditemukan
             if (!userGet) {
-                res.status(404).json(response(404, 'user data not found'));
-                return;
+                return res.status(404).json(response(404, 'user data kepangkatan not found'));
             }
-
-            res.status(200).json(response(200, 'success get user by slug', userGet));
+    
+            // Kirimkan response sukses dengan data User_kepangkatan
+            res.status(200).json(response(200, 'success get user kepangkatan by id', userGet));
         } catch (err) {
+            // Menangani error server
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -256,7 +230,7 @@ module.exports = {
     
             // Schema untuk validasi setiap objek di dalam array
             const schema = {
-                jenjang_kepangkatan: { type: "string", min: 2 },
+                pangkat_id: { type: "string", min: 1, optional: true },
                 tmt: { type: "string" },
                 no_sk_pangkat: { type: "string", optional: true },
                 tgl_sk_pangkat: { type: "date", convert: true }
@@ -285,7 +259,7 @@ module.exports = {
     
                     return res.status(400).json({
                         status: 400,
-                        message: `Error untuk kepangkatan ${userPangkat.jenjang_kepangkatan}: ${errorMessages.join(', ')}`
+                        message: `Error untuk kepangkatan ${userPangkat.no_sk_pangkat}: ${errorMessages.join(', ')}`
                     });
                 }
                 let userpangkatCreate = await User_kepangkatan.create(userPangkat);
@@ -323,7 +297,103 @@ module.exports = {
     updateUserPangkat: async (req, res) => {
         const transaction = await sequelize.transaction();
         try {
-            // Mengambil user_akun_id dari req.user
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id; // Pastikan req.user sudah diisi dari middleware autentikasi
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
+            }
+    
+            // Mengambil id kepangkatan dari parameter URL
+            const kepangkatanId = req.params.id;
+    
+            // Cek apakah data kepangkatan ada
+            let userKepangkatan = await User_kepangkatan.findOne({
+                where: {
+                    id: kepangkatanId,
+                    user_id: userId,
+                    deletedAt: null 
+                }
+            });
+    
+            if (!userKepangkatan) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User kepangkatan tidak ditemukan'
+                });
+            }
+    
+            // Membuat schema untuk validasi input
+            const schema = {
+                jenjang_kepangkatan: { type: "string", min: 2 },
+                tmt: { type: "string" },
+                no_sk_pangkat: { type: "string", optional: true },
+                tgl_sk_pangkat: { type: "date", convert: true }
+            };
+    
+            // Validasi input dari request body
+            const validate = v.validate(req.body, schema);
+            if (validate.length > 0) {
+                const errorMessages = validate.map(error => {
+                    if (error.type === 'stringMin') {
+                        return `Field ${error.field} minimal ${error.expected} karakter`;
+                    } else if (error.type === 'date') {
+                        return `Field ${error.field} harus berupa tanggal yang valid`;
+                    } else {
+                        return `Field ${error.field} tidak valid`;
+                    }
+                });
+    
+                return res.status(400).json({
+                    status: 400,
+                    message: errorMessages.join(', ')
+                });
+            }
+    
+            // Update data kepangkatan
+            await User_kepangkatan.update({
+                jenjang_kepangkatan: req.body.jenjang_kepangkatan,
+                tmt: req.body.tmt,
+                no_sk_pangkat: req.body.no_sk_pangkat,
+                tgl_sk_pangkat: req.body.tgl_sk_pangkat
+            }, {
+                where: {
+                    id: kepangkatanId,
+                    user_id: userId
+                },
+                transaction
+            });
+    
+            // Commit transaksi
+            await transaction.commit();
+    
+            // Mengirimkan response sukses
+            res.status(200).json({
+                status: 200,
+                message: 'User kepangkatan berhasil diupdate'
+            });
+    
+        } catch (err) {
+            // Rollback jika terjadi kesalahan
+            await transaction.rollback();
+            console.log(err);
+            res.status(500).json({
+                status: 500,
+                message: 'Terjadi kesalahan pada server',
+                error: err.message
+            });
+        }
+    },
+
+    //menghapus user berdasarkan slug
+    deleteUserPangkat: async (req, res) => {
+        const transaction = await sequelize.transaction();
+        
+        try {
+            // Mengambil user_id dari user yang sedang login
             const userId = req.user?.user_akun_id;
     
             if (!userId) {
@@ -332,222 +402,54 @@ module.exports = {
                     message: 'User ID tidak tersedia'
                 });
             }
-
-            await User_kepangkatan.destroy({
-                where: { user_id: userId },
-                force: true 
+    
+            // Mengambil id kepangkatan dari parameter URL
+            const kepangkatanId = req.params.id;
+    
+            // Cek apakah data kepangkatan ada
+            let userKepangkatan = await User_kepangkatan.findOne({
+                where: {
+                    id: kepangkatanId,
+                    user_id: userId,
+                    deletedAt: null
+                }
             });
     
-            // Mengambil array dari body request
-            const userPangkats = req.body;
-    
-            if (!Array.isArray(userPangkats) || userPangkats.length === 0) {
-                return res.status(400).json({
-                    status: 400,
-                    message: 'Input harus berupa array dan tidak boleh kosong'
+            if (!userKepangkatan) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User kepangkatan tidak ditemukan'
                 });
             }
     
-            // Schema untuk validasi setiap objek di dalam array
-            const schema = {
-                jenjang_kepangkatan: { type: "string", min: 2 },
-                tmt: { type: "string" },
-                no_sk_pangkat: { type: "string", optional: true },
-                tgl_sk_pangkat: { type: "date", convert: true }
-            };
+            // Soft delete data kepangkatan
+            await User_kepangkatan.destroy({
+                where: {
+                    id: kepangkatanId,
+                    user_id: userId
+                },
+                transaction
+            });
     
-            // Array untuk menyimpan hasil dari proses create
-            const createdPangkats = [];
-    
-            // Proses setiap item dalam array userPangkats
-            for (let userPangkat of userPangkats) {
-                // Masukkan user_id dari req.user ke dalam setiap objek Pangkat
-                userPangkat.user_id = userId;
-    
-                // Validasi setiap objek dalam array
-                const validate = v.validate(userPangkat, schema);
-                if (validate.length > 0) {
-                    const errorMessages = validate.map(error => {
-                        if (error.type === 'stringMin') {
-                            return `Field ${error.field} minimal ${error.expected} karakter`;
-                        } else if (error.type === 'date') {
-                            return `Field ${error.field} harus berupa tanggal yang valid`;
-                        } else {
-                            return `Field ${error.field} tidak valid`;
-                        }
-                    });
-    
-                    return res.status(400).json({
-                        status: 400,
-                        message: `Error untuk pangkat ${userPangkat.jenjang_kepangkatan}: ${errorMessages.join(', ')}`
-                    });
-                }
-                let userpangkatCreate = await User_kepangkatan.create(userPangkat);
-                createdPangkats.push(userpangkatCreate);
-            }
-    
-            // Commit transaksi jika semua data berhasil disimpan
+            // Commit transaksi
             await transaction.commit();
+    
+            // Mengirimkan response sukses
             res.status(200).json({
                 status: 200,
-                message: 'User Pangkats updated successfully',
-                data: createdPangkats
+                message: 'User pangkat berhasil dihapus'
             });
     
         } catch (err) {
+            // Rollback jika terjadi kesalahan
             await transaction.rollback();
-            if (err.name === 'SequelizeUniqueConstraintError') {
-                res.status(400).json({
-                    status: 400,
-                    message: `${err.errors[0].path} sudah terdaftar`
-                });
-            } else {
-                res.status(500).json({
-                    status: 500,
-                    message: 'Terjadi kesalahan pada server',
-                    error: err.message
-                });
-            }
             console.log(err);
+            res.status(500).json({
+                status: 500,
+                message: 'Terjadi kesalahan pada server',
+                error: err.message
+            });
         }
-    },
-
-    //menghapus user berdasarkan slug
-    deleteUserPangkat: async (req, res) => {
-        const transaction = await sequelize.transaction();
-
-        try {
-
-            //mendapatkan data user untuk pengecekan
-            let userinfoGet = await User_info.findOne({
-                where: {
-                    slug: req.params.slug,
-                    deletedAt: null
-                },
-                transaction
-            })
-
-            //cek apakah data user ada
-            if (!userinfoGet) {
-                await transaction.rollback();
-                res.status(404).json(response(404, 'data not found'));
-                return;
-            }
-
-            const models = Object.keys(sequelize.models);
-
-            // Array untuk menyimpan promise update untuk setiap model terkait
-            const updatePromises = [];
-
-            // Lakukan soft delete pada semua model terkait
-            models.forEach(async modelName => {
-                const Model = sequelize.models[modelName];
-                if (Model.associations && Model.associations.User_info && Model.rawAttributes.deletedAt) {
-                    updatePromises.push(
-                        Model.update({ deletedAt: new Date() }, {
-                            where: {
-                                userinfo_id: userinfoGet.id
-                            },
-                            transaction
-                        })
-                    );
-                }
-            });
-
-            // Jalankan semua promise update secara bersamaan
-            await Promise.all(updatePromises);
-
-            await User_info.update({ deletedAt: new Date() }, {
-                where: {
-                    slug: req.params.slug
-                },
-                transaction
-            });
-
-            await transaction.commit();
-
-            //response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success delete user'));
-
-        } catch (err) {
-            // Rollback transaksi jika terjadi kesalahan
-            await transaction.rollback();
-            res.status(500).json(response(500, 'Internal server error', err));
-            console.log(err);
-        }
-    },
-
-    //mengupdate berdasarkan user
-    updateProfil: async (req, res) => {
-        try {
-            //mendapatkan data fotoprofil untuk pengecekan
-
-            let fotoprofilGet = await User_info.findOne({
-                where: {
-                    slug: req.params.slug,
-                    deletedAt: null
-                },
-            });
-
-            //cek apakah data fotoprofil ada
-            if (!fotoprofilGet) {
-                res.status(404).json(response(404, 'fotoprofil not found'));
-                return;
-            }
-
-            //membuat schema untuk validasi
-            const schema = {
-                fotoprofil: {
-                    type: "string",
-                    optional: true
-                }
-            }
-
-            if (req.file) {
-                const timestamp = new Date().getTime();
-                const uniqueFileName = `${timestamp}-${req.file.originalname}`;
-
-                const uploadParams = {
-                    Bucket: process.env.AWS_S3_BUCKET,
-                    Key: `${process.env.PATH_AWS}/profile-user/${uniqueFileName}`,
-                    Body: req.file.buffer,
-                    ACL: 'public-read',
-                    ContentType: req.file.mimetype
-                };
-
-                const command = new PutObjectCommand(uploadParams);
-
-                await s3Client.send(command);
-
-                fotoprofilKey = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${uploadParams.Key}`;
-            }
-
-            //buat object fotoprofil
-            let fotoprofilUpdateObj = {
-                fotoprofil: req.file ? fotoprofilKey : undefined,
-            }
-
-            //validasi menggunakan module fastest-validator
-            const validate = v.validate(fotoprofilUpdateObj, schema);
-            if (validate.length > 0) {
-                res.status(400).json(response(400, 'validation failed', validate));
-                return;
-            }
-
-            //update fotoprofil
-            await Userinfo.update(fotoprofilUpdateObj, {
-                where: {
-                    slug: fotoprofilGet.slug,
-                },
-            });
-
-            //response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success update fotoprofil'));
-
-        } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
-            console.log(err);
-        }
-    },
+    }
 
 }

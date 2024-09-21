@@ -327,7 +327,6 @@ module.exports = {
                 gender: { type: "number", optional: true },
                 goldar: { type: "number", optional: true },
                 image_profile: { type: "string", optional: true },
-                aktalahir: { type: "string", optional: true },
             }
 
             const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, "");

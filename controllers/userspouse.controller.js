@@ -134,18 +134,20 @@ module.exports = {
                 return {
                     id: user.id,
                     user_id: user?.user_id,
-                    uraian_penghargaan: user.uraian_penghargaan,
-                    tanggal_penghargaan: user.tanggal_penghargaan,
-                    instansi_penghargaan: user.instansi_penghargaan,
+                    nama: user.nama,
+                    tempat_lahir: user.tempat_lahir,
+                    tanggal_lahir: user.tanggal_lahir,
+                    tanggal_pernikahan: user.tanggal_pernikahan,
+                    pekerjaan: user.pekerjaan,
+                    status: user.status,
                     createdAt: user.createdAt,
                     updatedAt: user.updatedAt,
-                    Role: relatedRole ? relatedRole.name : null,
-                    Bidang: relatedBidang ? relatedBidang.nama : null
+                    // Role: relatedRole ? relatedRole.name : null,
                 };
             });
     
             // Membuat pagination
-            const pagination = generatePagination(totalCount, page, limit, '/api/user/kepangkatan/get');
+            const pagination = generatePagination(totalCount, page, limit, '/api/user/spouse/get');
     
             // Mengirimkan response
             res.status(200).json({
@@ -169,33 +171,36 @@ module.exports = {
     //UTK ADMIN NGECEK DATA PEMOHON
     getUserSpouseByID: async (req, res) => {
         try {
-
-            const showDeleted = req.query.showDeleted ?? null;
-            const whereCondition = { slug: req.params.slug };
-
-            if (showDeleted !== null) {
-                whereCondition.deletedAt = { [Op.not]: null };
-            } else {
-                whereCondition.deletedAt = null;
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id;
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
             }
-
+    
+            const whereCondition = { 
+                id: req.params.id, 
+                user_id: userId,
+                deletedAt: null 
+            };
+    
+            // Mencari data User_spouse dengan kondisi where
             let userGet = await User_spouse.findOne({
                 where: whereCondition,
-                include: [
-                    {
-                        model: User,
-                        attributes: ['id'],
-                    }
-                ]
             });
-
+    
+            // Cek apakah data ditemukan
             if (!userGet) {
-                res.status(404).json(response(404, 'user data not found'));
-                return;
+                return res.status(404).json(response(404, 'user data pasangan not found'));
             }
-
-            res.status(200).json(response(200, 'success get user by slug', userGet));
+    
+            // Kirimkan response sukses dengan data User_spouse
+            res.status(200).json(response(200, 'success get user pasangan by id', userGet));
         } catch (err) {
+            // Menangani error server
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -297,32 +302,36 @@ module.exports = {
     updateUserSpouse: async (req, res) => {
         const transaction = await sequelize.transaction();
         try {
-            // Mengambil user_akun_id dari req.user
-            const userId = req.user?.user_akun_id;
-    
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id; 
+
             if (!userId) {
                 return res.status(400).json({
                     status: 400,
                     message: 'User ID tidak tersedia'
                 });
             }
-
-            await User_spouse.destroy({
-                where: { user_id: userId },
-                force: true // Menghapus secara permanen
+    
+            // Mengambil id spouse dari parameter URL
+            const spouseId = req.params.id;
+    
+            // Cek apakah data spouse ada
+            let userSpouse = await User_spouse.findOne({
+                where: {
+                    id: spouseId,
+                    user_id: userId,
+                    deletedAt: null 
+                }
             });
     
-            // Mengambil array dari body request
-            const userSpouses = req.body;
-    
-            if (!Array.isArray(userSpouses) || userSpouses.length === 0) {
-                return res.status(400).json({
-                    status: 400,
-                    message: 'Input harus berupa array dan tidak boleh kosong'
+            if (!userSpouse) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User data pasangan tidak ditemukan'
                 });
             }
     
-            // Schema untuk validasi setiap objek di dalam array
+            // Membuat schema untuk validasi input
             const schema = {
                 nama: { type: "string", optional: true },
                 tempat_lahir: { type: "string", optional: true },
@@ -332,59 +341,59 @@ module.exports = {
                 status: { type: "string", optional: true },
             };
     
-            // Array untuk menyimpan hasil dari proses create
-            const createdSpouses = [];
+            // Validasi input dari request body
+            const validate = v.validate(req.body, schema);
+            if (validate.length > 0) {
+                const errorMessages = validate.map(error => {
+                    if (error.type === 'stringMin') {
+                        return `Field ${error.field} minimal ${error.expected} karakter`;
+                    } else if (error.type === 'date') {
+                        return `Field ${error.field} harus berupa tanggal yang valid`;
+                    } else {
+                        return `Field ${error.field} tidak valid`;
+                    }
+                });
     
-            // Proses setiap item dalam array user penghargaan
-            for (let userSpouse of userSpouses) {
-                // Masukkan user_id dari req.user ke dalam setiap objek penghargaaan
-                userSpouse.user_id = userId;
-    
-                // Validasi setiap objek dalam array
-                const validate = v.validate(userSpouse, schema);
-                if (validate.length > 0) {
-                    const errorMessages = validate.map(error => {
-                        if (error.type === 'stringMin') {
-                            return `Field ${error.field} minimal ${error.expected} karakter`;
-                        } else if (error.type === 'date') {
-                            return `Field ${error.field} harus berupa tanggal yang valid`;
-                        } else {
-                            return `Field ${error.field} tidak valid`;
-                        }
-                    });
-    
-                    return res.status(400).json({
-                        status: 400,
-                        message: `Error untuk data spouses ${userSpouse.nama}: ${errorMessages.join(', ')}`
-                    });
-                }
-                let usersposesCreate = await User_spouse.create(userSpouse);
-                createdSpouses.push(usersposesCreate);
+                return res.status(400).json({
+                    status: 400,
+                    message: errorMessages.join(', ')
+                });
             }
     
-            // Commit transaksi jika semua data berhasil disimpan
+            // Update data spouse
+            await User_spouse.update({
+                nama: req.body.nama,
+                tempat_lahir: req.body.tempat_lahir,
+                tanggal_lahir: req.body.tanggal_lahir,
+                tanggal_pernikahan: req.body.tanggal_pernikahan,
+                pekerjaan: req.body.pekerjaan,
+                status: req.body.status
+            }, {
+                where: {
+                    id: spouseId,
+                    user_id: userId
+                },
+                transaction
+            });
+    
+            // Commit transaksi
             await transaction.commit();
+    
+            // Mengirimkan response sukses
             res.status(200).json({
                 status: 200,
-                message: 'User data pasangan updated successfully',
-                data: createdSpouses
+                message: 'User data pasangan berhasil diupdate'
             });
     
         } catch (err) {
+            // Rollback jika terjadi kesalahan
             await transaction.rollback();
-            if (err.name === 'SequelizeUniqueConstraintError') {
-                res.status(400).json({
-                    status: 400,
-                    message: `${err.errors[0].path} sudah terdaftar`
-                });
-            } else {
-                res.status(500).json({
-                    status: 500,
-                    message: 'Terjadi kesalahan pada server',
-                    error: err.message
-                });
-            }
             console.log(err);
+            res.status(500).json({
+                status: 500,
+                message: 'Terjadi kesalahan pada server',
+                error: err.message
+            });
         }
     },
 
@@ -393,63 +402,62 @@ module.exports = {
         const transaction = await sequelize.transaction();
 
         try {
-
-            //mendapatkan data user untuk pengecekan
-            let userspouseGet = await User_spouse.findOne({
-                where: {
-                    slug: req.params.slug,
-                    deletedAt: null
-                },
-                transaction
-            })
-
-            //cek apakah data user ada
-            if (!userspouseGet) {
-                await transaction.rollback();
-                res.status(404).json(response(404, 'data not found'));
-                return;
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id;
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
             }
-
-            const models = Object.keys(sequelize.models);
-
-            // Array untuk menyimpan promise update untuk setiap model terkait
-            const updatePromises = [];
-
-            // Lakukan soft delete pada semua model terkait
-            models.forEach(async modelName => {
-                const Model = sequelize.models[modelName];
-                if (Model.associations && Model.associations.User_spouse && Model.rawAttributes.deletedAt) {
-                    updatePromises.push(
-                        Model.update({ deletedAt: new Date() }, {
-                            where: {
-                                userspouse_id: userspouseGet.id
-                            },
-                            transaction
-                        })
-                    );
+    
+            // Mengambil id spouse dari parameter URL
+            const spouseId = req.params.id;
+    
+            // Cek apakah data spouse ada
+            let userSpouse = await User_spouse.findOne({
+                where: {
+                    id: spouseId,
+                    user_id: userId,
+                    deletedAt: null
                 }
             });
-
-            // Jalankan semua promise update secara bersamaan
-            await Promise.all(updatePromises);
-
-            await User_spouse.update({ deletedAt: new Date() }, {
+    
+            if (!userSpouse) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User data pasangan tidak ditemukan'
+                });
+            }
+    
+            // Soft delete data spouse
+            await User_spouse.destroy({
                 where: {
-                    slug: req.params.slug
+                    id: spouseId,
+                    user_id: userId
                 },
                 transaction
             });
-
+    
+            // Commit transaksi
             await transaction.commit();
-
-            //response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success delete user'));
-
+    
+            // Mengirimkan response sukses
+            res.status(200).json({
+                status: 200,
+                message: 'User data pasangan berhasil dihapus'
+            });
+    
         } catch (err) {
-            // Rollback transaksi jika terjadi kesalahan
+            // Rollback jika terjadi kesalahan
             await transaction.rollback();
-            res.status(500).json(response(500, 'Internal server error', err));
             console.log(err);
+            res.status(500).json({
+                status: 500,
+                message: 'Terjadi kesalahan pada server',
+                error: err.message
+            });
         }
     },
 

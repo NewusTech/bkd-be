@@ -141,12 +141,12 @@ module.exports = {
                     createdAt: user.createdAt,
                     updatedAt: user.updatedAt,
                     Role: relatedRole ? relatedRole.name : null,
-                    Bidang: relatedBidang ? relatedBidang.nama : null
+                    // Bidang: relatedBidang ? relatedBidang.nama : null
                 };
             });
     
             // Membuat pagination
-            const pagination = generatePagination(totalCount, page, limit, '/api/user/kepangkatan/get');
+            const pagination = generatePagination(totalCount, page, limit, '/api/user/jabatan/get');
     
             // Mengirimkan response
             res.status(200).json({
@@ -165,45 +165,46 @@ module.exports = {
             console.log(err);
         }
     },
-    
-    
 
     //mendapatkan data user jabatan berdasarkan id
     //UTK ADMIN NGECEK DATA PEMOHON
     getUserJabatanByID: async (req, res) => {
         try {
-
-            const showDeleted = req.query.showDeleted ?? null;
-            const whereCondition = { slug: req.params.slug };
-
-            if (showDeleted !== null) {
-                whereCondition.deletedAt = { [Op.not]: null };
-            } else {
-                whereCondition.deletedAt = null;
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id; // Asumsikan req.user sudah diisi dengan data user yang login
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
             }
-
+    
+            const whereCondition = { 
+                id: req.params.id, // ID yang diambil dari parameter
+                user_id: userId,   // User ID yang sedang login
+                deletedAt: null    // Kondisi hanya untuk data yang belum dihapus (soft delete)
+            };
+    
+            // Mencari data User_jabatan dengan kondisi where
             let userGet = await User_jabatan.findOne({
                 where: whereCondition,
-                include: [
-                    {
-                        model: User,
-                        attributes: ['id'],
-                    }
-                ]
             });
-
+    
+            // Cek apakah data ditemukan
             if (!userGet) {
-                res.status(404).json(response(404, 'user data not found'));
-                return;
+                return res.status(404).json(response(404, 'user data not found'));
             }
-
-            res.status(200).json(response(200, 'success get user by slug', userGet));
+    
+            // Kirimkan response sukses dengan data user_jabatan
+            res.status(200).json(response(200, 'success get user by id', userGet));
         } catch (err) {
+            // Menangani error server
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
     },
-
+    
     //create data person
     //dari sisi user untuk update data jabatan
     createUserJabatan: async (req, res) => {
@@ -297,9 +298,10 @@ module.exports = {
     //user update sendiri
     updateUserJabatan: async (req, res) => {
         const transaction = await sequelize.transaction();
+        
         try {
-            // Mengambil user_akun_id dari req.user
-            const userId = req.user?.user_akun_id;
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id; // Pastikan req.user sudah diisi dari middleware autentikasi
     
             if (!userId) {
                 return res.status(400).json({
@@ -307,23 +309,27 @@ module.exports = {
                     message: 'User ID tidak tersedia'
                 });
             }
-
-            await User_jabatan.destroy({
-                where: { user_id: userId },
-                force: true // Menghapus secara permanen
+    
+            // Mengambil id jabatan dari parameter URL
+            const jabatanId = req.params.id;
+    
+            // Cek apakah data jabatan ada
+            let userJabatan = await User_jabatan.findOne({
+                where: {
+                    id: jabatanId,
+                    user_id: userId,  // Pastikan hanya mengupdate data milik user yang sedang login
+                    deletedAt: null   // Hanya data yang belum dihapus
+                }
             });
     
-            // Mengambil array dari body request
-            const userJabatans = req.body;
-    
-            if (!Array.isArray(userJabatans) || userJabatans.length === 0) {
-                return res.status(400).json({
-                    status: 400,
-                    message: 'Input harus berupa array dan tidak boleh kosong'
+            if (!userJabatan) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User jabatan tidak ditemukan'
                 });
             }
     
-            // Schema untuk validasi setiap objek di dalam array
+            // Membuat schema untuk validasi input
             const schema = {
                 nama_jabatan: { type: "string", min: 2 },
                 tmt: { type: "string" },
@@ -331,125 +337,123 @@ module.exports = {
                 tgl_sk_pangkat: { type: "date", convert: true }
             };
     
-            // Array untuk menyimpan hasil dari proses create
-            const createdJabatans = [];
+            // Validasi input dari request body
+            const validate = v.validate(req.body, schema);
+            if (validate.length > 0) {
+                const errorMessages = validate.map(error => {
+                    if (error.type === 'stringMin') {
+                        return `Field ${error.field} minimal ${error.expected} karakter`;
+                    } else if (error.type === 'date') {
+                        return `Field ${error.field} harus berupa tanggal yang valid`;
+                    } else {
+                        return `Field ${error.field} tidak valid`;
+                    }
+                });
     
-            // Proses setiap item dalam array userJabatans
-            for (let userJabatan of userJabatans) {
-                // Masukkan user_id dari req.user ke dalam setiap objek jabatan
-                userJabatan.user_id = userId;
-    
-                // Validasi setiap objek dalam array
-                const validate = v.validate(userJabatan, schema);
-                if (validate.length > 0) {
-                    const errorMessages = validate.map(error => {
-                        if (error.type === 'stringMin') {
-                            return `Field ${error.field} minimal ${error.expected} karakter`;
-                        } else if (error.type === 'date') {
-                            return `Field ${error.field} harus berupa tanggal yang valid`;
-                        } else {
-                            return `Field ${error.field} tidak valid`;
-                        }
-                    });
-    
-                    return res.status(400).json({
-                        status: 400,
-                        message: `Error untuk jabatan ${userJabatan.nama_jabatan}: ${errorMessages.join(', ')}`
-                    });
-                }
-                let userjabatanCreate = await User_jabatan.create(userJabatan);
-                createdJabatans.push(userjabatanCreate);
+                return res.status(400).json({
+                    status: 400,
+                    message: errorMessages.join(', ')
+                });
             }
     
-            // Commit transaksi jika semua data berhasil disimpan
+            // Update data jabatan
+            await User_jabatan.update({
+                nama_jabatan: req.body.nama_jabatan,
+                tmt: req.body.tmt,
+                no_sk_pangkat: req.body.no_sk_pangkat,
+                tgl_sk_pangkat: req.body.tgl_sk_pangkat
+            }, {
+                where: {
+                    id: jabatanId,
+                    user_id: userId
+                },
+                transaction
+            });
+    
+            // Commit transaksi
             await transaction.commit();
+    
+            // Mengirimkan response sukses
             res.status(200).json({
                 status: 200,
-                message: 'User jabatans updated successfully',
-                data: createdJabatans
+                message: 'User jabatan berhasil diupdate'
             });
     
         } catch (err) {
+            // Rollback jika terjadi kesalahan
             await transaction.rollback();
-            if (err.name === 'SequelizeUniqueConstraintError') {
-                res.status(400).json({
-                    status: 400,
-                    message: `${err.errors[0].path} sudah terdaftar`
-                });
-            } else {
-                res.status(500).json({
-                    status: 500,
-                    message: 'Terjadi kesalahan pada server',
-                    error: err.message
-                });
-            }
             console.log(err);
+            res.status(500).json({
+                status: 500,
+                message: 'Terjadi kesalahan pada server',
+                error: err.message
+            });
         }
     },
+    
 
     //menghapus user berdasarkan slug
     deleteUserJabatan: async (req, res) => {
         const transaction = await sequelize.transaction();
-
+        
         try {
-
-            //mendapatkan data user untuk pengecekan
-            let userinfoGet = await User_info.findOne({
-                where: {
-                    slug: req.params.slug,
-                    deletedAt: null
-                },
-                transaction
-            })
-
-            //cek apakah data user ada
-            if (!userinfoGet) {
-                await transaction.rollback();
-                res.status(404).json(response(404, 'data not found'));
-                return;
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id; // Pastikan req.user sudah diisi dari middleware autentikasi
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
             }
-
-            const models = Object.keys(sequelize.models);
-
-            // Array untuk menyimpan promise update untuk setiap model terkait
-            const updatePromises = [];
-
-            // Lakukan soft delete pada semua model terkait
-            models.forEach(async modelName => {
-                const Model = sequelize.models[modelName];
-                if (Model.associations && Model.associations.User_info && Model.rawAttributes.deletedAt) {
-                    updatePromises.push(
-                        Model.update({ deletedAt: new Date() }, {
-                            where: {
-                                userinfo_id: userinfoGet.id
-                            },
-                            transaction
-                        })
-                    );
+    
+            // Mengambil id jabatan dari parameter URL
+            const jabatanId = req.params.id;
+    
+            // Cek apakah data jabatan ada
+            let userJabatan = await User_jabatan.findOne({
+                where: {
+                    id: jabatanId,
+                    user_id: userId,  // Hanya menghapus data milik user yang sedang login
+                    deletedAt: null   // Hanya data yang belum dihapus
                 }
             });
-
-            // Jalankan semua promise update secara bersamaan
-            await Promise.all(updatePromises);
-
-            await User_info.update({ deletedAt: new Date() }, {
+    
+            if (!userJabatan) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User jabatan tidak ditemukan'
+                });
+            }
+    
+            // Soft delete data jabatan
+            await User_jabatan.destroy({
                 where: {
-                    slug: req.params.slug
+                    id: jabatanId,
+                    user_id: userId
                 },
                 transaction
             });
-
+    
+            // Commit transaksi
             await transaction.commit();
-
-            //response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success delete user'));
-
+    
+            // Mengirimkan response sukses
+            res.status(200).json({
+                status: 200,
+                message: 'User jabatan berhasil dihapus'
+            });
+    
         } catch (err) {
-            // Rollback transaksi jika terjadi kesalahan
+            // Rollback jika terjadi kesalahan
             await transaction.rollback();
-            res.status(500).json(response(500, 'Internal server error', err));
             console.log(err);
+            res.status(500).json({
+                status: 500,
+                message: 'Terjadi kesalahan pada server',
+                error: err.message
+            });
         }
-    },
-
+    }
+    
 }

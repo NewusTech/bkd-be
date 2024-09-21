@@ -8,11 +8,15 @@ module.exports = (sequelize, DataTypes) => {
       User_kepangkatan.hasOne(models.User, {
         foreignKey: 'userkepangkatan_id',
       });
+      User_kepangkatan.belongsTo(models.Pangkat, {
+        foreignKey: 'pangkat_id',
+      });
     }
   }
   User_kepangkatan.init({
     user_id: DataTypes.INTEGER,
-    jenjang_kepangkatan: DataTypes.STRING,
+    pangkat_id: DataTypes.INTEGER,
+    // jenjang_kepangkatan: DataTypes.STRING,
     tmt: DataTypes.DATE,
     no_sk_pangkat: DataTypes.STRING,
     tgl_sk_pangkat: DataTypes.DATE,

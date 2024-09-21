@@ -169,33 +169,36 @@ module.exports = {
     //UTK ADMIN NGECEK DATA PEMOHON
     getUserPenghargaanByID: async (req, res) => {
         try {
-
-            const showDeleted = req.query.showDeleted ?? null;
-            const whereCondition = { slug: req.params.slug };
-
-            if (showDeleted !== null) {
-                whereCondition.deletedAt = { [Op.not]: null };
-            } else {
-                whereCondition.deletedAt = null;
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id;
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
             }
-
+    
+            const whereCondition = { 
+                id: req.params.id, 
+                user_id: userId,
+                deletedAt: null 
+            };
+    
+            // Mencari data user penghargaan dengan kondisi where
             let userGet = await User_penghargaan.findOne({
                 where: whereCondition,
-                include: [
-                    {
-                        model: User,
-                        attributes: ['id'],
-                    }
-                ]
             });
-
+    
+            // Cek apakah data ditemukan
             if (!userGet) {
-                res.status(404).json(response(404, 'user data not found'));
-                return;
+                return res.status(404).json(response(404, 'user data penghargaan not found'));
             }
-
-            res.status(200).json(response(200, 'success get user by slug', userGet));
+    
+            // Kirimkan response sukses dengan data User penghargaan
+            res.status(200).json(response(200, 'success get user penghargaan by id', userGet));
         } catch (err) {
+            // Menangani error server
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
@@ -294,91 +297,92 @@ module.exports = {
     updateUserPenghargaan: async (req, res) => {
         const transaction = await sequelize.transaction();
         try {
-            // Mengambil user_akun_id dari req.user
-            const userId = req.user?.user_akun_id;
-    
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id; 
+
             if (!userId) {
                 return res.status(400).json({
                     status: 400,
                     message: 'User ID tidak tersedia'
                 });
             }
-
-            await User_penghargaan.destroy({
-                where: { user_id: userId },
-                force: true // Menghapus secara permanen
+    
+            // Mengambil id penghargaan dari parameter URL
+            const penghargaanId = req.params.id;
+    
+            // Cek apakah data penghargaan ada
+            let userPenghargaan = await User_penghargaan.findOne({
+                where: {
+                    id: penghargaanId,
+                    user_id: userId,
+                    deletedAt: null 
+                }
             });
     
-            // Mengambil array dari body request
-            const userPenghargaans = req.body;
-    
-            if (!Array.isArray(userPenghargaans) || userPenghargaans.length === 0) {
-                return res.status(400).json({
-                    status: 400,
-                    message: 'Input harus berupa array dan tidak boleh kosong'
+            if (!userPenghargaan) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User data penghargaan tidak ditemukan'
                 });
             }
     
-            // Schema untuk validasi setiap objek di dalam array
+            // Membuat schema untuk validasi input
             const schema = {
-                uraian_penghargaan: { type: "string",optional: true,},
-                tanggal_penghargaan: { type: "string", optional: true},
+                uraian_penghargaan: { type: "string" },
+                tanggal_penghargaan: { type: "string" },
                 instansi_penghargaan: { type: "string", optional: true },
             };
     
-            // Array untuk menyimpan hasil dari proses create
-            const createdPenghargaans = [];
+            // Validasi input dari request body
+            const validate = v.validate(req.body, schema);
+            if (validate.length > 0) {
+                const errorMessages = validate.map(error => {
+                    if (error.type === 'stringMin') {
+                        return `Field ${error.field} minimal ${error.expected} karakter`;
+                    } else if (error.type === 'date') {
+                        return `Field ${error.field} harus berupa tanggal yang valid`;
+                    } else {
+                        return `Field ${error.field} tidak valid`;
+                    }
+                });
     
-            // Proses setiap item dalam array user penghargaan
-            for (let userPenghargaan of userPenghargaans) {
-                // Masukkan user_id dari req.user ke dalam setiap objek penghargaaan
-                userPenghargaan.user_id = userId;
-    
-                // Validasi setiap objek dalam array
-                const validate = v.validate(userPenghargaan, schema);
-                if (validate.length > 0) {
-                    const errorMessages = validate.map(error => {
-                        if (error.type === 'stringMin') {
-                            return `Field ${error.field} minimal ${error.expected} karakter`;
-                        } else if (error.type === 'date') {
-                            return `Field ${error.field} harus berupa tanggal yang valid`;
-                        } else {
-                            return `Field ${error.field} tidak valid`;
-                        }
-                    });
-    
-                    return res.status(400).json({
-                        status: 400,
-                        message: `Error untuk penghargaan ${userPenghargaan.uraian_penghargaan}: ${errorMessages.join(', ')}`
-                    });
-                }
-                let userpenghargaanCreate = await User_penghargaan.create(userPenghargaan);
-                createdPenghargaans.push(userpenghargaanCreate);
+                return res.status(400).json({
+                    status: 400,
+                    message: errorMessages.join(', ')
+                });
             }
     
-            // Commit transaksi jika semua data berhasil disimpan
+            // Update data penghargaan
+            await User_penghargaan.update({
+                uraian_penghargaan: req.body.uraian_penghargaan,
+                tanggal_penghargaan: req.body.tanggal_penghargaan,
+                instansi_penghargaan: req.body.instansi_penghargaan,
+            }, {
+                where: {
+                    id: penghargaanId,
+                    user_id: userId
+                },
+                transaction
+            });
+    
+            // Commit transaksi
             await transaction.commit();
+    
+            // Mengirimkan response sukses
             res.status(200).json({
                 status: 200,
-                message: 'User penghargaan updated successfully',
-                data: createdPenghargaans
+                message: 'User data penghargaan berhasil diupdate'
             });
     
         } catch (err) {
+            // Rollback jika terjadi kesalahan
             await transaction.rollback();
-            if (err.name === 'SequelizeUniqueConstraintError') {
-                res.status(400).json({
-                    status: 400,
-                    message: `${err.errors[0].path} sudah terdaftar`
-                });
-            } else {
-                res.status(500).json({
-                    status: 500,
-                    message: 'Terjadi kesalahan pada server',
-                    error: err.message
-                });
-            }
             console.log(err);
+            res.status(500).json({
+                status: 500,
+                message: 'Terjadi kesalahan pada server',
+                error: err.message
+            });
         }
     },
 
@@ -387,63 +391,62 @@ module.exports = {
         const transaction = await sequelize.transaction();
 
         try {
-
-            //mendapatkan data user untuk pengecekan
-            let userinfoGet = await User_info.findOne({
-                where: {
-                    slug: req.params.slug,
-                    deletedAt: null
-                },
-                transaction
-            })
-
-            //cek apakah data user ada
-            if (!userinfoGet) {
-                await transaction.rollback();
-                res.status(404).json(response(404, 'data not found'));
-                return;
+            // Mengambil user_id dari user yang sedang login
+            const userId = req.user?.user_akun_id;
+    
+            if (!userId) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'User ID tidak tersedia'
+                });
             }
-
-            const models = Object.keys(sequelize.models);
-
-            // Array untuk menyimpan promise update untuk setiap model terkait
-            const updatePromises = [];
-
-            // Lakukan soft delete pada semua model terkait
-            models.forEach(async modelName => {
-                const Model = sequelize.models[modelName];
-                if (Model.associations && Model.associations.User_info && Model.rawAttributes.deletedAt) {
-                    updatePromises.push(
-                        Model.update({ deletedAt: new Date() }, {
-                            where: {
-                                userinfo_id: userinfoGet.id
-                            },
-                            transaction
-                        })
-                    );
+    
+            // Mengambil id penghargaan dari parameter URL
+            const penghargaanId = req.params.id;
+    
+            // Cek apakah data penghargaan ada
+            let userPenghargaan = await User_penghargaan.findOne({
+                where: {
+                    id: penghargaanId,
+                    user_id: userId,
+                    deletedAt: null
                 }
             });
-
-            // Jalankan semua promise update secara bersamaan
-            await Promise.all(updatePromises);
-
-            await User_info.update({ deletedAt: new Date() }, {
+    
+            if (!userPenghargaan) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User data Penghargaan tidak ditemukan'
+                });
+            }
+    
+            // Soft delete data Penghargaan
+            await User_penghargaan.destroy({
                 where: {
-                    slug: req.params.slug
+                    id: penghargaanId,
+                    user_id: userId
                 },
                 transaction
             });
-
+    
+            // Commit transaksi
             await transaction.commit();
-
-            //response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success delete user'));
-
+    
+            // Mengirimkan response sukses
+            res.status(200).json({
+                status: 200,
+                message: 'User data penghargaan berhasil dihapus'
+            });
+    
         } catch (err) {
-            // Rollback transaksi jika terjadi kesalahan
+            // Rollback jika terjadi kesalahan
             await transaction.rollback();
-            res.status(500).json(response(500, 'Internal server error', err));
             console.log(err);
+            res.status(500).json({
+                status: 500,
+                message: 'Terjadi kesalahan pada server',
+                error: err.message
+            });
         }
     },
 

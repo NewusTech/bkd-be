@@ -22,13 +22,13 @@ module.exports = {
         type: Sequelize.DATE,
       },
       jenis_kelamin: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
       },
       pekerjaan: {
         type: Sequelize.STRING,
       },
       status: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
       },
       createdAt: {
         allowNull: false,

@@ -141,7 +141,7 @@ module.exports = {
                     createdAt: user.createdAt,
                     updatedAt: user.updatedAt,
                     Role: relatedRole ? relatedRole.name : null,
-                    Bidang: relatedBidang ? relatedBidang.nama : null
+                    // Bidang: relatedBidang ? relatedBidang.nama : null
                 };
             });
     
