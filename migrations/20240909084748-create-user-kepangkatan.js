@@ -12,8 +12,8 @@ module.exports = {
       user_id: {
         type: Sequelize.INTEGER,
       },
-      jenjang_kepangkatan: {
-        type: Sequelize.STRING
+      pangkat_id: {
+        type: Sequelize.INTEGER
       },
       tmt: {
         type: Sequelize.DATE,
