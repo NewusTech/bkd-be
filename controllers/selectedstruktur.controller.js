@@ -23,6 +23,18 @@ module.exports = {
     //membuat selected struktur bkd
     createSelectedStruktur: async (req, res) => {
         try {
+
+            // Hitung jumlah data yang ada di tabel Selected_struktur
+            const selectedStrukturCount = await Selected_struktur.count();
+
+            // Jika jumlah data sudah 18, kirimkan error
+            if (selectedStrukturCount >= 18) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'Maksimal 18 data yang diperbolehkan'
+                });
+            }
+
             let selectedstrukturCreateObj = {
                 bkdstruktur_id: req.body.bkdstruktur_id,
             };
