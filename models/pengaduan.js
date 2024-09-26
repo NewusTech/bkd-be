@@ -14,27 +14,22 @@ module.exports = (sequelize, DataTypes) => {
       Pengaduan.belongsTo(models.User_info, {
         foreignKey: 'userinfo_id',
       });
-      Pengaduan.belongsTo(models.User_info, {
-        foreignKey: 'admin_id',
-        as: 'Admin'
-      });
-      Pengaduan.belongsTo(models.User_info, {
-        foreignKey: 'updated_by',
-        as: 'Adminupdate'
-      });
+      // Pengaduan.belongsTo(models.User_info, {
+      //   foreignKey: 'updated_by',
+      //   as: 'Adminupdate'
+      // });
     }
   }
   Pengaduan.init({
     bidang_id: DataTypes.INTEGER,
     layanan_id: DataTypes.INTEGER,
     userinfo_id: DataTypes.INTEGER,
-    admin_id: DataTypes.INTEGER,
     status: DataTypes.SMALLINT,
     isi_pengaduan: DataTypes.STRING,
     judul_pengaduan: DataTypes.STRING,
     jawaban: DataTypes.STRING,
     image: DataTypes.STRING,
-    updated_by: DataTypes.INTEGER
+    // updated_by: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'Pengaduan',
