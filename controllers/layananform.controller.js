@@ -12,7 +12,7 @@ module.exports = {
     // LAYANAN FORM
 
     //membuat layananform
-    createlayananform: async (req, res) => {
+    createLayananForm: async (req, res) => {
         try {
 
             //membuat schema untuk validasi
@@ -90,7 +90,7 @@ module.exports = {
         }
     },
 
-    createmultilayananform: async (req, res) => {
+    createMultiLayananForm: async (req, res) => {
         const transaction = await sequelize.transaction();
 
         try {
@@ -170,7 +170,7 @@ module.exports = {
     },
 
     //mendapatkan semua form berdasarkan layanan
-    getformbylayanan: async (req, res) => {
+    getFormByLayanan: async (req, res) => {
         try {
             const { layananid } = req.params;
     
@@ -180,7 +180,7 @@ module.exports = {
                 }
             };
     
-            if (data.role === 'User') {
+            if (req.user.role === 'User') {
                 formWhereCondition.status = true;
             }
     
@@ -189,7 +189,7 @@ module.exports = {
                     id: layananid,
                     deletedAt: null
                 },
-                attributes: ['name', 'slug', 'desc', 'image'],
+                attributes: ['nama', 'slug', 'desc'],
                 include: [{
                     model: Layanan_form,
                     attributes: { exclude: ['createdAt', 'updatedAt'] },
@@ -211,7 +211,7 @@ module.exports = {
     },
 
     //mendapatkan semua data layananform
-    getlayananform: async (req, res) => {
+    getLayananForm: async (req, res) => {
         try {
             //mendapatkan data semua layananform
             let layananformGets = await Layanan_form.findAll({});
@@ -226,20 +226,26 @@ module.exports = {
     },
 
     //mendapatkan data layananform berdasarkan id
-    getlayananformById: async (req, res) => {
+    getLayananFormById: async (req, res) => {
         try {
             //mendapatkan data layananform berdasarkan id
-            let layananformGet = await Layananform.findOne({
+            let layananformGet = await Layanan_form.findOne({
                 where: {
                     id: req.params.id
                 },
             });
+
+            if (req.user.role !== 'Super Admin') {
+                return res.status(403).send("Unauthorized: Insufficient role");
+            }
+            
 
             //cek jika layananform tidak ada
             if (!layananformGet) {
                 res.status(404).json(response(404, 'layananform not found'));
                 return;
             }
+            
 
             //response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success get layananform by id', layananformGet));
@@ -250,10 +256,10 @@ module.exports = {
     },
 
     //mengupdate layananform berdasarkan id
-    updatelayananform: async (req, res) => {
+    updateLayananForm: async (req, res) => {
         try {
             //mendapatkan data layananform untuk pengecekan
-            let layananformGet = await Layananform.findOne({
+            let layananformGet = await Layanan_form.findOne({
                 where: {
                     id: req.params.id
                 }
@@ -331,14 +337,14 @@ module.exports = {
             }
 
             //update layananform
-            await Layananform.update(layananformUpdateObj, {
+            await Layanan_form.update(layananformUpdateObj, {
                 where: {
                     id: req.params.id,
                 }
             })
 
             //mendapatkan data layananform setelah update
-            let layananformAfterUpdate = await Layananform.findOne({
+            let layananformAfterUpdate = await Layanan_form.findOne({
                 where: {
                     id: req.params.id,
                 }
@@ -353,7 +359,7 @@ module.exports = {
         }
     },
 
-    updatemultilayananform: async (req, res) => {
+    updateMultiLayananForm: async (req, res) => {
         const transaction = await sequelize.transaction();
     
         try {
@@ -394,7 +400,7 @@ module.exports = {
             // Validate and process each object in the input array
             for (let input of req.body) {
                 // Check if the layananform exists
-                let layananformGet = await Layananform.findOne({
+                let layananformGet = await Layanan_form.findOne({
                     where: {
                         id: input.id
                     }
@@ -426,7 +432,7 @@ module.exports = {
                 }
     
                 // Update layananform in the database
-                await Layananform.update(layananformUpdateObj, {
+                await Layanan_form.update(layananformUpdateObj, {
                     where: {
                         id: input.id,
                     },
@@ -434,7 +440,7 @@ module.exports = {
                 });
     
                 // Get the updated layananform
-                let layananformAfterUpdate = await Layananform.findOne({
+                let layananformAfterUpdate = await Layanan_form.findOne({
                     where: {
                         id: input.id,
                     }
@@ -461,11 +467,11 @@ module.exports = {
     
 
     //menghapus layananform berdasarkan id
-    deletelayananform: async (req, res) => {
+    deleteLayananForm: async (req, res) => {
         try {
 
             //mendapatkan data layananform untuk pengecekan
-            let layananformGet = await Layananform.findOne({
+            let layananformGet = await Layanan_form.findOne({
                 where: {
                     id: req.params.id
                 }
@@ -477,7 +483,7 @@ module.exports = {
                 return;
             }
 
-            await Layananform.destroy({
+            await Layanan_form.destroy({
                 where: {
                     id: req.params.id,
                 }
@@ -498,7 +504,7 @@ module.exports = {
     // LAYANAN DOCS
 
     //membuat layanandocs
-    createlayanandocs: async (req, res) => {
+    createLayananDocs: async (req, res) => {
         try {
 
             //membuat schema untuk validasi
@@ -543,7 +549,7 @@ module.exports = {
             }
 
             //buat layanandocs
-            let layanandocsCreate = await Layananform.create(layanandocsCreateObj);
+            let layanandocsCreate = await Layanan_form.create(layanandocsCreateObj);
 
             //response menggunakan helper response.docsatter
             res.status(201).json(response(201, 'success create layanandocs', layanandocsCreate));
@@ -553,7 +559,7 @@ module.exports = {
         }
     },
 
-    createmultilayanandocs: async (req, res) => {
+    createMultiLayananDocs: async (req, res) => {
         const transaction = await sequelize.transaction();
 
         try {
@@ -599,7 +605,7 @@ module.exports = {
                 }
 
                 // Create layananform in the database
-                let layananformCreate = await Layananform.create(layananformCreateObj, { transaction });
+                let layananformCreate = await Layanan_form.create(layananformCreateObj, { transaction });
                 createdForms.push(layananformCreate);
             }
 
@@ -620,7 +626,7 @@ module.exports = {
     },
 
     //mendapatkan semua form docs berdasarkan layanan
-    getdocsbylayanan: async (req, res) => {
+    getDocsByLayanan: async (req, res) => {
         try {
             const { layananid } = req.params;
 
@@ -628,7 +634,7 @@ module.exports = {
                 tipedata: "file"
             };
     
-            if (data.role === 'User') {
+            if (req.user.role === 'User') {
                 formWhereCondition.status = true;
             }
 
@@ -636,14 +642,14 @@ module.exports = {
                 where: {
                     id: layananid
                 },
-                attributes: ['name', 'slug', 'desc', 'image'],
+                attributes: ['name', 'slug', 'desc'],
                 include: [{
-                    model: Layananform,
+                    model: Layanan_form,
                     attributes: { exclude: ['createdAt', 'updatedAt'] },
                     where: formWhereCondition,
                     required: false,
                 }],
-                order: [[{ model: Layananform }, 'id', 'ASC']]
+                order: [[{ model: Layanan_form }, 'id', 'ASC']]
             });
 
             if (!layananData) {
@@ -659,10 +665,10 @@ module.exports = {
     },
 
     //mengupdate layanandocs berdasarkan id
-    updatelayanandocs: async (req, res) => {
+    updateLayananDocs: async (req, res) => {
         try {
             //mendapatkan data layanandocs untuk pengecekan
-            let layanandocsGet = await Layananform.findOne({
+            let layanandocsGet = await Layanan_form.findOne({
                 where: {
                     id: req.params.id
                 }
@@ -716,14 +722,14 @@ module.exports = {
             }
 
             //update layanandocs
-            await Layananform.update(layanandocsUpdateObj, {
+            await Layanan_form.update(layanandocsUpdateObj, {
                 where: {
                     id: req.params.id,
                 }
             })
 
             //mendapatkan data layanandocs setelah update
-            let layanandocsAfterUpdate = await Layananform.findOne({
+            let layanandocsAfterUpdate = await Layanan_form.findOne({
                 where: {
                     id: req.params.id,
                 }
@@ -738,7 +744,7 @@ module.exports = {
         }
     },
 
-    updatemultilayanandocs: async (req, res) => {
+    updateMultiLayananDocs: async (req, res) => {
         const transaction = await sequelize.transaction(); // Assuming sequelize is properly configured
     
         try {
@@ -764,7 +770,7 @@ module.exports = {
             // Validate and process each object in the input array
             for (let input of req.body) {
                 // Check if the layanandocs exists
-                let layanandocsGet = await Layananform.findOne({
+                let layanandocsGet = await Layanan_form.findOne({
                     where: {
                         id: input.id
                     }
@@ -796,7 +802,7 @@ module.exports = {
                 }
     
                 // Update layanandocs in the database
-                await Layananform.update(layanandocsUpdateObj, {
+                await Layanan_form.update(layanandocsUpdateObj, {
                     where: {
                         id: input.id,
                     },
@@ -804,7 +810,7 @@ module.exports = {
                 });
     
                 // Get the updated layanandocs
-                let layanandocsAfterUpdate = await Layananform.findOne({
+                let layanandocsAfterUpdate = await Layanan_form.findOne({
                     where: {
                         id: input.id,
                     }

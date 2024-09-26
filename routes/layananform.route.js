@@ -6,25 +6,25 @@ const express = require('express');
 const route = express.Router();
 
 //get from by layanan
-route.get('/user/layanan/form/:layananid', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin', 'User'])], layananformController.getformbylayanan); 
+route.get('/user/layanan/form/:layananid', [mid.checkRolesAndLogout(['Super Admin', 'User'])], layananformController.getFormByLayanan); 
 
-route.post('/user/layananform/create', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], layananformController.createlayananform);
-route.post('/user/layananform/createmulti', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], layananformController.createmultilayananform);
-route.put('/user/layananform/update/:id', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], layananformController.updatelayananform); 
-route.put('/user/layananform/updatemulti', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], layananformController.updatemultilayananform); 
-route.delete('/user/layananform/delete/:id', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], layananformController.deletelayananform);
+route.post('/user/layanan/form/create', [mid.checkRolesAndLogout(['Super Admin'])], layananformController.createLayananForm);
+route.post('/user/layanan/form/createmulti', [mid.checkRolesAndLogout(['Super Admin'])], layananformController.createMultiLayananForm);
+route.put('/user/layanan/form/update/:id', [mid.checkRolesAndLogout([ 'Super Admin'])], layananformController.updateLayananForm); 
+route.put('/user/layanan/form/updatemulti', [mid.checkRolesAndLogout(['Super Admin'])], layananformController.updateMultiLayananForm); 
+route.delete('/user/layanan/form/delete/:id', [mid.checkRolesAndLogout(['Super Admin'])], layananformController.deleteLayananForm);
 
 //get from docs by layanan
-route.get('/user/layanan/docs/:layananid', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin', 'User'])], layananformController.getdocsbylayanan); 
+route.get('/user/layanan/docs/:layananid', [mid.checkRolesAndLogout(['Super Admin', 'User'])], layananformController.getDocsByLayanan); 
 
-route.post('/user/layanandocs/create', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], layananformController.createlayanandocs);
-route.post('/user/layanandocs/createmulti', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], layananformController.createmultilayanandocs);
-route.put('/user/layanandocs/update/:id', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], layananformController.updatelayanandocs); 
-route.put('/user/layanandocs/updatemulti', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], layananformController.updatemultilayanandocs); 
+route.post('/user/layanan/docs/create', [mid.checkRolesAndLogout(['Super Admin'])], layananformController.createLayananDocs);
+route.post('/user/layanan/docs/createmulti', [mid.checkRolesAndLogout(['Super Admin'])], layananformController.createMultiLayananDocs);
+route.put('/user/layanan/docs/update/:id', [mid.checkRolesAndLogout(['Super Admin'])], layananformController.updateLayananDocs); 
+route.put('/user/layanan/docs/updatemulti', [mid.checkRolesAndLogout(['Super Admin'])], layananformController.updateMultiLayananDocs); 
 
 //get semua from --> gak bakal kepake
-route.get('/user/layananform/get', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], layananformController.getlayananform); 
+route.get('/user/layanan/formulir/get', [mid.checkRolesAndLogout(['Super Admin'])], layananformController.getLayananForm); 
 //get form by id --> gak bakal kepake
-route.get('/user/layananform/get/:id', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], layananformController.getlayananformById); 
+route.get('/user/layanan/formulir/get/:id', [mid.checkRolesAndLogout(['Super Admin', 'User'])], layananformController.getLayananFormById); 
 
 module.exports = route;
