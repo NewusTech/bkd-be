@@ -461,11 +461,11 @@ module.exports = {
                 rt: { type: "string", min: 1, optional: true },
                 rw: { type: "string", min: 1, optional: true },
                 alamat: { type: "string", min: 3, optional: true },
-                agama: { type: "number", optional: true },
+                agama: { type: "string", optional: true },
                 tempat_lahir: { type: "string", min: 2, optional: true },
                 tgl_lahir: { type: "string", pattern: /^\d{4}-\d{2}-\d{2}$/, optional: true },
-                gender: { type: "number", optional: true },
-                goldar: { type: "number", optional: true },
+                gender: { type: "string", optional: true },
+                goldar: { type: "string", optional: true },
                 image_profile: { type: "string", optional: true }
             };
     
@@ -500,11 +500,11 @@ module.exports = {
                 rt: req.body.rt,
                 rw: req.body.rw,
                 alamat: req.body.alamat,
-                agama: req.body.agama ? Number(req.body.agama) : undefined,
+                agama: req.body.agama,
                 tempat_lahir: req.body.tempat_lahir,
                 tgl_lahir: req.body.tgl_lahir,
-                gender: req.body.gender ? Number(req.body.gender) : undefined,
-                goldar: req.body.goldar ? Number(req.body.goldar) : undefined,
+                gender: req.body.gender,
+                goldar: req.body.goldar,
                 image_profile: req.file ? imageKey : userinfoGet.image_profile
             };
     
