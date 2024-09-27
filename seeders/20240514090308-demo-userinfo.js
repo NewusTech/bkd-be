@@ -26,7 +26,43 @@ module.exports = {
         slug: "superadmin-20240620041615213",
         createdAt: new Date(),
         updatedAt: new Date()
-      }
+      },
+      {
+        name: 'Admin Verifikasi',
+        nip: 'adminverifikasi',
+        slug: "adminverifikasi-20240620041615213",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Kepala Bidang Mutasi',
+        nip: 'kepalabidangmutasi',
+        slug: "kepalabidangmutasi-20240620041615213",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Sekretaris Dinas',
+        nip: 'sekdin',
+        slug: "sekretarisdinas-20240620041615213",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Kepala Dinas',
+        nip: 'kadis',
+        slug: "kepaladinas-20240620041615213",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Sekretaris Daerah',
+        nip: 'sekda',
+        slug: "sekretarisdaerah-20240620041615213",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+
     ];
 
     await queryInterface.bulkInsert('User_infos', User_infos, {});

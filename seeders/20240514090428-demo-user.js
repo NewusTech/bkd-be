@@ -21,6 +21,51 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date()
       },
+      {
+        userinfo_id: 3,
+        slug: "adminverifikasi-20240620041615213",
+        password: passwordHash.generate('123456'),
+        bidang_id: 1,
+        role_id: 3,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        userinfo_id: 3,
+        slug: "kepalabidangmutasi-20240620041615213",
+        password: passwordHash.generate('123456'),
+        bidang_id: 1,
+        role_id: 4,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        userinfo_id: 4,
+        slug: "sekretarisdinas-20240620041615213",
+        password: passwordHash.generate('123456'),
+        bidang_id: null,
+        role_id: 5,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        userinfo_id: 5,
+        slug: "kepaladinas-20240620041615213",
+        password: passwordHash.generate('123456'),
+        bidang_id: null,
+        role_id: 6,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        userinfo_id: 5,
+        slug: "sekretarisdaerah-20240620041615213",
+        password: passwordHash.generate('123456'),
+        bidang_id: null,
+        role_id: 7,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
     ];
 
     await queryInterface.bulkInsert('Users', users, {});
