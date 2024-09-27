@@ -10,10 +10,10 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-route.post('/user/layananfile/create/:idlayanan', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], upload.single('file'), layananfile.input);
-route.get('/user/layananfile/get/:idlayanan', layananfile.get);
-route.get('/user/layananfile/get/id/:id', layananfile.getbyid);
-route.delete('/user/layananfile/delete/:idlayanan', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], layananfile.delete);
-route.put('/user/layananfile/update/:id', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], upload.single('file'), layananfile.update);
+route.post('/user/layanan/file/create/:idlayanan', [mid.checkRolesAndLogout(['Super Admin'])], upload.single('file'), layananfile.createLayananFile);
+route.get('/user/layanan/file/get/:idlayanan', layananfile.getLayananFile);
+route.get('/user/layanan/file/:id/get', layananfile.getLayananFileById);
+route.delete('/user/layanan/file/delete/:idlayanan', [mid.checkRolesAndLogout(['Super Admin'])], layananfile.deleteLayananFile);
+route.put('/user/layanan/file/update/:id', [mid.checkRolesAndLogout(['Super Admin'])], upload.single('file'), layananfile.updateLayananFile);
 
 module.exports = route;
