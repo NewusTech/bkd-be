@@ -300,7 +300,7 @@ module.exports = {
 
             models.forEach(async modelName => {
                 const Model = sequelize.models[modelName];
-                if (Model.associations && Model.associations.Instansi && Model.rawAttributes.deletedAt) {
+                if (Model.associations && Model.associations.Bidang && Model.rawAttributes.deletedAt) {
                     updatePromises.push(
                         Model.update({ deletedAt: new Date() }, {
                             where: {
