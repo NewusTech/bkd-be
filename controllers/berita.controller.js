@@ -68,7 +68,8 @@ module.exports = {
             //mendapatkan data data untuk pengecekan
             let dataGets = await Beritas.findOne({
                 where: {
-                    slug: beritaCreateObj.slug
+                    slug: beritaCreateObj.slug,
+                    deletedAt: null,
                 }
             });
 
@@ -222,11 +223,15 @@ module.exports = {
     
             //buat object berita
             let beritaUpdateObj = {
-                title: req.body.title || beritaGet.title,
-                slug: req.body.title ? slugify(req.body.title, { lower: true }) : beritaGet.slug,
-                desc: req.body.desc || beritaGet.desc,
-                image: req.file ? imageKey : beritaGet.image,
+                desc: req.body.desc || beritaGet.desc, // jika desc tidak diisi, gunakan desc yang lama
+                image: req.file ? imageKey : beritaGet.image, // jika tidak ada file baru, gunakan image yang lama
             };
+    
+            // hanya update slug jika title baru ada
+            if (req.body.title) {
+                beritaUpdateObj.title = req.body.title;
+                beritaUpdateObj.slug = slugify(req.body.title, { lower: true });
+            }
     
             //validasi menggunakan module fastest-validator
             const validate = v.validate(beritaUpdateObj, schema);
@@ -245,7 +250,7 @@ module.exports = {
             //mendapatkan data berita setelah update
             let beritaAfterUpdate = await Beritas.findOne({
                 where: {
-                    slug: req.params.slug,
+                    slug: beritaUpdateObj.slug || req.params.slug, // gunakan slug baru jika ada, atau slug lama jika tidak diubah
                 }
             });
     
@@ -258,7 +263,6 @@ module.exports = {
         }
     },
     
-
     //menghapus berita berdasarkan slug
     deleteBerita: async (req, res) => {
         try {
