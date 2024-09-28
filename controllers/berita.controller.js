@@ -186,25 +186,26 @@ module.exports = {
                     slug: req.params.slug,
                     deletedAt: null
                 }
-            })
-
+            });
+    
             //cek apakah data berita ada
             if (!beritaGet) {
                 res.status(404).json(response(404, 'berita not found'));
                 return;
             }
-
+    
             //membuat schema untuk validasi
             const schema = {
                 title: { type: "string", min: 3, optional: true },
                 desc: { type: "string", min: 3, optional: true },
                 image: { type: "string", optional: true },
-            }
-
+            };
+    
+            let imageKey;
             if (req.file) {
                 const timestamp = new Date().getTime();
                 const uniqueFileName = `${timestamp}-${req.file.originalname}`;
-
+    
                 const uploadParams = {
                     Bucket: process.env.AWS_BUCKET,
                     Key: `${process.env.PATH_AWS}/berita/${uniqueFileName}`,
@@ -212,51 +213,51 @@ module.exports = {
                     ACL: 'public-read',
                     ContentType: req.file.mimetype
                 };
-
+    
                 const command = new PutObjectCommand(uploadParams);
-
                 await s3Client.send(command);
-
+    
                 imageKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
             }
-
+    
             //buat object berita
             let beritaUpdateObj = {
-                title: req.body.title,
-                slug: req.body.title ? slugify(req.body.title, { lower: true }) : null,
-                desc: req.body.desc,
+                title: req.body.title || beritaGet.title,
+                slug: req.body.title ? slugify(req.body.title, { lower: true }) : beritaGet.slug,
+                desc: req.body.desc || beritaGet.desc,
                 image: req.file ? imageKey : beritaGet.image,
-            }
-
+            };
+    
             //validasi menggunakan module fastest-validator
             const validate = v.validate(beritaUpdateObj, schema);
             if (validate.length > 0) {
                 res.status(400).json(response(400, 'validation failed', validate));
                 return;
             }
-
+    
             //update berita
             await Beritas.update(beritaUpdateObj, {
                 where: {
                     slug: req.params.slug,
                 }
-            })
-
+            });
+    
             //mendapatkan data berita setelah update
             let beritaAfterUpdate = await Beritas.findOne({
                 where: {
                     slug: req.params.slug,
                 }
-            })
-
+            });
+    
             //response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success update berita', beritaAfterUpdate));
-
+    
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
     },
+    
 
     //menghapus berita berdasarkan slug
     deleteBerita: async (req, res) => {
