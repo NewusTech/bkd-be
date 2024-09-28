@@ -48,7 +48,8 @@ module.exports = {
             }
             let dataGets = await Bidang.findOne({
                 where: {
-                    slug: bidangCreateObj.slug
+                    slug: bidangCreateObj.slug,
+                    deleted: null
                 }
             }
             );
@@ -171,7 +172,7 @@ module.exports = {
     
 
     //mendapatkan data bidang berdasarkan slug
-     getBidangBySlug: async (req, res) => {
+    getBidangBySlug: async (req, res) => {
         try {
             const showDeleted = req.query.showDeleted ?? null;
             const whereCondition = { slug: req.params.slug };
