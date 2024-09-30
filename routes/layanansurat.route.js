@@ -1,18 +1,18 @@
-const suratController = require('../controllers/surat.controller');
+const layanansuratController = require('../controllers/layanansurat.controller');
 
 const mid = require('../middlewares/auth.middleware');
 
 const express = require('express');
 const route = express.Router();
 
-route.get('/user/detailsurat/:idlayanan', [mid.checkRolesAndLogout(['Admin Instansi', 'Super Admin', 'User', 'Admin Layanan'])], suratController.get); 
+route.get('/user/surat/detail/:idlayanan', [mid.checkRolesAndLogout(['Super Admin', 'User'])], layanansuratController.get); 
 
 //untuk admin get template pdf
-route.get('/user/surat/:idlayanan', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], suratController.getsurat); 
+route.get('/user/surat/:idlayanan', [mid.checkRolesAndLogout(['Super Admin'])], layanansuratController.getSurat); 
 
 //untuk print pdf berserta permohonan user
-route.get('/user/surat/:idlayanan/:idforminput', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin', 'User'])], suratController.getsurat); 
+route.get('/user/surat/:idlayanan/:idforminput', [mid.checkRolesAndLogout(['Super Admin', 'User'])], layanansuratController.getSurat); 
 
-route.put('/user/editsurat/:idlayanan', [mid.checkRolesAndLogout(['Admin Instansi', 'Super Admin', 'User', 'Admin Layanan'])], suratController.editinfosurat); 
+route.put('/user/surat/edit/:idlayanan', [mid.checkRolesAndLogout([ 'Super Admin', 'User',])], layanansuratController.editInfoSurat); 
 
 module.exports = route;

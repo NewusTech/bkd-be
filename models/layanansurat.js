@@ -12,13 +12,13 @@ module.exports = (sequelize, DataTypes) => {
   }
   Layanan_surat.init({
     layanan_id: DataTypes.INTEGER,
-    header: DataTypes.STRING,
-    body: DataTypes.STRING,
-    footer: DataTypes.STRING,
+    header: DataTypes.TEXT,
+    body: DataTypes.TEXT,
+    footer: DataTypes.TEXT,
     nomor: DataTypes.STRING,
-    perihal: DataTypes.STRING,
-    catatan: DataTypes.STRING,
-    tembusan: DataTypes.STRING,
+    perihal: DataTypes.TEXT,
+    catatan: DataTypes.TEXT,
+    tembusan: DataTypes.TEXT,
   }, {
     sequelize,
     modelName: 'Layanan_surat',

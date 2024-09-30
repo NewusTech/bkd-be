@@ -14,11 +14,11 @@ module.exports = {
                 where: {
                     id: req.params.idlayanan
                 },
-                attributes: ['id', 'nama'],
+                attributes: ['id', 'name'],
                 include: [
                     {
                         model: Bidang,
-                        attributes: ['id', 'nama', 'alamat', 'pj', 'nip_pj'],
+                        attributes: ['id', 'name', 'alamat', 'image', 'pj', 'nip_pj'],
                     },
                     {
                         model: Layanan_surat
@@ -26,7 +26,7 @@ module.exports = {
                 ]
             });
             if (!layanan) {
-                return res.status(404).send('Data surat tidak ditemukan');
+                return res.status(404).send('Data tidak ditemukan');
             }
 
             res.status(200).json(response(200, 'success get data', layanan));
@@ -38,7 +38,7 @@ module.exports = {
     },
 
     //untuk admin
-    getsurat: async (req, res) => {
+    getSurat: async (req, res) => {
         try {
             let layanan = await Layanan.findOne({
                 where: {
@@ -48,7 +48,7 @@ module.exports = {
                 include: [
                     {
                         model: Bidang,
-                        attributes: ['id', 'nama', 'alamat', 'pj', 'nip_pj'],
+                        attributes: ['id', 'nama', 'desc', 'pj', 'nip_pj'],
                     },
                     {
                         model: Layanan_surat,
@@ -69,7 +69,7 @@ module.exports = {
                     include: [
                         {
                             model: User_info,
-                            attributes: ['id', 'nama', 'alamat', 'nik', 'telepon', 'tempat_lahir', 'tgl_lahir'],
+                            attributes: ['id', 'name', 'alamat', 'nip', 'telepon', 'tempat_lahir', 'tgl_lahir'],
                         },
                     ]
                 });
@@ -80,31 +80,31 @@ module.exports = {
             }
 
             // Read HTML template
-            const templatePath = path.resolve(__dirname, '../views/templatesurat.html');
+            const templatePath = path.resolve(__dirname, '../views/template.html');
             let htmlContent = fs.readFileSync(templatePath, 'utf8');
 
             // Replace placeholders with actual data
-            const bidangImage = layanan.Bidang.image || '';
+            // const instansiImage = layanan.Instansi.image || '';
             const tanggalInfo =  new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-            htmlContent = htmlContent.replace('{{bidangImage}}', bidangImage);
+            // htmlContent = htmlContent.replace('{{instansiImage}}', instansiImage);
             htmlContent = htmlContent.replace('{{bidangNama}}', layanan.Bidang.nama ?? '');
-            htmlContent = htmlContent.replace('{{bidangAlamat}}', layanan.Bidang.alamat ?? '');
-            htmlContent = htmlContent.replace('{{layananHeader}}', layanan.Layanan_surat?.header ?? '');
-            htmlContent = htmlContent.replace('{{layananBody}}', layanan.Layanan_surat?.body ?? '');
-            htmlContent = htmlContent.replace('{{layananFooter}}', layanan.Layanan_surat?.footer ?? '');
-            htmlContent = htmlContent.replace('{{layanannomor}}', layanan.Layanan_surat?.nomor ?? '');
-            htmlContent = htmlContent.replace('{{layanantembusan}}', layanan.Layanan_surat?.tembusan ?`Tembusan =  ${layanan.Layanan_surat?.tembusan}` : '');
-            htmlContent = htmlContent.replace('{{layananperihal}}', layanan.Layanan_surat?.perihal ?? '');
-            htmlContent = htmlContent.replace('{{layanancatatan}}', layanan.Layanan_surat?.catatan ? `Catatan =  ${layanan.Layanan_surat?.catatan}` : '');
+            // htmlContent = htmlContent.replace('{{instansiAlamat}}', layanan.Instansi.alamat ?? '');
+            htmlContent = htmlContent.replace('{{layananHeader}}', layanan.Layanansurat?.header ?? '');
+            htmlContent = htmlContent.replace('{{layananBody}}', layanan.Layanansurat?.body ?? '');
+            htmlContent = htmlContent.replace('{{layananFooter}}', layanan.Layanansurat?.footer ?? '');
+            htmlContent = htmlContent.replace('{{layanannomor}}', layanan.Layanansurat?.nomor ?? '');
+            htmlContent = htmlContent.replace('{{layanantembusan}}', layanan.Layanansurat?.tembusan ?`Tembusan =  ${layanan.Layanansurat?.tembusan}` : '');
+            htmlContent = htmlContent.replace('{{layananperihal}}', layanan.Layanansurat?.perihal ?? '');
+            htmlContent = htmlContent.replace('{{layanancatatan}}', layanan.Layanansurat?.catatan ? `Catatan =  ${layanan.Layanansurat?.catatan}` : '');
             htmlContent = htmlContent.replace('{{tanggalInfo}}', tanggalInfo);
 
-            htmlContent = htmlContent.replace('{{nama}}', getdatauser?.User_info?.nama ?? '');
+            htmlContent = htmlContent.replace('{{nama}}', getdatauser?.User_info?.name ?? '');
             htmlContent = htmlContent.replace('{{nik}}', getdatauser?.User_info?.nik ?? '');
             htmlContent = htmlContent.replace('{{tempat}}', getdatauser?.User_info?.tempat_lahir ?? '');
-            htmlContent = htmlContent.replace('{{tgl_lahir}}', getdatauser?.User_info?.tgl_lahir ? new Date(getdatauser?.User_info?.tgl_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '');
+            htmlContent = htmlContent.replace('{{tgl_lahir}}', getdatauser?.User_info?.tgl_lahir ? new Date(getdatauser?.Userinfo?.tgl_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '');
             htmlContent = htmlContent.replace('{{alamat}}', getdatauser?.User_info?.alamat ?? '');
-            htmlContent = htmlContent.replace('{{nama_pj}}', layanan?.Bidang?.pj ?? 'Fullan');
-            htmlContent = htmlContent.replace('{{nip_pj}}', layanan?.Bidang?.nip_pj ?? '1234567890');
+            // htmlContent = htmlContent.replace('{{nama_pj}}', layanan?.Instansi?.pj ?? 'Fullan');
+            // htmlContent = htmlContent.replace('{{nip_pj}}', layanan?.Instansi?.nip_pj ?? '1234567890');
 
             // Launch Puppeteer with increased timeout
             const browser = await puppeteer.launch({
@@ -118,9 +118,9 @@ module.exports = {
             await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
             // If an image URL is provided, wait for it to load
-            if (bidangImage) {
-                await page.waitForSelector('img.logo', { timeout: 60000 });
-            }
+            // if (instansiImage) {
+            //     await page.waitForSelector('img.logo', { timeout: 60000 });
+            // }
 
             // Generate PDF with 3 cm margins
             const pdfBuffer = await page.pdf({
@@ -150,7 +150,7 @@ module.exports = {
         }
     },
 
-    editinfosurat: async (req, res) => {
+    editInfoSurat: async (req, res) => {
         const transaction = await sequelize.transaction();
 
         try {
@@ -160,8 +160,8 @@ module.exports = {
                     id: req.params.idlayanan
                 },
                 include: [
-                    { model: Instansi },
-                    { model: Layanansurat }
+                    { model: Bidang },
+                    { model: Layanan_surat }
                 ],
                 transaction
             });
@@ -174,8 +174,8 @@ module.exports = {
 
             // membuat schema untuk validasi
             const schema = {
-                instansi_pj: { type: "string", optional: true },
-                nip_pj: { type: "string", optional: true },
+                // instansi_pj: { type: "string", optional: true },
+                // nip_pj: { type: "string", optional: true },
                 header: { type: "string", optional: true },
                 body: { type: "string", optional: true },
                 footer: { type: "string", optional: true },
@@ -187,8 +187,8 @@ module.exports = {
 
             // buat object layanan
             let layananUpdateObj = {
-                instansi_pj: req.body.instansi_pj,
-                nip_pj: req.body.nip_pj,
+                // instansi_pj: req.body.instansi_pj,
+                // nip_pj: req.body.nip_pj,
                 header: req.body.header,
                 body: req.body.body,
                 footer: req.body.footer,
@@ -205,15 +205,15 @@ module.exports = {
                 return res.status(400).json(response(400, 'validation failed', validate));
             }
 
-            // update instansi
-            if (layananUpdateObj.instansi_pj) {
-                await Instansi.update(
+            // update bidang
+            if (layananUpdateObj.bidang_pj) {
+                await Bidang.update(
                     {
-                        pj: layananUpdateObj.instansi_pj,
+                        pj: layananUpdateObj.bidang_pj,
                         nip_pj: layananUpdateObj.nip_pj
                     },
                     {
-                        where: { id: layananGet.Instansi.id },
+                        where: { id: layananGet.Bidang.id },
                         transaction
                     });
             }
@@ -229,14 +229,14 @@ module.exports = {
                 if (layananUpdateObj.tembusan) layanansuratUpdateObj.tembusan = layananUpdateObj.tembusan;
                 if (layananUpdateObj.perihal) layanansuratUpdateObj.perihal = layananUpdateObj.perihal;
 
-                let [layanansurat, created] = await Layanansurat.findOrCreate({
+                let [layanansurat, created] = await Layanan_surat.findOrCreate({
                     where: { layanan_id: layananGet.id },
                     defaults: layanansuratUpdateObj,
                     transaction
                 });
 
                 if (!created) {
-                    await Layanansurat.update(layanansuratUpdateObj, {
+                    await Layanan_surat.update(layanansuratUpdateObj, {
                         where: { layanan_id: layananGet.id },
                         transaction
                     });
