@@ -42,16 +42,6 @@ module.exports = {
         type: Sequelize.DATE
       }
     });
-
-    await queryInterface.addConstraint('Layanan_surats', {
-      fields: ['layanan_id'],
-      type: 'foreign key',
-      name: 'custom_fkey_layanan_idsurat',
-      references: {
-        table: 'Layanans',
-        field: 'id'
-      }
-    });
   },
 
   //untuk drop table ketika melakukan revert migrations
