@@ -13,13 +13,25 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       header: {
+        type: Sequelize.TEXT
+      },
+      nomor: {
         type: Sequelize.STRING
+      },
+      perihal: {
+        type: Sequelize.TEXT
       },
       body: {
-        type: Sequelize.STRING
+        type: Sequelize.TEXT
+      },
+      catatan: {
+        type: Sequelize.TEXT
+      },
+      tembusan: {
+        type: Sequelize.TEXT
       },
       footer: {
-        type: Sequelize.STRING
+        type: Sequelize.TEXT
       },
       createdAt: {
         allowNull: false,
