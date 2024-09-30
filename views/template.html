@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            /* margin: 3cm; */
+        }
+
+        .header,
+        .footer {
+            text-align: left;
+            margin-bottom: 25px;
+        }
+
+        .content {
+            margin-top: 20px;
+        }
+
+        .logo {
+            margin: 0;
+            width: 65px;
+            height: 65px;
+        }
+
+        .flex {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px; /* Optional: adds some space between the logo and the text */
+        }
+
+        .flex .logo-container {
+            flex: 0 0 auto; /* Only takes as much space as the logo needs */
+        }
+
+        .flex .text-container {
+            flex: 1; /* This makes sure the text container takes up remaining space */
+            text-align: left; /* Align text to the left inside the text container */
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .righttab {
+            text-align: right;
+        }
+
+        .horizontal-line {
+            border-bottom: 3px solid black; /* Adjust the thickness and color as needed */
+            margin: 10px 0; /* Adjust margin as needed */
+        }
+
+        /* Added border style for table */
+        table {
+            font-family: Arial, sans-serif;
+            width: 100%; /* Adjust width as needed */
+        }
+
+        p {
+            font-family: Arial, sans-serif;
+        }
+
+        .nospasi {
+            margin-bottom: 1px;
+            margin-top: 0px;
+            padding: 0px;
+        }
+
+        th, td {
+            text-align: left; /* Align text to the left */
+        }
+
+        th {
+            background-color: #f2f2f2; /* Add background color for table header */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header flex">
+        <div class="logo-container">
+            <img src="{{instansiImage}}" class="logo" />
+        </div>
+        <div class="text-container">
+            <h4 class="center" style="margin-top: 0px; margin-bottom: 2px;">PEMERINTAH KABUPATEN LAMPUNG TIMUR</h4>
+            <h4 class="center" style="margin-top: 0px; margin-bottom: 2px;">{{instansiName}}</h4>
+            <p class="center" style="margin-top: 0px; margin-bottom: 2px;">{{instansiAlamat}}</p>
+        </div>
+    </div>
+    <div class="horizontal-line"></div>
+    <div class="content">
+        <p class="righttab">Lampung Timur, {{tanggalInfo}}</p>
+        <p>{{layananHeader}}</p>
+        <p class="nospasi">Nomor : {{layanannomor}}</p>
+        <p class="nospasi">Perihal : {{layananperihal}}</p>
+        <p>{{layananBody}}</p>
+    </div>
+    <table>
+        <tr>
+            <td style="width: 35%; margin: 0; padding: 0;">Nama</td>
+            <td style="width: 65%; margin: 0; padding: 0;">: {{nama}}</td>
+        </tr>
+        <tr>
+            <td style="width: 35%; margin: 0; padding: 0;">NIK</td>
+            <td style="width: 65%; margin: 0; padding: 0;">: {{nik}}</td>
+        </tr>
+        <tr>
+            <td style="width: 35%; margin: 0; padding: 0;">Tempat / Tanggal Lahir</td>
+            <td style="width: 65%; margin: 0; padding: 0;">: {{tempat}} / {{tgl_lahir}}</td>
+        </tr>
+        <tr>
+            <td style="width: 35%; margin: 0; padding: 0;">Alamat</td>
+            <td style="width: 65%; margin: 0; padding: 0;">: {{alamat}}</td>
+        </tr>
+    </table>
+    <div class="footer">
+        <p>{{layananFooter}}</p>
+    </div>
+    <table>
+        <tr>
+            <td style="width: 50%;"></td>
+            <td style="width: 50%;" class="center">Kepala Dinas</td>
+        </tr>
+        <tr>
+            <td style="width: 50%;"></td>
+            <td style="width: 50%; padding-top: 90px;" class="center">{{nama_pj}}</td>
+        </tr>
+        <tr>
+            <td style="width: 50%;"></td>
+            <td style="width: 50%;" class="center">{{nip_pj}}</td>
+        </tr>
+    </table>
+    <p>{{layanancatatan}}</p>
+    <p>{{layanantembusan}}</p>
+</body>
+
+</html>
