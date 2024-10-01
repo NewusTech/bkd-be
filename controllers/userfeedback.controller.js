@@ -72,7 +72,7 @@ module.exports = {
                 // surveyformnum_id: createdFeedback.id
             }));
     
-            const createdUserFeedback = await Surveyforminput.bulkCreate(updatedDatainput, { transaction });
+            const createdUserFeedback = await User_feedback.bulkCreate(updatedDatainput, { transaction });
     
             await transaction.commit();
             res.status(201).json(response(201, 'Success create', createdUserFeedback));
