@@ -552,7 +552,7 @@ module.exports = {
             let layanandocsCreate = await Layanan_form.create(layanandocsCreateObj);
 
             //response menggunakan helper response.docsatter
-            res.status(201).json(response(201, 'success create layanandocs', layanandocsCreate));
+            res.status(201).json(response(201, 'success create layanan docs', layanandocsCreate));
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
@@ -642,7 +642,7 @@ module.exports = {
                 where: {
                     id: layananid
                 },
-                attributes: ['name', 'slug', 'desc'],
+                attributes: ['nama', 'slug', 'desc'],
                 include: [{
                     model: Layanan_form,
                     attributes: { exclude: ['createdAt', 'updatedAt'] },
@@ -657,7 +657,7 @@ module.exports = {
             }
 
             // Response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'Success get layanan with forms', layananData));
+            res.status(200).json(response(200, 'Success get layanan with forms dokumen', layananData));
         } catch (err) {
             res.status(500).json(response(500, 'Internal server error', err));
             console.log(err);

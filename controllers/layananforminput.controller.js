@@ -43,7 +43,7 @@ const s3Client = new S3Client({
 module.exports = {
 
     //input form user
-    inputform: async (req, res) => {
+    inputForm: async (req, res) => {
         const transaction = await sequelize.transaction();
 
         try {
@@ -52,9 +52,9 @@ module.exports = {
             };
 
             const idlayanan = req.params.idlayanan;
-            const iduser = data.role === "User" ? data.userId : req.body.userId;
-            const isonline = req.body.isonline ?? 'true';
-            const statusinput = data.role === "User" ? 0 : 1;
+            const iduser = req.user.role === "User" ? req.user.userId : req.body.userId;
+            // const isonline = req.body.isonline ?? 'true';
+            const statusinput = req.user.role === "User" ? 0 : 1;
 
             if (!iduser) {
                 throw new Error('User ID is required');
@@ -73,7 +73,7 @@ module.exports = {
             const today = new Date();
             const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
 
-            const countToday = await Layananformnum.count({
+            const countToday = await Layanan_form_num.count({
                 where: {
                     createdAt: {
                         [Op.gte]: new Date(todayStr + 'T00:00:00Z'),
@@ -95,7 +95,7 @@ module.exports = {
                 status: Number(statusinput)
             };
 
-            const createdLayananformnum = await Layananformnum.create(layananID, { transaction });
+            const createdLayananformnum = await Layanan_form_num.create(layananID, { transaction });
 
             const updatedDatainput = datainput.map(item => ({
                 ...item,
@@ -136,10 +136,10 @@ module.exports = {
                 }));
             }
 
-            const createdLayananforminput = await Layananforminput.bulkCreate(updatedDatainput, { transaction });
+            const createdLayananforminput = await Layanan_form_input.bulkCreate(updatedDatainput, { transaction });
             let createdLayananformfile;
             if (datafile) {
-                createdLayananformfile = await Layananforminput.bulkCreate(datafile, { transaction });
+                createdLayananformfile = await Layanan_form_input.bulkCreate(datafile, { transaction });
             }
 
             await transaction.commit();
@@ -176,25 +176,25 @@ module.exports = {
     },
 
     //get input form user
-    getdetailinputform: async (req, res) => {
+    getDetailInputForm: async (req, res) => {
         try {
             const idlayanannum = req.params.idlayanannum;
 
             // Fetch Layananformnum details
-            let layananformnumData = await Layananformnum.findOne({
+            let layananformnumData = await Layanan_form_num.findOne({
                 where: {
                     id: idlayanannum
                 },
                 include: [
                     {
-                        model: Layananforminput,
+                        model: Layanan_form_input,
                         include: [{
-                            model: Layananform,
+                            model: Layanan_form,
                             attributes: { exclude: ['createdAt', 'updatedAt', "status"] },
                         }]
                     },
                     {
-                        model: Userinfo,
+                        model: User_info,
                         include: [
                             {
                                 model: Desa,
@@ -206,13 +206,13 @@ module.exports = {
                             }
                         ]
                     },
-                    { model: Userinfo, as: 'Adminupdate', attributes: ['id', 'name', 'nik'] },
+                    { model: User_info, as: 'Adminupdate', attributes: ['id', 'name', 'nik'] },
                     {
                         model: Layanan,
-                        attributes: ['id', 'name', 'desc'],
+                        attributes: ['id', 'nama', 'desc'],
                         include: [{
-                            model: Instansi,
-                            attributes: ['id', 'name', 'desc'],
+                            model: Bidang,
+                            attributes: ['id', 'nama', 'desc'],
                         }]
                     }
                 ]
@@ -279,7 +279,7 @@ module.exports = {
         }
     },
 
-    updatedata: async (req, res) => {
+    updateData: async (req, res) => {
         const transaction = await sequelize.transaction();
 
         try {
@@ -290,12 +290,12 @@ module.exports = {
             let updateDataPromises = [];
             if (datainput && Array.isArray(datainput)) {
                 updateDataPromises = datainput.map(item =>
-                    Layananforminput.update(
+                    Layanan_form_input.update(
                         { data: item.data, layananform_id: item.layananform_id },
                         { where: { id: item.id, layananformnum_id: idlayanannum }, transaction }
                     ).catch(err => {
                         console.error('Error updating data:', err);
-                        return null; // Return null or any other value you prefer in case of an error
+                        return null;
                     })
                 );
             }
@@ -333,7 +333,7 @@ module.exports = {
                 );
             });
 
-            Layananformnum.update(
+            Layanan_form_num.update(
                 { status: status },
                 { where: { id: idlayanannum }, transaction }
             );
@@ -373,26 +373,26 @@ module.exports = {
         }
     },
 
-    updatestatuspengajuan: async (req, res) => {
+    updateStatusPengajuan: async (req, res) => {
         try {
 
             //mendapatkan data layanan untuk pengecekan
-            let layananGet = await Layananformnum.findOne({
+            let layananGet = await Layanan_form_num.findOne({
                 where: {
                     id: req.params.idlayanannum
                 },
                 include: [
                     {
-                        model: Userinfo,
+                        model: User_info,
                         attributes: ['id' ,'email', 'name'],
                     },
                     {
                         model: Layanan,
-                        attributes: ['name'],
+                        attributes: ['nama'],
                         include: [
                             {
-                                model: Instansi,
-                                attributes: ['email', 'name', 'telp'],
+                                model: Bidang,
+                                attributes: ['email', 'nama', 'telp'],
                             },
                         ]
                     }
@@ -466,7 +466,7 @@ module.exports = {
             }
 
             //update layanan
-            await Layananformnum.update(layananUpdateObj, {
+            await Layanan_form_num.update(layananUpdateObj, {
                 where: {
                     id: req.params.idlayanannum,
                 }
@@ -504,7 +504,7 @@ module.exports = {
             await redisClient.set(`notification:${newNotification.id}`, JSON.stringify(newNotification));
 
             //mendapatkan data layanan setelah update
-            let layananAfterUpdate = await Layananformnum.findOne({
+            let layananAfterUpdate = await Layanan_form_num.findOne({
                 where: {
                     id: req.params.idlayanannum,
                 }
@@ -520,10 +520,10 @@ module.exports = {
     },
 
     //upload surat hasil permohonan
-    uploadfilehasil: async (req, res) => {
+    uploadFileHasil: async (req, res) => {
         try {
 
-            let dataGet = await Layananformnum.findOne({
+            let dataGet = await Layanan_form_num.findOne({
                 where: {
                     id: req.params.idlayanannum
                 }
@@ -591,7 +591,7 @@ module.exports = {
             }
 
             //update instansi
-            await Layananformnum.update(fileUpdateObj, {
+            await Layanan_form_num.update(fileUpdateObj, {
                 where: {
                     id: req.params.idlayanannum,
                 }
