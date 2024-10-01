@@ -10,12 +10,12 @@ const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-route.post('/user/inputform/create/:idlayanan', [mid.checkRolesAndLogout(['User', 'Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], upload.any(), layananforminput.inputform);
-route.put('/user/inputform/update/:idlayanannum', [mid.checkRolesAndLogout(['User', 'Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], upload.any(), layananforminput.updatedata);
-route.get('/user/inputform/detail/:idlayanannum', [mid.checkRolesAndLogout(['User', 'Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], layananforminput.getdetailinputform);
+route.post('/user/input/form/create/:idlayanan', [mid.checkRolesAndLogout(['User', 'Super Admin'])], upload.any(), layananforminput.inputForm);
+route.put('/user/input/form/update/:idlayanannum', [mid.checkRolesAndLogout(['User', 'Super Admin'])], upload.any(), layananforminput.updateData);
+route.get('/user/input/form/detail/:idlayanannum', [mid.checkRolesAndLogout(['User', 'Super Admin'])], layananforminput.getDetailInputForm);
 
-route.put('/user/inputform/updatestatus/:idlayanannum', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], upload.any(), layananforminput.updatestatuspengajuan);
+route.put('/user/input/form/updatestatus/:idlayanannum', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], upload.any(), layananforminput.updateStatusPengajuan);
 
-route.put('/user/inputform/file/:idlayanannum', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], upload.fields([{ name: 'file', maxCount: 1 }, { name: 'sertif', maxCount: 1 }]), layananforminput.uploadfilehasil);
+route.put('/user/input/form/file/:idlayanannum', [mid.checkRolesAndLogout(['Admin Instansi', 'Admin Verifikasi', 'Admin Layanan', 'Super Admin'])], upload.fields([{ name: 'file', maxCount: 1 }, { name: 'sertif', maxCount: 1 }]), layananforminput.uploadFileHasil);
 
 module.exports = route;
