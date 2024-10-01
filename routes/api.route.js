@@ -31,6 +31,7 @@ const bkdstrukturRoute = require('./bkdstruktur.route');
 const selectedstrukturRoute = require('./selectedstruktur.route');
 const beritaRoute = require('./berita.route');
 const manualbookRoute = require('./manualbook.route');
+const regulasiRoute = require('./regulasi.route');
 
 module.exports = function (app, urlApi) {
     app.use(urlApi, userRoute);
@@ -66,4 +67,5 @@ module.exports = function (app, urlApi) {
     app.use(urlApi, selectedstrukturRoute);
     app.use(urlApi, beritaRoute);
     app.use(urlApi, manualbookRoute);
+    app.use(urlApi, regulasiRoute);
 }
