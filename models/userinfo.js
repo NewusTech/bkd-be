@@ -8,9 +8,6 @@ module.exports = (sequelize, DataTypes) => {
       User_info.hasOne(models.User, {
         foreignKey: 'userinfo_id',
       });
-      User_info.hasMany(models.Survey_form_num, {
-        foreignKey: 'userinfo_id',
-      });
       User_info.hasMany(models.Layanan_form_num, {
         foreignKey: 'userinfo_id',
       });
