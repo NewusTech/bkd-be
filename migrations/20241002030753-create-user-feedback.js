@@ -12,6 +12,9 @@ module.exports = {
       userinfo_id: {
         type: Sequelize.INTEGER
       },
+      bidang_id: {
+        type: Sequelize.INTEGER
+      },
       layanan_id: {
         type: Sequelize.INTEGER
       },
