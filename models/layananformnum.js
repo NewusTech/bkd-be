@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Layanan_form_num.init({
     userinfo_id: DataTypes.INTEGER,
-    // no_request: DataTypes.STRING,
+    no_request: DataTypes.STRING,
     layanan_id: DataTypes.INTEGER,
     fileoutput: DataTypes.STRING,
     pesan: DataTypes.STRING,
