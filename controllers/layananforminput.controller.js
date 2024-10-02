@@ -49,7 +49,7 @@ module.exports = {
 
         try {
             const folderPaths = {
-                fileinput: "dir_mpp/file_pemohon",
+                fileinput: "dir_bkd/file_pemohon",
             };
 
             const idlayanan = req.params.idlayanan;
@@ -300,7 +300,7 @@ module.exports = {
             }
 
             const files = req.files;
-            const folderPath = { fileinput: "dir_mpp/file_pemohon" };
+            const folderPath = { fileinput: "dir_bkd/file_pemohon" };
 
             let redisUploadPromises = files.map(async (file) => {
                 const { fieldname, mimetype, buffer, originalname } = file;
