@@ -3,6 +3,7 @@ module.exports = {
     const Layanans = [
       {
         nama: 'Layanan Kenaikan Pangkat',
+        slug: 'layanan-kenaikan-pangkat',
         desc: 'Layanan ini ditujukan bagi pegawai negeri sipil (PNS) yang memenuhi syarat untuk kenaikan pangkat sesuai dengan aturan yang berlaku.',
         syarat: '1. SK pangkat terakhir, 2. SKP 2 tahun terakhir, 3. Surat keterangan tidak pernah dijatuhi hukuman disiplin, 4. Penilaian prestasi kerja.',
         penanggung_jawab: 'Sub Bagian Kenaikan Pangkat BKD',
@@ -14,6 +15,7 @@ module.exports = {
       },
       {
         nama: 'Layanan Pensiun',
+        slug: 'layanan-pensiun',
         desc: 'Layanan ini melayani pengurusan administrasi pensiun bagi PNS yang sudah memasuki masa pensiun sesuai dengan ketentuan yang berlaku.',
         syarat: '1. SK CPNS dan PNS, 2. SK Pangkat terakhir, 3. Surat keterangan pemberhentian dari instansi, 4. Kartu identitas PNS.',
         penanggung_jawab: 'Sub Bagian Pensiun BKD',
@@ -25,6 +27,7 @@ module.exports = {
       },
       {
         nama: 'Layanan Mutasi PNS',
+        slug: 'layanan-mutasi-pns',
         desc: 'Layanan ini digunakan untuk mengajukan mutasi antar daerah, antar instansi, atau mutasi jabatan bagi PNS.',
         syarat: '1. Surat persetujuan atasan, 2. SK Pangkat terakhir, 3. Penilaian prestasi kerja, 4. SKP 2 tahun terakhir.',
         penanggung_jawab: 'Sub Bagian Mutasi BKD',
@@ -36,6 +39,7 @@ module.exports = {
       },
       {
         nama: 'Layanan Cuti PNS',
+        slug: 'layanan-cuti-pns',
         desc: 'Layanan ini memfasilitasi PNS untuk mengajukan berbagai jenis cuti, seperti cuti tahunan, cuti sakit, dan cuti besar.',
         syarat: '1. Surat permohonan cuti, 2. SK Pangkat terakhir, 3. SKP 1 tahun terakhir.',
         penanggung_jawab: 'Sub Bagian Cuti BKD',
@@ -47,6 +51,7 @@ module.exports = {
       },
       {
         nama: 'Layanan Pengembangan Karier',
+        slug: 'layanan-pengembangan-karier',
         desc: 'Layanan ini membantu pengembangan karier PNS melalui pendidikan dan pelatihan (diklat), serta pengembangan kompetensi teknis dan manajerial.',
         syarat: '1. SK Pangkat terakhir, 2. SKP 2 tahun terakhir, 3. Surat rekomendasi dari atasan.',
         penanggung_jawab: 'Sub Bagian Diklat BKD',
