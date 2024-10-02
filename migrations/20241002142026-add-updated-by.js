@@ -6,7 +6,7 @@ module.exports = {
       type: Sequelize.INTEGER
     });
     await queryInterface.addColumn('Layanan_form_nums', 'no_request', {
-      type: Sequelize.INTEGER
+      type: Sequelize.STRING
     });
   },
   async down(queryInterface, Sequelize) {
