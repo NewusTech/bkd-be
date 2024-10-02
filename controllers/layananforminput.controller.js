@@ -15,6 +15,7 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const nodemailer = require('nodemailer');
 const { format } = require('date-fns');
 const { id } = require('date-fns/locale');
+const crypto = require('crypto');
 
 // const Redis = require("ioredis");
 // const redisClient = new Redis({
@@ -32,7 +33,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const s3Client = new S3Client({
-    region: process.env.AWS_REGION,
+    region: process.env.AWS_DEFAULT_REGION,
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -63,16 +64,9 @@ module.exports = {
             const { datainput } = req.body;
             let { datafile } = req.body;
 
-            let dataLayanan = await Layanan.findOne({
-                where: {
-                    id: idlayanan
-                },
-                attributes: ['id', 'code'],
-            });
-
             const today = new Date();
             const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
-
+            
             const countToday = await Layanan_form_num.count({
                 where: {
                     createdAt: {
@@ -82,16 +76,21 @@ module.exports = {
                     layanan_id: idlayanan
                 }
             });
-
-            const urut = String(countToday + 1).padStart(4, '0'); // Menambah 1 pada count dan pad dengan '0' hingga 4 digit
-            const tanggalFormat = today.toISOString().slice(2, 10).replace(/-/g, ''); // Format YYMMDD
-            const noRequest = `${dataLayanan.code}-${tanggalFormat}-${urut}`;
+            
+            const urut = String(countToday + 1).padStart(4, '0'); // Menambah 1 pada count dan pad dengan '0' hingga 4 digit\
+            const tanggalFormat = today.toISOString().slice(2, 10).replace(/-/g, '');
+            
+            // Generate random code instead of using dataLayanan.code
+            const randomCode = crypto.randomBytes(3).toString('hex'); 
+            
+            // New noRequest format
+            const noRequest = `${randomCode}-${tanggalFormat}-${urut}`;
 
             let layananID = {
                 userinfo_id: Number(iduser),
                 no_request: noRequest,
                 layanan_id: Number(idlayanan),
-                isonline: isonline,
+                // isonline: isonline,
                 status: Number(statusinput)
             };
 
@@ -117,9 +116,9 @@ module.exports = {
                     originalname,
                     uniqueFilename,
                     folderPath: folderPaths.fileinput
-                }), 'EX', 60 * 60); // Expire in 1 hour
+                }), 'EX', 60 * 60);
 
-                const fileUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${folderPaths.fileinput}/${uniqueFilename}`;
+                const fileUrl = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${folderPaths.fileinput}/${uniqueFilename}`;
 
                 // Extract index from fieldname (e.g., 'datafile[0][data]' -> 0)
                 const index = parseInt(fieldname.match(/\d+/)[0], 10);
@@ -154,7 +153,7 @@ module.exports = {
                     if (fileData) {
                         const { buffer, mimetype, originalname, uniqueFilename, folderPath } = JSON.parse(fileData);
                         const uploadParams = {
-                            Bucket: process.env.AWS_S3_BUCKET,
+                            Bucket: process.env.AWS_BUCKET,
                             Key: `${folderPath}/${uniqueFilename}`,
                             Body: Buffer.from(buffer),
                             ACL: 'public-read',
