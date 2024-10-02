@@ -118,7 +118,7 @@ module.exports = {
                     folderPath: folderPaths.fileinput
                 }), 'EX', 60 * 60);
 
-                const fileUrl = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${folderPaths.fileinput}/${uniqueFilename}`;
+                const fileUrl = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${folderPaths.fileinput}/${uniqueFilename}`;
 
                 // Extract index from fieldname (e.g., 'datafile[0][data]' -> 0)
                 const index = parseInt(fieldname.match(/\d+/)[0], 10);
@@ -320,7 +320,7 @@ module.exports = {
                     folderPath: folderPath.fileinput
                 }), 'EX', 60 * 60); // Expire in 1 hour
 
-                const fileUrl = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${folderPath.fileinput}/${uniqueFilename}`;
+                const fileUrl = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${folderPath.fileinput}/${uniqueFilename}`;
 
                 // Extract index from fieldname (e.g., 'datafile[0][data]' -> 0)
                 const index = parseInt(fieldname.match(/\d+/)[0], 10);
