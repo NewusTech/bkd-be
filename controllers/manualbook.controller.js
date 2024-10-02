@@ -8,7 +8,7 @@ const { Op } = require('sequelize');
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
 const s3Client = new S3Client({
-    region: process.env.AWS_REGION,
+    region: process.env.AWS_DEFAULT_REGION,
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -112,26 +112,26 @@ module.exports = {
                     id: req.params.id
                 },
             });
-
+    
             // Cek apakah data manualbook ada
             if (!manualbookGet) {
                 res.status(404).json(response(404, 'manual book not found'));
                 return;
             }
-
+    
             // Membuat schema untuk validasi
             const schema = {
                 title: { type: "string", optional: true },
                 dokumen: { type: "string", optional: true }
             };
-
+    
             let manualbookKey;
-
-            if (req.files && req.files.manualbook) {
-                const file = req.files.manualbook[0];
+    
+            if (req.files && req.files.dokumen) {
+                const file = req.files.dokumen[0];
                 const timestamp = new Date().getTime();
                 const uniqueFileName = `${timestamp}-${file.originalname}`;
-
+    
                 const uploadParams = {
                     Bucket: process.env.AWS_BUCKET,
                     Key: `${process.env.PATH_AWS}/manualbook/${uniqueFileName}`,
@@ -139,46 +139,52 @@ module.exports = {
                     ACL: 'public-read',
                     ContentType: file.mimetype
                 };
-
+    
                 const command = new PutObjectCommand(uploadParams);
-
-                await s3Client.send(command);
-
+    
+                // Log upload status
+                const uploadResponse = await s3Client.send(command);
+                console.log("Upload Response:", uploadResponse);
+    
                 manualbookKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
             }
-
+    
             // Buat object manualbook
             let manualbookUpdateObj = {
                 title: req.body.title,
-                dokumen: req.files.manualbook ? manualbookKey : undefined,
             };
-
+    
+            if (req.files && req.files.dokumen) {
+                manualbookUpdateObj.dokumen = manualbookKey;
+            }
+    
             // Validasi menggunakan module fastest-validator
             const validate = v.validate(manualbookUpdateObj, schema);
             if (validate.length > 0) {
                 res.status(400).json(response(400, 'validation failed', validate));
                 return;
             }
-
+    
             // Update manualbook
             await Manual_book.update(manualbookUpdateObj, {
                 where: { id: req.params.id },
             });
-
+    
             // Mendapatkan data manualbook setelah update
             let manualbookAfterUpdate = await Manual_book.findOne({
                 where: {
                     id: req.params.id
                 },
             });
-
+    
             // Response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success update manual book', manualbookAfterUpdate));
-
+    
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
     },
+    
 
 }
