@@ -17,12 +17,12 @@ const { format } = require('date-fns');
 const { id } = require('date-fns/locale');
 const crypto = require('crypto');
 
-// const Redis = require("ioredis");
-// const redisClient = new Redis({
-//     host: process.env.REDIS_HOST,
-//     port: process.env.REDIS_PORT,
-//     password: process.env.REDIS_PASSWORD,
-// });
+const Redis = require("ioredis");
+const redisClient = new Redis({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD,
+});
 
 const transporter = nodemailer.createTransport({
     service: 'Gmail',
@@ -278,7 +278,7 @@ module.exports = {
         }
     },
 
-    updateData: async (req, res) => {
+    updateDataForm: async (req, res) => {
         const transaction = await sequelize.transaction();
 
         try {
@@ -391,7 +391,7 @@ module.exports = {
                         include: [
                             {
                                 model: Bidang,
-                                attributes: ['email', 'nama', 'telp'],
+                                attributes: ['nama'],
                             },
                         ]
                     }
@@ -419,7 +419,7 @@ module.exports = {
             let layananUpdateObj = {
                 status: Number(req.body.status),
                 pesan: req.body.pesan,
-                updated_by: data.userId
+                updated_by: req.user.userId
             }
 
             const sendEmailNotification = (subject, text) => {
@@ -473,21 +473,29 @@ module.exports = {
 
             let pesansocket;
             
-            if(req.body.status == 1 || req.body.status == 2) {
-                pesansocket = 'sedang diproses';
+            if(req.body.status == 1) {
+                pesansocket = 'Menunggu';
+            } else if(req.body.status == 2) {
+                pesansocket = 'Sedang Diproses';
             } else if(req.body.status == 3) {
-                pesansocket = 'selesai';
+                pesansocket = 'Butuh Perbaikan';
             } else if(req.body.status == 4) {
-                pesansocket = 'ditolak';
+                pesansocket = 'Sudah Diperbaiki';
             } else if(req.body.status == 5) {
-                pesansocket = 'harus direvisi';
+                pesansocket = 'Sedang Divalidasi';
             } else if(req.body.status == 6) {
-                pesansocket = 'sudah direvisi';
+                pesansocket = 'Sudah Divalidasi';
+            } else if(req.body.status == 7) {
+                pesansocket = 'Sedang Ditandatangani';
+            } else if(req.body.status == 8) {
+                pesansocket = 'Sudah Ditandatangani';
+            } else if(req.body.status == 9) {
+                pesansocket = 'Sudah Selesai';
             }
 
             console.log("pesansocket", pesansocket)
             
-            global.io.emit('UpdateStatus', { pesansocket, iduser : layananGet.Userinfo.id });
+            global.io.emit('UpdateStatus', { pesansocket, iduser : layananGet.User_info.id });
 
             const newNotification = {
                 id: Date.now(), // ID unik menggunakan timestamp
@@ -544,8 +552,8 @@ module.exports = {
                 const uniqueFileName = `${timestamp}-${file.originalname}`;
 
                 const uploadParams = {
-                    Bucket: process.env.AWS_S3_BUCKET,
-                    Key: `${process.env.PATH_AWS}/fileoutput/${uniqueFileName}`,
+                    Bucket: process.env.AWS_BUCKET,
+                    Key: `${process.env.PATH_AWS}/file_output/${uniqueFileName}`,
                     Body: file.buffer,
                     ACL: 'public-read',
                     ContentType: file.mimetype
@@ -554,32 +562,12 @@ module.exports = {
                 const command = new PutObjectCommand(uploadParams);
                 await s3Client.send(command);
 
-                dataKey = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${uploadParams.Key}`;
-            }
-
-            if (req.files && req.files.sertif) {
-                const file = req.files.sertif[0];
-                const timestamp = new Date().getTime();
-                const uniqueFileName = `${timestamp}-${file.originalname}`;
-
-                const uploadParams = {
-                    Bucket: process.env.AWS_S3_BUCKET,
-                    Key: `${process.env.PATH_AWS}/sertif/${uniqueFileName}`,
-                    Body: file.buffer,
-                    ACL: 'public-read',
-                    ContentType: file.mimetype
-                };
-
-                const command = new PutObjectCommand(uploadParams);
-                await s3Client.send(command);
-
-                dataKey2 = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${uploadParams.Key}`;
+                dataKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
             }
 
             //buat object instansi
             let fileUpdateObj = {
-                fileoutput: req.files.file ? dataKey : undefined,
-                filesertif: req.files.sertif ? dataKey2 : undefined,
+                fileoutput: req.files.file ? dataKey : undefined
             }
 
             //validasi menggunakan module fastest-validator
@@ -597,7 +585,7 @@ module.exports = {
             })
 
             //response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success update'));
+            res.status(200).json(response(200, 'success upload output surat'));
 
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
