@@ -10,7 +10,7 @@ route.post('/login', userController.loginUser);
 route.post('/logout', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userController.logoutUser); 
 
 // API UNTUK ADMIN / SUPER ADMIN
-route.get('/getforuser', [mid.checkRolesAndLogout(['Super Admin'])], userController.getUser); 
+route.get('/getforuser', [mid.checkRolesAndLogout(['Super Admin', 'Admin Verifikasi'])], userController.getUser); 
 route.get('/user/get/:slug', [mid.checkRolesAndLogout(['Super Admin'])], userController.getUserBySlug); 
 route.delete('/user/delete/:slug', [mid.checkRolesAndLogout(['Super Admin'])], userController.deleteUser);
 
