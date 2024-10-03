@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { Layanan_form_input, Layanan_form_num, Layanan_form, Layanan, Bidang, User_info, Desa, Kecamatan, sequelize } = require('../models');
+const { Layanan_form_input, Layanan_form_num, Layanan_form, Layanan, Bidang, User_info, Desa, Kecamatan, User_feedback, sequelize } = require('../models');
 require('dotenv').config()
 
 const Validator = require("fastest-validator");
@@ -745,21 +745,21 @@ module.exports = {
                 return {
                     id: data.id,
                     userinfo_id: data?.userinfo_id,
-                    name: data?.Userinfo?.name,
-                    nik: data?.Userinfo?.nik,
+                    name: data?.User_info?.name,
+                    nip: data?.User_info?.nip,
                     pesan: data?.pesan,
                     admin_updated: data?.Adminupdate,
                     status: data?.status,
                     tgl_selesai: data?.tgl_selesai,
                     // isonline: data?.isonline,
+                    fileoutput: data?.fileoutput,
+                    no_request: data?.no_request,
                     layanan_id: data?.layanan_id,
                     layanan_name: data?.Layanan ? data?.Layanan?.nama : null,
                     bidang_id: data?.Layanan && data?.Layanan?.Bidang ? data?.Layanan?.Bidang.id : null,
                     bidang_name: data?.Layanan && data?.Layanan?.Bidang ? data?.Layanan?.Bidang.nama : null,
                     createdAt: data?.createdAt,
-                    updatedAt: data?.updatedAt,
-                    fileoutput: data?.fileoutput,
-                    no_request: data?.no_request,
+                    updatedAt: data?.updatedAt,  
                 };
             });
 
@@ -778,7 +778,7 @@ module.exports = {
         }
     },
 
-    gethistorydokumen: async (req, res) => {
+    getHistoryDokumen: async (req, res) => {
         try {
             const search = req.query.search ?? null;
             const status = req.query.status ?? null;
@@ -863,7 +863,7 @@ module.exports = {
             }
 
             [history, totalCount] = await Promise.all([
-                Layananformnum.findAll({
+                Layanan_form_num.findAll({
                     where: WhereClause,
                     include: [
                         {
@@ -876,7 +876,7 @@ module.exports = {
                             where: WhereClause2,
                         },
                         {
-                            model: Userinfo,
+                            model: User_info,
                             attributes: ['name', 'nik'],
                             where: WhereClause3,
                         }
@@ -885,7 +885,7 @@ module.exports = {
                     offset: offset,
                     order: [['id', 'DESC']]
                 }),
-                Layananformnum.count({
+                Layanan_form_num.count({
                     where: WhereClause,
                     include: [
                         {
@@ -947,27 +947,27 @@ module.exports = {
         }
     },
 
-    gethistorybyid: async (req, res) => {
+    getHistoryById: async (req, res) => {
         try {
 
-            let Layananformnumget = await Layananformnum.findOne({
+            let Layananformnumget = await Layanan_form_num.findOne({
                 where: {
                     id: req.params.idforminput
                 },
                 include: [
                     {
                         model: Layanan,
-                        attributes: { exclude: ['createdAt', 'updatedAt', "status", 'slug'] },
+                        attributes: { exclude: ['createdAt', 'updatedAt', 'slug'] },
                         include: [{
-                            model: Instansi,
-                            attributes: { exclude: ['createdAt', 'updatedAt', "status", 'slug'] },
+                            model: Bidang,
+                            attributes: { exclude: ['createdAt', 'updatedAt', 'slug'] },
                         }],
                     },
                     {
-                        model: Userinfo,
+                        model: User_info,
                         attributes: ['name'],
                     },
-                    { model: Userinfo, as: 'Adminupdate', attributes: ['id', 'name', 'nik'] },
+                    { model: User_info, as: 'Adminupdate', attributes: ['id', 'name', 'nip'] },
                 ],
             });
 
@@ -976,7 +976,7 @@ module.exports = {
                 return;
             }
 
-            let surveyGet = await Surveyformnum.findOne({
+            let surveyGet = await User_feedback.findOne({
                 where: {
                     userinfo_id: Layananformnumget.userinfo_id,
                     layanan_id: Layananformnumget.layanan_id
@@ -986,23 +986,20 @@ module.exports = {
             let formattedData = {
                 id: Layananformnumget?.id,
                 userinfo_id: Layananformnumget?.userinfo_id,
-                name: Layananformnumget?.Userinfo ? Layananformnumget?.Userinfo?.name : null,
+                name: Layananformnumget?.User_info ? Layananformnumget?.User_info?.name : null,
+                no_request: Layananformnumget?.no_request,
                 status: Layananformnumget?.status,
                 pesan: Layananformnumget?.pesan,
                 admin_updated: Layananformnumget?.Adminupdate,
-                tgl_selesai: data?.tgl_selesai,
+                tgl_selesai: req.user?.tgl_selesai,
                 layanan_id: Layananformnumget?.layanan_id,
-                layanan_name: Layananformnumget?.Layanan ? Layananformnumget?.Layanan?.name : null,
-                layanan_image: Layananformnumget?.Layanan ? Layananformnumget?.Layanan?.image : null,
-                instansi_id: Layananformnumget?.Layanan && Layananformnumget?.Layanan?.Instansi ? Layananformnumget?.Layanan?.Instansi.id : null,
-                instansi_name: Layananformnumget?.Layanan && Layananformnumget?.Layanan?.Instansi ? Layananformnumget?.Layanan?.Instansi.name : null,
-                instansi_image: Layananformnumget?.Layanan && Layananformnumget?.Layanan?.Instansi ? Layananformnumget?.Layanan?.Instansi.image : null,
+                layanan_name: Layananformnumget?.Layanan ? Layananformnumget?.Layanan?.nama : null,
+                bidang_id: Layananformnumget?.Layanan && Layananformnumget?.Layanan?.Bidang ? Layananformnumget?.Layanan?.Bidang.id : null,
+                bidang_name: Layananformnumget?.Layanan && Layananformnumget?.Layanan?.Bidang ? Layananformnumget?.Layanan?.Bidang.nama : null,
+                fileoutput: Layananformnumget?.fileoutput,
+                input_skm: surveyGet ? true : false,
                 createdAt: Layananformnumget?.createdAt,
                 updatedAt: Layananformnumget?.updatedAt,
-                fileoutput: Layananformnumget?.fileoutput,
-                filesertif: Layananformnumget?.filesertif,
-                input_skm: surveyGet ? true : false,
-                no_request: Layananformnumget?.no_request,
             };
 
             res.status(200).json(response(200, 'success get', formattedData));
@@ -1013,7 +1010,7 @@ module.exports = {
         }
     },
 
-    pdfhistoryformuser: async (req, res) => {
+    pdfHistoryFormUser: async (req, res) => {
         try {
             const search = req.query.search ?? null;
             const status = req.query.status ?? null;
