@@ -55,7 +55,7 @@ module.exports = {
             const idlayanan = req.params.idlayanan;
             const iduser = req.user.role === "User" ? req.user.userId : req.body.userId;
             // const isonline = req.body.isonline ?? 'true';
-            const statusinput = req.user.role === "User" ? 0 : 1;
+            const statusinput = 1;
 
             if (!iduser) {
                 throw new Error('User ID is required');
@@ -326,7 +326,7 @@ module.exports = {
                 const index = parseInt(fieldname.match(/\d+/)[0], 10);
 
                 // Assuming datafile[index].id is available in req.body to identify the correct record
-                await Layananforminput.update(
+                await Layanan_form_input.update(
                     { data: fileUrl },
                     { where: { id: req.body.datafile[index].id, layananformnum_id: idlayanannum }, transaction }
                 );
@@ -374,8 +374,7 @@ module.exports = {
 
     updateStatusPengajuan: async (req, res) => {
         try {
-
-            //mendapatkan data layanan untuk pengecekan
+            // Mendapatkan data layanan untuk pengecekan
             let layananGet = await Layanan_form_num.findOne({
                 where: {
                     id: req.params.idlayanannum
@@ -383,7 +382,7 @@ module.exports = {
                 include: [
                     {
                         model: User_info,
-                        attributes: ['id' ,'email', 'name'],
+                        attributes: ['id', 'email', 'name'],
                     },
                     {
                         model: Layanan,
@@ -396,15 +395,15 @@ module.exports = {
                         ]
                     }
                 ],
-            })
-
-            //cek apakah data layanan ada
+            });
+    
+            // Cek apakah data layanan ada
             if (!layananGet) {
                 res.status(404).json(response(404, 'layanan not found'));
                 return;
             }
-
-            //membuat schema untuk validasi
+    
+            // Membuat schema untuk validasi
             const schema = {
                 status: {
                     type: "number"
@@ -413,118 +412,65 @@ module.exports = {
                     type: "string",
                     optional: true
                 }
-            }
-
-            //buat object layanan
+            };
+    
+            // Buat object layanan
             let layananUpdateObj = {
                 status: Number(req.body.status),
                 pesan: req.body.pesan,
                 updated_by: req.user.userId
-            }
-
-            const sendEmailNotification = (subject, text) => {
-                const mailOptions = {
-                    to: layananGet?.Userinfo?.email,
-                    from: process.env.EMAIL_NAME,
-                    subject,
-                    text
-                };
-                transporter.sendMail(mailOptions, (err) => {
-                    if (err) {
-                        console.error('There was an error: ', err);
-                        return res.status(500).json({ message: 'Error sending the email.' });
-                    }
-                    res.status(200).json({ message: 'An email has been sent with further instructions.' });
-                });
             };
-
-            if (layananUpdateObj.status === 3 || layananUpdateObj.status === 4 || layananUpdateObj.status === 5) {
-                const formattedDate = format(new Date(layananGet?.createdAt), "EEEE, dd MMMM yyyy (HH.mm 'WIB')", { locale: id });
-                let subject, text;
-                if (layananUpdateObj.status === 3) {
-                    subject = 'Notifikasi Permohonan Selesai';
-                    text = `Yth. ${layananGet?.Userinfo?.name},\nKami ingin memberitahukan bahwa permohonan Anda dengan nomor permohonan ${layananGet?.no_request} telah selesai diproses.\n\nDetail permohonan Anda adalah sebagai berikut:\n\t- Dinas = ${layananGet?.Layanan?.Instansi?.name}\n\t- Permohonan = ${layananGet?.Layanan?.name}\n\t- Tanggal Permohonan = ${formattedDate}\n\t- Status = Selesai\n\nSilakan mengunjungi Mal Pelayanan Publik atau mengakses portal kami untuk mengambil hasil permohonan Anda. Jika Anda membutuhkan informasi lebih lanjut, jangan ragu untuk menghubungi kami melalui kontak dibawah ini.\n\t- Email = ${layananGet?.Layanan?.Instansi?.email}\n\t- Nomor = ${layananGet?.Layanan?.Instansi?.telp}\n\nTerima kasih atas kepercayaan Anda menggunakan layanan kami.\n\nSalam hormat,\n${layananGet?.Layanan?.Instansi?.name}`;
-                    layananUpdateObj.tgl_selesai = Date.now();
-                } else if (layananUpdateObj.status === 4) {
-                    subject = 'Notifikasi Permohonan Ditolak';
-                    text = `Yth. ${layananGet?.Userinfo?.name},\nKami ingin memberitahukan bahwa permohonan Anda dengan nomor permohonan ${layananGet?.no_request} telah ditolak.\n\nDetail permohonan Anda adalah sebagai berikut:\n\t- Dinas = ${layananGet?.Layanan?.Instansi?.name}\n\t- Permohonan = ${layananGet?.Layanan?.name}\n\t- Tanggal Permohonan = ${formattedDate}\n\t- Status = Ditolak\n\t- Alasan Penolakan: ${layananUpdateObj.pesan || 'Tidak ada alasan yang diberikan.'}\n\nSilakan mengunjungi Mal Pelayanan Publik atau mengakses portal kami untuk mendapatkan informasi lebih lanjut mengenai penolakan ini. Jika Anda membutuhkan informasi lebih lanjut, jangan ragu untuk menghubungi kami melalui kontak dibawah ini.\n\t- Email = ${layananGet?.Layanan?.Instansi?.email}\n\t- Nomor = ${layananGet?.Layanan?.Instansi?.telp}.\n\nKami mohon maaf atas ketidaknyamanan yang terjadi dan berharap dapat melayani Anda lebih baik di masa mendatang.\n\nTerima kasih atas pengertian Anda.\n\nSalam hormat,\n${layananGet?.Layanan?.Instansi?.name}`;
-                } else if (layananUpdateObj.status === 5) {
-                    subject = 'Notifikasi Permohonan Perlu Revisi';
-                    text = `Yth. ${layananGet?.Userinfo?.name},\nKami ingin memberitahukan bahwa permohonan Anda dengan nomor permohonan ${layananGet?.no_request} memerlukan revisi/perbaikan data.\n\nDetail permohonan Anda adalah sebagai berikut:\n\t- Dinas = ${layananGet?.Layanan?.Instansi?.name}\n\t- Permohonan = ${layananGet?.Layanan?.name}\n\t- Tanggal Permohonan = ${formattedDate}\n\t- Status = Perlu Revisi\n\t- Alasan Revisi: ${layananUpdateObj.pesan || 'Tidak ada alasan yang diberikan.'}\n\nSilakan mengunjungi Mal Pelayanan Publik atau mengakses portal kami untuk memperbaiki data permohonan Anda. Jika Anda membutuhkan informasi lebih lanjut, jangan ragu untuk menghubungi kami melalui kontak dibawah ini.\n\t- Email = ${layananGet?.Layanan?.Instansi?.email}\n\t- Nomor = ${layananGet?.Layanan?.Instansi?.telp}.\n\nTerima kasih atas perhatian dan kerjasama Anda.\n\nSalam hormat,\n${layananGet?.Layanan?.Instansi?.name}`;
-                }
-                if (layananGet?.Userinfo?.email) {
-                    sendEmailNotification(subject, text);
-                }
-            }
-
-            //validasi menggunakan module fastest-validator
+    
+            // Validasi menggunakan module fastest-validator
             const validate = v.validate(layananUpdateObj, schema);
             if (validate.length > 0) {
                 res.status(400).json(response(400, 'validation failed', validate));
                 return;
             }
-
-            //update layanan
+    
+            // Update layanan
             await Layanan_form_num.update(layananUpdateObj, {
                 where: {
                     id: req.params.idlayanannum,
                 }
-            })
+            });
+    
+            // Menentukan pesan socket berdasarkan status
 
             let pesansocket;
-            
-            if(req.body.status == 1) {
-                pesansocket = 'Menunggu';
-            } else if(req.body.status == 2) {
-                pesansocket = 'Sedang Diproses';
-            } else if(req.body.status == 3) {
-                pesansocket = 'Butuh Perbaikan';
-            } else if(req.body.status == 4) {
-                pesansocket = 'Sudah Diperbaiki';
-            } else if(req.body.status == 5) {
-                pesansocket = 'Sedang Divalidasi';
-            } else if(req.body.status == 6) {
-                pesansocket = 'Sudah Divalidasi';
-            } else if(req.body.status == 7) {
-                pesansocket = 'Sedang Ditandatangani';
-            } else if(req.body.status == 8) {
-                pesansocket = 'Sudah Ditandatangani';
-            } else if(req.body.status == 9) {
-                pesansocket = 'Sudah Selesai';
+            switch (Number(req.body.status)) {
+                case 1: pesansocket = 'Menunggu'; break;
+                case 2: pesansocket = 'Sedang Diproses'; break;
+                case 3: pesansocket = 'Butuh Perbaikan'; break;
+                case 4: pesansocket = 'Sudah Diperbaiki'; break;
+                case 5: pesansocket = 'Sedang Divalidasi'; break;
+                case 6: pesansocket = 'Sudah Divalidasi'; break;
+                case 7: pesansocket = 'Sedang Ditandatangani'; break;
+                case 8: pesansocket = 'Sudah Ditandatangani'; break;
+                case 9: pesansocket = 'Sudah Selesai'; break;
+                case 10: pesansocket = 'Ditolak'; break;
+                default: pesansocket = 'Status tidak dikenal';
             }
-
-            console.log("pesansocket", pesansocket)
-            
-            global.io.emit('UpdateStatus', { pesansocket, iduser : layananGet.User_info.id });
-
-            const newNotification = {
-                id: Date.now(), // ID unik menggunakan timestamp
-                layananformnum_id: layananGet.id,
-                userinfo: layananGet.userinfo_id,
-                isopen: 0,
-                title: `Permohonan ${pesansocket}`, // Judul notifikasi
-                description: `Yth. ${layananGet?.Userinfo?.name}, permohonan Anda dengan nomor permohonan ${layananGet?.no_request} telah selesai diproses.`, // Deskripsi notifikasi
-                url: `${process.env.WEBSITE_URL}/riwayat/${layananGet.id}`,
-                date: new Date().toISOString().split('T')[0] // Tanggal saat notifikasi dibuat
-            };
-        
-            await redisClient.set(`notification:${newNotification.id}`, JSON.stringify(newNotification));
-
-            //mendapatkan data layanan setelah update
+    
+            // Mendapatkan data layanan setelah update
             let layananAfterUpdate = await Layanan_form_num.findOne({
                 where: {
                     id: req.params.idlayanannum,
                 }
-            })
-
-            //response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success update layanan', layananAfterUpdate));
-
+            });
+    
+            // Response menggunakan helper response.formatter dengan tambahan pesansocket
+            res.status(200).json(response(200, 'success update layanan', {
+                layanan: layananAfterUpdate,
+                pesan: pesansocket
+            }));
+    
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
     },
+    
 
     //upload surat hasil permohonan
     uploadFileHasil: async (req, res) => {
