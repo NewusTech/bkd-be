@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { Layanan_form_input, Layanan_form_num, Layanan_form, Layanan, Bidang, User_info, Surveyformnum, Desa, Kecamatan, sequelize } = require('../models');
+const { Layanan_form_input, Layanan_form_num, Layanan_form, Layanan, Bidang, User_info, Desa, Kecamatan, sequelize } = require('../models');
 require('dotenv').config()
 
 const Validator = require("fastest-validator");
@@ -205,7 +205,7 @@ module.exports = {
                             }
                         ]
                     },
-                    { model: User_info, as: 'Adminupdate', attributes: ['id', 'name', 'nik'] },
+                    { model: User_info, as: 'Adminupdate', attributes: ['id', 'name', 'nip'] },
                     {
                         model: Layanan,
                         attributes: ['id', 'nama', 'desc'],
@@ -223,20 +223,20 @@ module.exports = {
             }
 
             // Format the Layananforminput data
-            let formattedInputData = layananformnumData?.Layananforminputs?.map(datafilter => {
+            let formattedInputData = layananformnumData?.Layanan_form_inputs?.map(datafilter => {
                 let data_key = null;
 
-                if (datafilter?.Layananform?.tipedata === 'radio' && datafilter?.Layananform?.datajson) {
-                    const selectedOption = datafilter?.Layananform?.datajson.find(option => option?.id == datafilter?.data);
+                if (datafilter?.Layananform?.tipedata === 'radio' && datafilter?.Layanan_form?.datajson) {
+                    const selectedOption = datafilter?.Layanan_form?.datajson.find(option => option?.id == datafilter?.data);
                     if (selectedOption) {
                         data_key = selectedOption?.key;
                     }
                 }
 
-                if (datafilter?.Layananform?.tipedata === 'checkbox' && datafilter?.Layananform?.datajson) {
+                if (datafilter?.Layanan_form?.tipedata === 'checkbox' && datafilter?.Layanan_form?.datajson) {
                     const selectedOptions = JSON.parse(datafilter?.data);
                     data_key = selectedOptions.map(selectedId => {
-                        const option = datafilter?.Layananform?.datajson.find(option => option?.id == selectedId);
+                        const option = datafilter?.Layanan_form?.datajson.find(option => option?.id == selectedId);
                         return option ? option.key : null;
                     }).filter(key => key !== null);
                 }
@@ -246,9 +246,9 @@ module.exports = {
                     data: datafilter?.data,
                     layananform_id: datafilter?.layananform_id,
                     layananformnum_id: datafilter?.layananformnum_id,
-                    layananform_name: datafilter?.Layananform?.field,
-                    layananform_datajson: datafilter?.Layananform?.datajson,
-                    layananform_tipedata: datafilter?.Layananform?.tipedata,
+                    layananform_name: datafilter?.Layanan_form?.field,
+                    layananform_datajson: datafilter?.Layanan_form?.datajson,
+                    layananform_tipedata: datafilter?.Layanan_form?.tipedata,
                     data_key: data_key ?? null
                 };
             });
@@ -261,11 +261,11 @@ module.exports = {
                 layanan: layananformnumData?.Layanan,
                 tgl_selesai: layananformnumData?.tgl_selesai,
                 userinfo_id: layananformnumData?.userinfo_id,
-                userinfo: layananformnumData?.Userinfo,
+                userinfo: layananformnumData?.User_info,
                 admin_updated: layananformnumData?.Adminupdate,
                 createdAt: layananformnumData?.createdAt,
                 updatedAt: layananformnumData?.updatedAt,
-                Layananforminputs: formattedInputData ?? null,
+                Layanan_form_inputs: formattedInputData ?? null,
                 status: layananformnumData?.status,
                 fileoutput: layananformnumData?.fileoutput,
                 filesertif: layananformnumData?.filesertif
@@ -594,14 +594,14 @@ module.exports = {
     },
 
     //get history input form user
-    gethistoryformuser: async (req, res) => {
+    getHistoryFormUser: async (req, res) => {
         try {
             const search = req.query.search ?? null;
             const status = req.query.status ?? null;
             const range = req.query.range;
             const isonline = req.query.isonline ?? null;
-            const userinfo_id = data.role === "User" ? data.userId : null;
-            const instansi_id = Number(req.query.instansi_id);
+            const userinfo_id = req.user.role === "User" ? req.user.userId : null;
+            const bidang_id = Number(req.query.bidang_id);
             const layanan_id = Number(req.query.layanan_id);
             const start_date = req.query.start_date;
             let end_date = req.query.end_date;
@@ -617,12 +617,12 @@ module.exports = {
             const WhereClause2 = {};
             const WhereClause3 = {};
 
-            if (data.role === 'Admin Instansi' || data.role === 'Admin Verifikasi' || data.role === 'Admin Layanan') {
-                WhereClause2.instansi_id = data.instansi_id;
+            if (req.user.role === 'Kepala Bidang' || req.user.role === 'Admin Verifikasi' || req.user.role === 'Super Admin') {
+                WhereClause2.bidang_id = req.user.bidang_id;
             }
 
-            if (data.role === 'Admin Layanan') {
-                WhereClause.layanan_id = data.layanan_id;
+            if (req.user.role === 'Admin Verifikasi') {
+                WhereClause.layanan_id = req.user.layanan_id;
             }
 
             if (range == 'today') {
@@ -662,15 +662,15 @@ module.exports = {
                 };
             }
 
-            if (instansi_id) {
-                WhereClause2.instansi_id = instansi_id;
+            if (bidang_id) {
+                WhereClause2.bidang_id = bidang_id;
             }
 
             if (search) {
                 WhereClause3[Op.or] = [
                     { name: { [Op.iLike]: `%${search}%` } },
-                    { '$Layanan.name$': { [Op.iLike]: `%${search}%` } },
-                    { '$Layanan->Instansi.name$': { [Op.iLike]: `%${search}%` } }
+                    { '$Layanan.nama$': { [Op.iLike]: `%${search}%` } },
+                    { '$Layanan->Bidang.nama$': { [Op.iLike]: `%${search}%` } }
                 ];
             }
 
@@ -699,44 +699,44 @@ module.exports = {
             }
 
             [history, totalCount] = await Promise.all([
-                Layananformnum.findAll({
+                Layanan_form_num.findAll({
                     where: WhereClause,
                     include: [
                         {
                             model: Layanan,
-                            attributes: { exclude: ['createdAt', 'updatedAt', "status", 'slug'] },
+                            attributes: { exclude: ['createdAt', 'updatedAt', 'slug'] },
                             include: [{
-                                model: Instansi,
-                                attributes: { exclude: ['createdAt', 'updatedAt', "status", 'slug'] },
+                                model: Bidang,
+                                attributes: { exclude: ['createdAt', 'updatedAt', 'slug'] },
                             }],
                             where: WhereClause2,
                         },
                         {
-                            model: Userinfo,
-                            attributes: ['name', 'nik'],
+                            model: User_info,
+                            attributes: ['name', 'nip'],
                             where: WhereClause3,
                         },
-                        { model: Userinfo, as: 'Adminupdate', attributes: ['id', 'name', 'nik'] },
+                        { model: User_info, as: 'Adminupdate', attributes: ['id', 'name', 'nip'] },
                     ],
                     limit: limit,
                     offset: offset,
                     order: [['id', 'DESC']]
                 }),
-                Layananformnum.count({
+                Layanan_form_num.count({
                     where: WhereClause,
                     include: [
                         {
                             model: Layanan,
                             include: [{
-                                model: Instansi
+                                model: Bidang
                             }],
                             where: WhereClause2,
                         },
                         {
-                            model: Userinfo,
+                            model: User_info,
                             where: WhereClause3,
                         },
-                        { model: Userinfo, as: 'Adminupdate', attributes: ['id', 'name', 'nik'] },
+                        { model: User_info, as: 'Adminupdate', attributes: ['id', 'name', 'nik'] },
                     ],
                 })
             ]);
@@ -751,22 +751,19 @@ module.exports = {
                     admin_updated: data?.Adminupdate,
                     status: data?.status,
                     tgl_selesai: data?.tgl_selesai,
-                    isonline: data?.isonline,
+                    // isonline: data?.isonline,
                     layanan_id: data?.layanan_id,
-                    layanan_name: data?.Layanan ? data?.Layanan?.name : null,
-                    layanan_image: data?.Layanan ? data?.Layanan?.image : null,
-                    instansi_id: data?.Layanan && data?.Layanan?.Instansi ? data?.Layanan?.Instansi.id : null,
-                    instansi_name: data?.Layanan && data?.Layanan?.Instansi ? data?.Layanan?.Instansi.name : null,
-                    instansi_image: data?.Layanan && data?.Layanan?.Instansi ? data?.Layanan?.Instansi.image : null,
+                    layanan_name: data?.Layanan ? data?.Layanan?.nama : null,
+                    bidang_id: data?.Layanan && data?.Layanan?.Bidang ? data?.Layanan?.Bidang.id : null,
+                    bidang_name: data?.Layanan && data?.Layanan?.Bidang ? data?.Layanan?.Bidang.nama : null,
                     createdAt: data?.createdAt,
                     updatedAt: data?.updatedAt,
                     fileoutput: data?.fileoutput,
-                    filesertif: data?.filesertif,
                     no_request: data?.no_request,
                 };
             });
 
-            const pagination = generatePagination(totalCount, page, limit, `/api/user/historyform`);
+            const pagination = generatePagination(totalCount, page, limit, `/api/user/history/form`);
 
             res.status(200).json({
                 status: 200,
