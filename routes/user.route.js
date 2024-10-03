@@ -7,7 +7,7 @@ const route = express.Router();
 
 route.post('/register', userController.createUser);
 route.post('/login', userController.loginUser);
-route.post('/logout', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userController.logoutUser); 
+route.post('/logout', [mid.checkRolesAndLogout(['Super Admin', 'User', 'Admin Verifikasi', 'Kepala Bidang', 'Sekretaris Dinas', 'Kepala Dinas', 'Sekretaris Daerah'])], userController.logoutUser); 
 
 // API UNTUK ADMIN / SUPER ADMIN
 route.get('/getforuser', [mid.checkRolesAndLogout(['Super Admin', 'Admin Verifikasi'])], userController.getUser); 
