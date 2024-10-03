@@ -31,7 +31,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
-        userinfo_id: 3,
+        userinfo_id: 4,
         slug: "kepalabidangmutasi-20240620041615213",
         password: passwordHash.generate('123456'),
         bidang_id: 1,
@@ -40,7 +40,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
-        userinfo_id: 4,
+        userinfo_id: 5,
         slug: "sekretarisdinas-20240620041615213",
         password: passwordHash.generate('123456'),
         bidang_id: null,
@@ -49,7 +49,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
-        userinfo_id: 5,
+        userinfo_id: 6,
         slug: "kepaladinas-20240620041615213",
         password: passwordHash.generate('123456'),
         bidang_id: null,
@@ -58,7 +58,7 @@ module.exports = {
         updatedAt: new Date()
       },
       {
-        userinfo_id: 5,
+        userinfo_id: 7,
         slug: "sekretarisdaerah-20240620041615213",
         password: passwordHash.generate('123456'),
         bidang_id: null,
