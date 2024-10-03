@@ -26,7 +26,7 @@ module.exports = {
     
             const { datainput } = req.body;
     
-            // Cek apakah layanan ID valid
+            // Cek apakah layanan ID valid dan mengambil bidang terkait
             let dataLayanan = await Layanan.findOne({
                 where: {
                     id: idlayanan
@@ -34,12 +34,13 @@ module.exports = {
                 include: [
                     {
                         model: Bidang,
-                        attributes: ['nama']
+                        attributes: ['id', 'nama']
                     },
                 ],
                 attributes: ['id'],
             });
     
+            // Jika layanan tidak ditemukan
             if (!dataLayanan) {
                 throw new Error('Layanan not found');
             }
@@ -51,10 +52,14 @@ module.exports = {
                 }
             });
     
-            // Memasukkan nilai feedback dari pengguna
+            // Ambil bidang_id dari data layanan
+            const bidangId = dataLayanan.Bidang?.id;
+    
+            // Memasukkan nilai feedback dari pengguna, termasuk bidang_id
             let layananID = {
                 userinfo_id: Number(iduser), // Get id user dari token
                 layanan_id: Number(idlayanan),
+                bidang_id: bidangId,         // Tambahkan bidang_id ke feedback
                 question_1: req.body.question_1 ?? null,
                 question_2: req.body.question_2 ?? null,
                 question_3: req.body.question_3 ?? null,
@@ -65,10 +70,11 @@ module.exports = {
             // Membuat feedback baru
             const createdFeedback = await User_feedback.create(layananID, { transaction });
     
-    
+            // Commit transaksi jika semua berhasil
             await transaction.commit();
             res.status(201).json(response(201, 'Success create', createdFeedback));
         } catch (err) {
+            // Rollback transaksi jika ada error
             await transaction.rollback();
             res.status(500).json(response(500, 'Internal server error', err));
             console.error(err);
@@ -267,6 +273,7 @@ module.exports = {
         }
     },
 
+    // user get inputan feedback nya
     getHistoryForUser: async (req, res) => {
         try {
             const page = parseInt(req.query.page) || 1;
