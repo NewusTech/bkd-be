@@ -344,35 +344,68 @@ module.exports = {
                 });
             }
     
-            console.log('Existing Document:', userDokumen);
+            const uploadToS3 = async (file) => {
+                const timestamp = new Date().getTime();
+                const uniqueFileName = `${timestamp}-${file.originalname}`;
+                const uploadParams = {
+                    Bucket: process.env.AWS_BUCKET,
+                    Key: `${process.env.PATH_AWS}/user_dokumen/${uniqueFileName}`,
+                    Body: file.buffer,
+                    ACL: 'public-read',
+                    ContentType: file.mimetype
+                };
+                const command = new PutObjectCommand(uploadParams);
+                await s3Client.send(command);
     
-            const uploadFields = ['sk_80', 'sk_100', 'kartu_pegawai', 'ktp', 'kk', 'npwp'];
-            const updatedFields = {};
+                return `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
+            };
     
-            for (const field of uploadFields) {
-                if (req.files && req.files[field]) {
-                    const timestamp = new Date().getTime();
-                    const uniqueFileName = `${timestamp}-${req.files[field].originalname}`;
-                    const uploadParams = {
-                        Bucket: process.env.AWS_BUCKET,
-                        Key: `${process.env.PATH_AWS}/berita/${uniqueFileName}`,
-                        Body: req.files[field].buffer,
-                        ACL: 'public-read',
-                        ContentType: req.files[field].mimetype
-                    };
+            let sk80Key = userDokumen.sk_80;
+            let sk100Key = userDokumen.sk_100;
+            let kartupegawaiKey = userDokumen.kartu_pegawai;
+            let ktpKey = userDokumen.ktp;
+            let kartukeluargaKey = userDokumen.kk;
+            let npwpKey = userDokumen.npwp;
     
-                    const command = new PutObjectCommand(uploadParams);
-                    await s3Client.send(command);
+            // Cek dan upload setiap file yang ada
+            if (req.files?.sk_80) sk80Key = await uploadToS3(req.files.sk_80[0]);
+            if (req.files?.sk_100) sk100Key = await uploadToS3(req.files.sk_100[0]);
+            if (req.files?.kartu_pegawai) kartupegawaiKey = await uploadToS3(req.files.kartu_pegawai[0]);
+            if (req.files?.ktp) ktpKey = await uploadToS3(req.files.ktp[0]);
+            if (req.files?.kk) kartukeluargaKey = await uploadToS3(req.files.kk[0]);
+            if (req.files?.npwp) npwpKey = await uploadToS3(req.files.npwp[0]);
     
-                    updatedFields[field] = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
-                } else {
-                    updatedFields[field] = userDokumen[field];
-                }
+            // Buat objek dokumen baru
+            const updatedUserDokumen = {
+                sk_80: sk80Key || null,
+                sk_100: sk100Key || null,
+                kartu_pegawai: kartupegawaiKey || null,
+                ktp: ktpKey || null,
+                kk: kartukeluargaKey || null,
+                npwp: npwpKey || null
+            };
+    
+            // Validasi input berdasarkan schema
+            const schema = {
+                sk_80: { type: "string", optional: true },
+                sk_100: { type: "string", optional: true },
+                kartu_pegawai: { type: "string", optional: true },
+                ktp: { type: "string", optional: true },
+                kk: { type: "string", optional: true },
+                npwp: { type: "string", optional: true }
+            };
+            
+            const validate = v.validate(updatedUserDokumen, schema);
+            if (validate.length > 0) {
+                const errorMessages = validate.map(error => `Field ${error.field} tidak valid: ${error.message}`);
+                return res.status(400).json({
+                    status: 400,
+                    message: `Error: ${errorMessages.join(', ')}`
+                });
             }
     
-            console.log('Updated Fields:', updatedFields);
-    
-            const [affectedCount] = await User_dokumen.update(updatedFields, {
+            // Update dokumen di database
+            await User_dokumen.update(updatedUserDokumen, {
                 where: {
                     id: dokumenId,
                     user_id: userId
@@ -380,17 +413,15 @@ module.exports = {
                 transaction
             });
     
-            console.log('Affected Rows:', affectedCount);
-    
             await transaction.commit();
             res.status(200).json({
                 status: 200,
-                message: 'User dokumen berhasil diupdate'
+                message: 'User dokumen berhasil diupdate',
+                data: updatedUserDokumen
             });
     
         } catch (err) {
             await transaction.rollback();
-            console.log(err);
             res.status(500).json({
                 status: 500,
                 message: 'Terjadi kesalahan pada server',
