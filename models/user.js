@@ -53,9 +53,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'userdescendant_id',
       });
 
-      // User.belongsTo(models.User_dokumen, {
-      //   foreignKey: 'userdokumen_id',
-      // });
+      User.belongsTo(models.User_dokumen, {
+        foreignKey: 'userdokumen_id',
+      });
+      
       User.belongsToMany(models.Permission, {
         through: 'User_permissions',
         as: 'permissions',
@@ -78,7 +79,7 @@ module.exports = (sequelize, DataTypes) => {
     userpelatihan_id: DataTypes.INTEGER,
     userspouse_id: DataTypes.INTEGER,
     userdescendant_id: DataTypes.INTEGER,
-    // userdokumen_id: DataTypes.INTEGER,
+    userdokumen_id: DataTypes.INTEGER,
     deletedAt: DataTypes.DATE,
     resetpasswordtoken: DataTypes.STRING,
     resetpasswordexpires: DataTypes.DATE,
