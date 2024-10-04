@@ -27,8 +27,12 @@ module.exports = {
             //membuat schema untuk validasi
             const schema = {
                 nama: { type: "string", min: 3 },
-                jabatan: { type: "string", min: 3, optional: true },
+                bidang_id: { type: "string", optional: true },
+                nip: { type: "string", optional: true },
+                jabatan: { type: "string", optional: true },
+                golongan: { type: "string", optional: true },
                 image: { type: "string", optional: true },
+                status: { type: "string", optional: true },
             }
 
             if (req.file) {
@@ -54,7 +58,11 @@ module.exports = {
             let bkdstrukturCreateObj = {
                 nama: req.body.nama,
                 slug: req.body.nama ? slugify(req.body.nama, { lower: true }) : null,
+                bidang_id: req.body.bidang_id,
+                golongan: req.body.golongan,
+                nip: req.body.nip,
                 jabatan: req.body.jabatan,
+                status: req.body.status,
                 image: req.file ? imageKey : null,
             }
 
@@ -193,7 +201,11 @@ module.exports = {
             // Membuat schema untuk validasi
             const schema = {
                 nama: { type: "string", min: 3, optional: true },
-                jabatan: { type: "string", min: 3, optional: true },
+                bidang_id: { type: "string", optional: true },
+                nip: { type: "string", optional: true },
+                jabatan: { type: "string", optional: true },
+                golongan: { type: "string", optional: true },
+                status: { type: "string", optional: true },
                 image: { type: "string", optional: true },
             };
     
