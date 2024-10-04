@@ -8,6 +8,7 @@ const userpenghargaanRoute = require('./userpenghargaan.route');
 const userpelatihanRoute = require('./userpelatihan.route');
 const userspouseRoute = require('./userspouse.route');
 const userdescendantRoute = require('./userdescendant.route');
+const userdokumenRoute = require('./userdokumen.route');
 const userfeedbackRoute = require('./userfeedback.route');
 const roleRoute = require('./role.route');
 const permissionRoute = require('./permission.route');
@@ -32,6 +33,8 @@ const selectedstrukturRoute = require('./selectedstruktur.route');
 const beritaRoute = require('./berita.route');
 const manualbookRoute = require('./manualbook.route');
 const regulasiRoute = require('./regulasi.route');
+const dashboardRoute = require('./dashboard.route');
+
 
 module.exports = function (app, urlApi) {
     app.use(urlApi, userRoute);
@@ -44,6 +47,7 @@ module.exports = function (app, urlApi) {
     app.use(urlApi, userpelatihanRoute);
     app.use(urlApi, userspouseRoute);
     app.use(urlApi, userdescendantRoute);
+    app.use(urlApi, userdokumenRoute);
     app.use(urlApi, userfeedbackRoute);
     app.use(urlApi, roleRoute);
     app.use(urlApi, permissionRoute);
@@ -68,4 +72,5 @@ module.exports = function (app, urlApi) {
     app.use(urlApi, beritaRoute);
     app.use(urlApi, manualbookRoute);
     app.use(urlApi, regulasiRoute);
+    app.use(urlApi, dashboardRoute);
 }
