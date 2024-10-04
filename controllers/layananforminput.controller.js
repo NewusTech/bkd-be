@@ -615,9 +615,9 @@ module.exports = {
 
             if (search) {
                 WhereClause3[Op.or] = [
-                    { name: { [Op.iLike]: `%${search}%` } },
-                    { '$Layanan.nama$': { [Op.iLike]: `%${search}%` } },
-                    { '$Layanan->Bidang.nama$': { [Op.iLike]: `%${search}%` } }
+                    { name: { [Op.like]: `%${search}%` } },
+                    { '$Layanan.nama$': { [Op.like]: `%${search}%` } },
+                    { '$Layanan->Bidang.nama$': { [Op.like]: `%${search}%` } }
                 ];
             }
 
