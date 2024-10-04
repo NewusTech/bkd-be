@@ -100,7 +100,6 @@ module.exports = {
     getPengaduan: async (req, res) => {
         try {
             const userinfo_id = req.user.role === "User" ? req.user.userId : null;
-
             const bidang_id = req.query.bidang_id ?? null;
             const layanan_id = req.query.layanan_id ?? null;
             let { start_date, end_date, search, status } = req.query;
@@ -120,11 +119,11 @@ module.exports = {
                 whereCondition.layanan_id = layanan_id;
             }
 
-            if (req.user.role === 'Admin Instansi' || req.user.role === 'Admin Verifikasi' || req.user.role === 'Admin Layanan') {
+            if (req.user.role === 'Kepala Bidang' || req.user.role === 'Admin Verifikasi') {
                 whereCondition.bidang_id = req.user.bidang_id;
             }
 
-            if (req.user.role === 'Admin Layanan') {
+            if (req.user.role === 'Admin Verifikasi') {
                 whereCondition.layanan_id = data.layanan_id;
             }
 
@@ -342,5 +341,259 @@ module.exports = {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
-    }
+    },
+
+    pdfPengaduan: async (req, res) => {
+        try {
+            const userinfo_id = req.user.role === "User" ? req.user.userId : null;
+
+            let bidang_id = req.query.bidang_id ?? null;
+            let layanan_id = req.query.layanan_id ?? null;
+            let { start_date, end_date, search, status } = req.query;
+            let pengaduanGets;
+
+            const whereCondition = {};
+
+            if (bidang_id) {
+                whereCondition.bidang_id = bidang_id;
+            }
+
+            if (layanan_id) {
+                whereCondition.layanan_id = layanan_id;
+            }
+
+            if (req.user.role === 'Admin Verifikasi' || req.user.role === 'Kepala Bidang' || req.user.role === 'Super Admin') {
+                bidang_id = req.user.bidang_id;
+                whereCondition.bidang_id = req.user.bidang_id;
+            }
+
+            if (req.user.role === 'Admin Verifikasi') {
+                layanan_id = req.user.layanan_id;
+                whereCondition.layanan_id = req.user.layanan_id;
+            }
+
+            if (search) {
+                whereCondition[Op.or] = [
+                    { judul: { [Op.iLike]: `%${search}%` } },
+                    { aduan: { [Op.iLike]: `%${search}%` } },
+                    { '$Bidang.nama$': { [Op.iLike]: `%${search}%` } },
+                    { '$Layanan.nama$': { [Op.iLike]: `%${search}%` } }
+                ];
+            }
+            if (status) {
+                whereCondition.status = status;
+            }
+            if (userinfo_id) {
+                whereCondition.userinfo_id = userinfo_id;
+            }
+            if (start_date && end_date) {
+                whereCondition.createdAt = {
+                    [Op.between]: [moment(start_date).startOf('day').toDate(), moment(end_date).endOf('day').toDate()]
+                };
+            } else if (start_date) {
+                whereCondition.createdAt = {
+                    [Op.gte]: moment(start_date).startOf('day').toDate()
+                };
+            } else if (end_date) {
+                whereCondition.createdAt = {
+                    [Op.lte]: moment(end_date).endOf('day').toDate()
+                };
+            }
+
+            pengaduanGets = await Promise.all([
+                Pengaduan.findAll({
+                    where: whereCondition,
+                    include: [
+                        { model: Layanan, attributes: ['id', 'nama'] },
+                        { model: Bidang, attributes: ['id', 'nama'] },
+                        { model: User_info, attributes: ['id', 'name', 'nip'] }
+                    ],
+                    order: [['id', 'DESC']]
+                })
+            ]);
+
+            // Generate HTML content for PDF
+            const templatePath = path.resolve(__dirname, '../views/pengaduan.html');
+            let htmlContent = fs.readFileSync(templatePath, 'utf8');
+            let bidangGet, pengaduanGet;
+
+            if (bidang_id) {
+                bidangGet = await Instansi.findOne({
+                    where: {
+                        id: bidang_id
+                    },
+                });
+            }
+
+            if (layanan_id) {
+                pengaduanGet = await Layanan.findOne({
+                    where: {
+                        id: layanan_id
+                    },
+                });
+            }
+
+            const bidangInfo = bidangGet?.nama ? `<p>Bidang : ${bidangGet?.nama}</p>` : '';
+            const layananInfo = pengaduanGet?.name ? `<p>Layanan : ${pengaduanGet?.name}</p>` : '';
+            let tanggalInfo = '';
+            if (start_date || end_date) {
+                const startDateFormatted = start_date ? new Date(start_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '';
+                const endDateFormatted = end_date ? new Date(end_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '';
+                tanggalInfo = `<p>Periode Tanggal : ${startDateFormatted} s.d. ${endDateFormatted ? endDateFormatted : 'Hari ini'} </p>`;
+            }
+
+            const reportTableRows = pengaduanGets[0]?.map(pengaduan => {
+                const createdAtDate = new Date(pengaduan.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+
+                return `
+                     <tr>
+                         <td class="center">${createdAtDate}</td>
+                         <td>${pengaduan?.Layanan?.nama}</td>
+                         <td>${pengaduan?.User_info?.name}</td>
+                         <td>${pengaduan?.judul}</td>
+                     </tr>
+                 `;
+            }).join('');
+
+            htmlContent = htmlContent.replace('{{bidangInfo}}', bidangInfo);
+            htmlContent = htmlContent.replace('{{layananInfo}}', layananInfo);
+            htmlContent = htmlContent.replace('{{tanggalInfo}}', tanggalInfo);
+            htmlContent = htmlContent.replace('{{reportTableRows}}', reportTableRows);
+
+            // Launch Puppeteer
+            const browser = await puppeteer.launch({
+                headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            const page = await browser.newPage();
+
+            // Set HTML content
+            await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+            // Generate PDF
+            const pdfBuffer = await page.pdf({
+                format: 'Legal',
+                landscape: true,
+                margin: {
+                    top: '1.16in',
+                    right: '1.16in',
+                    bottom: '1.16in',
+                    left: '1.16in'
+                }
+            });
+
+            await browser.close();
+
+            // Generate filename
+            const currentDate = new Date().toISOString().replace(/:/g, '-');
+            const filename = `laporan-${currentDate}.pdf`;
+
+            // Send PDF buffer
+            res.setHeader('Content-disposition', 'attachment; filename="' + filename + '"');
+            res.setHeader('Content-type', 'application/pdf');
+            res.send(pdfBuffer);
+
+        } catch (err) {
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
+
+    getReportPermasalahan: async (req, res) => {
+        try {
+            const bidang_id = req.query.bidang_id ?? null;
+            const layanan_id = req.query.layanan_id ?? null;
+            const admin_id = req.query.admin_id ?? null;
+            let { start_date, end_date, search, status } = req.query;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const offset = (page - 1) * limit;
+            let pengaduanGets;
+            let totalCount;
+
+            const whereCondition = {};
+
+            if (bidang_id) {
+                whereCondition.bidang_id = bidang_id;
+            }
+
+            if (admin_id) {
+                whereCondition.admin_id = admin_id;
+            }
+
+            if (layanan_id) {
+                whereCondition.layanan_id = layanan_id;
+            }
+
+            if (req.user.role === 'Admin Instansi' || req.user.role === 'Admin Verifikasi' || req.user.role === 'Admin Layanan') {
+                whereCondition.instansi_id = req.user.instansi_id;
+            }
+
+            if (req.user.role === 'Admin Layanan') {
+                whereCondition.layanan_id = req.user.layanan_id;
+            }
+
+            if (search) {
+                whereCondition[Op.or] = [
+                    { judul: { [Op.iLike]: `%${search}%` } },
+                    { aduan: { [Op.iLike]: `%${search}%` } },
+                    { '$Bidang.nama$': { [Op.iLike]: `%${search}%` } },
+                    { '$Bidang.nama$': { [Op.iLike]: `%${search}%` } },
+                    { '$User_info.name$': { [Op.iLike]: `%${search}%` } }
+                ];
+            }
+            whereCondition.status = { [Op.ne]: 4 };
+
+            if (start_date && end_date) {
+                whereCondition.createdAt = {
+                    [Op.between]: [moment(start_date).startOf('day').toDate(), moment(end_date).endOf('day').toDate()]
+                };
+            } else if (start_date) {
+                whereCondition.createdAt = {
+                    [Op.gte]: moment(start_date).startOf('day').toDate()
+                };
+            } else if (end_date) {
+                whereCondition.createdAt = {
+                    [Op.lte]: moment(end_date).endOf('day').toDate()
+                };
+            }
+
+            [pengaduanGets, totalCount] = await Promise.all([
+                Pengaduan.findAll({
+                    where: whereCondition,
+                    include: [
+                        { model: Layanan, attributes: ['id', 'nama'] },
+                        { model: Bidang, attributes: ['id', 'nama'] },
+                        { model: User_info, attributes: ['id', 'name', 'nip'] },
+                        { model: User_info, as: 'Admin', attributes: ['id', 'name', 'nip'] },
+                        { model: User_info, as: 'Adminupdate', attributes: ['id', 'name', 'nip'] }
+                    ],
+                    limit: limit,
+                    offset: offset,
+                    order: [['id', 'DESC']]
+                }),
+                Pengaduan.count({
+                    where: whereCondition,
+                    include: [
+                        { model: Layanan },
+                        { model: Bidang },
+                        { model: User_info }
+                    ],
+                })
+            ]);
+
+            const pagination = generatePagination(totalCount, page, limit, '/api/user/bidang/report/pengaduan');
+
+            res.status(200).json({
+                status: 200,
+                message: 'success get pengaduan',
+                data: pengaduanGets,
+                pagination: pagination
+            });
+
+        } catch (err) {
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
 }

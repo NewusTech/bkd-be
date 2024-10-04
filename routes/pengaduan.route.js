@@ -16,4 +16,7 @@ route.get('/user/pengaduan/get/:id', pengaduanController.getPengaduanById);
 route.put('/user/pengaduan/update/:id', [mid.checkRolesAndLogout(['Super Admin'])], pengaduanController.updatePengaduan); 
 route.delete('/user/pengaduan/delete/:id', [mid.checkRolesAndLogout(['Super Admin'])], pengaduanController.deletePengaduan);
 
+route.get('/user/pengaduan/pdfget', [mid.checkRolesAndLogout(['Super Admin', 'Admin Verifikasi', 'Kepala Bidang'])], pengaduanController.pdfPengaduan);
+route.get('/user/bidang/report/pengaduan', [mid.checkRolesAndLogout(['Kepala Bidang','Sekretaris Bidang', 'Admin Verifikasi', 'Super Admin'])], pengaduanController.getReportPermasalahan); 
+
 module.exports = route;
