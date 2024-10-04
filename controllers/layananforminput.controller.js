@@ -563,9 +563,10 @@ module.exports = {
             const WhereClause2 = {};
             const WhereClause3 = {};
 
-            if (req.user.role === 'Kepala Bidang' || req.user.role === 'Admin Verifikasi' || req.user.role === 'Super Admin') {
+            if (req.user.role === 'Kepala Bidang' || req.user.role === 'Admin Verifikasi') {
                 WhereClause2.bidang_id = req.user.bidang_id;
-            }
+              } else if (req.user.role === 'Super Admin') {
+              }
 
             if (req.user.role === 'Admin Verifikasi') {
                 WhereClause.layanan_id = req.user.layanan_id;
