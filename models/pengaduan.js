@@ -14,10 +14,14 @@ module.exports = (sequelize, DataTypes) => {
       Pengaduan.belongsTo(models.User_info, {
         foreignKey: 'userinfo_id',
       });
-      // Pengaduan.belongsTo(models.User_info, {
-      //   foreignKey: 'updated_by',
-      //   as: 'Adminupdate'
-      // });
+      Pengaduan.belongsTo(models.User_info, {
+        foreignKey: 'admin_id',
+        as: 'Admin'
+      });
+      Pengaduan.belongsTo(models.User_info, {
+        foreignKey: 'updated_by',
+        as: 'Adminupdate'
+      });
     }
   }
   Pengaduan.init({
@@ -29,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
     judul_pengaduan: DataTypes.STRING,
     jawaban: DataTypes.STRING,
     image: DataTypes.STRING,
-    // updated_by: DataTypes.INTEGER
+    updated_by: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'Pengaduan',
