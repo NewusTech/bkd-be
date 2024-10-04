@@ -290,8 +290,8 @@ module.exports = {
 
             if (search) {
                 WhereClause[Op.or] = [
-                    { '$Layanan.nama$': { [Op.iLike]: `%${search}%` } },
-                    { '$Layanan.Bidang.nama$': { [Op.iLike]: `%${search}%` } }
+                    { '$Layanan.nama$': { [Op.like]: `%${search}%` } },
+                    { '$Layanan.Bidang.nama$': { [Op.like]: `%${search}%` } }
                 ];
             }
 
