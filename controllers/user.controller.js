@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { User, Token, Bidang, Layanan, Role, User_info, User_jabatan, User_kepangkatan, User_pendidikan, User_penghargaan, User_pelatihan, User_kgb, User_descendant, User_spouse, Kecamatan, Desa, Pangkat, User_permission, Permission, sequelize } = require('../models');
+const { User, Token, Bidang, Layanan, Role, User_info, User_jabatan, User_kepangkatan, User_pendidikan, User_penghargaan, User_pelatihan, User_kgb, User_descendant, User_spouse, User_dokumen, Kecamatan, Desa, Pangkat, User_permission, Permission, sequelize } = require('../models');
 const baseConfig = require('../config/base.config');
 const passwordHash = require('password-hash');
 const jwt = require('jsonwebtoken');
@@ -490,6 +490,9 @@ module.exports = {
             const userChildrens = await User_descendant.findAll({
                 where: { user_id: userId }
             });
+            const userDokumens = await User_dokumen.findOne({
+                where: { user_id: userId }
+            });
 
 
         // Format data jabatan untuk user (jika ada banyak jabatan)
@@ -566,6 +569,16 @@ module.exports = {
             pekerjaan: children.pekerjaan,
             status: children.status,
         }));
+
+        const formattedDokumen = userDokumens ? {
+            id: userDokumens.id,
+            sk_80: userDokumens.sk_80,
+            sk_100: userDokumens.sk_100,
+            ktp: userDokumens.ktp,
+            kk: userDokumens.kk,
+            kartu_pegawai: userDokumens.kartu_pegawai,
+            npwp: userDokumens.npwp,
+        } : null;
     
             let formattedUsers = {
                 id: userGet.id,
@@ -601,6 +614,7 @@ module.exports = {
                 kgb: formattedKgbs,
                 penghargaan: formattedPenghargaans,
                 pelatihan: formattedPelatihans,
+                dokumen_pendukung: formattedDokumen, 
                 createdAt: userGet.createdAt,
                 updatedAt: userGet.updatedAt,
             };
