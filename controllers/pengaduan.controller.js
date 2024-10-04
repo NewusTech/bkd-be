@@ -121,6 +121,7 @@ module.exports = {
 
             if (req.user.role === 'Kepala Bidang' || req.user.role === 'Admin Verifikasi') {
                 whereCondition.bidang_id = req.user.bidang_id;
+            } else if (req.user.role === 'Super Admin') {
             }
 
             if (req.user.role === 'Admin Verifikasi') {
@@ -129,10 +130,10 @@ module.exports = {
 
             if (search) {
                 whereCondition[Op.or] = [
-                    { isi: { [Op.iLike]: `%${search}%` } },
-                    { judul_pengaduan: { [Op.iLike]: `%${search}%` } },
-                    { '$Bidang.nama$': { [Op.iLike]: `%${search}%` } },
-                    { '$Layanan.nama$': { [Op.iLike]: `%${search}%` } }
+                    { isi: { [Op.like]: `%${search}%` } },
+                    { judul_pengaduan: { [Op.like]: `%${search}%` } },
+                    { '$Bidang.nama$': { [Op.like]: `%${search}%` } },
+                    { '$Layanan.nama$': { [Op.like]: `%${search}%` } }
                 ];
             }
             if (status) {
@@ -374,10 +375,10 @@ module.exports = {
 
             if (search) {
                 whereCondition[Op.or] = [
-                    { judul: { [Op.iLike]: `%${search}%` } },
-                    { aduan: { [Op.iLike]: `%${search}%` } },
-                    { '$Bidang.nama$': { [Op.iLike]: `%${search}%` } },
-                    { '$Layanan.nama$': { [Op.iLike]: `%${search}%` } }
+                    { judul: { [Op.like]: `%${search}%` } },
+                    { aduan: { [Op.like]: `%${search}%` } },
+                    { '$Bidang.nama$': { [Op.like]: `%${search}%` } },
+                    { '$Layanan.nama$': { [Op.like]: `%${search}%` } }
                 ];
             }
             if (status) {
@@ -535,11 +536,11 @@ module.exports = {
 
             if (search) {
                 whereCondition[Op.or] = [
-                    { judul: { [Op.iLike]: `%${search}%` } },
-                    { aduan: { [Op.iLike]: `%${search}%` } },
-                    { '$Bidang.nama$': { [Op.iLike]: `%${search}%` } },
-                    { '$Bidang.nama$': { [Op.iLike]: `%${search}%` } },
-                    { '$User_info.name$': { [Op.iLike]: `%${search}%` } }
+                    { judul: { [Op.like]: `%${search}%` } },
+                    { aduan: { [Op.like]: `%${search}%` } },
+                    { '$Bidang.nama$': { [Op.like]: `%${search}%` } },
+                    { '$Bidang.nama$': { [Op.like]: `%${search}%` } },
+                    { '$User_info.name$': { [Op.like]: `%${search}%` } }
                 ];
             }
             whereCondition.status = { [Op.ne]: 4 };
