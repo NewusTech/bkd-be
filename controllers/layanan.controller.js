@@ -297,6 +297,7 @@ module.exports = {
                 ketentuan: { type: "string", optional: true },
                 langkah: { type: "string", optional: true },
                 penanggung_jawab: { type: "string", optional: true },
+                bidang_id: { type: "string", optional: true },
             }
 
             let layananUpdateObj = {
@@ -307,6 +308,7 @@ module.exports = {
                 ketentuan: req.body.ketentuan,
                 langkah: req.body.langkah,
                 penanggung_jawab: req.body.penanggung_jawab,
+                bidang_id: req.body.bidang_id,
             }
 
             const validate = v.validate(layananUpdateObj, schema);
