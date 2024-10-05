@@ -76,7 +76,8 @@ module.exports = {
             //mendapatkan data data untuk pengecekan
             let dataGets = await Bkd_struktur.findOne({
                 where: {
-                    slug: bkdstrukturCreateObj.slug
+                    slug: bkdstrukturCreateObj.slug,
+                    deletedAt: null
                 }
             });
 
