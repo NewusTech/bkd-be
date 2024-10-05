@@ -130,7 +130,7 @@ module.exports = {
 
             if (search) {
                 whereCondition[Op.or] = [
-                    { isi: { [Op.like]: `%${search}%` } },
+                    { isi_pengaduan: { [Op.like]: `%${search}%` } },
                     { judul_pengaduan: { [Op.like]: `%${search}%` } },
                     { '$Bidang.nama$': { [Op.like]: `%${search}%` } },
                     { '$Layanan.nama$': { [Op.like]: `%${search}%` } }
