@@ -34,6 +34,7 @@ const beritaRoute = require('./berita.route');
 const manualbookRoute = require('./manualbook.route');
 const regulasiRoute = require('./regulasi.route');
 const dashboardRoute = require('./dashboard.route');
+const suratRoute = require('./surat.route');
 
 
 module.exports = function (app, urlApi) {
@@ -73,4 +74,5 @@ module.exports = function (app, urlApi) {
     app.use(urlApi, manualbookRoute);
     app.use(urlApi, regulasiRoute);
     app.use(urlApi, dashboardRoute);
+    app.use(urlApi, suratRoute);
 }
