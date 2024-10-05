@@ -49,7 +49,7 @@ module.exports = {
             let dataGets = await Bidang.findOne({
                 where: {
                     slug: bidangCreateObj.slug,
-                    deleted: null
+                    deletedAt: null
                 }
             }
             );
