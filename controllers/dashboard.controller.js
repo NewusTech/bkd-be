@@ -8,56 +8,8 @@ const { finished } = require('nodemailer/lib/xoauth2');
 
 module.exports = {
 
-    //mendapatkan semua data instansi
-    web_user: async (req, res) => {
-        try {
-            const today = new Date();
-            const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-            const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
-            const antrianCountToday = await Antrian.count({
-                where: {
-                    createdAt: {
-                        [Op.between]: [startOfDay, endOfDay]
-                    }
-                }
-            });
-
-            const permohonanCountToday = await Layananformnum.count({
-                where: {
-                    createdAt: {
-                        [Op.between]: [startOfDay, endOfDay]
-                    }
-                }
-            });
-            const instansiCount = await Instansi.count({
-                where: {
-                    status: true,
-                    deletedAt: null
-                }
-            });
-            const layananCount = await Layanan.count({
-                where: {
-                    status: true,
-                    deletedAt: null
-                }
-            });
-
-            const dataget = {
-                instansiCount,
-                layananCount,
-                permohonanCountToday,
-                antrianCountToday
-            };
-
-            res.status(200).json(response(200, 'success get data', dataget));
-
-        } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
-            console.log(err);
-        }
-    },
-
+    // get dashboard user
     getDashboardSuperadmin: async (req, res) => {
         try {
             const { year, bidang_id, start_date, end_date, search, page, limit } = req.query;
@@ -115,13 +67,13 @@ module.exports = {
             const formattedCountByBidang = countbyBidang.map(bidang => ({
                 id: bidang.id,
                 name: bidang.nama,
-                layananformnum_count: bidang.Layanans.reduce((total, layanan) => total + layanan.Layanan_form_nums.length, 0),
+                permohonan_count: bidang.Layanans.reduce((total, layanan) => total + layanan.Layanan_form_nums.length, 0),
             }));
 
             // Fetch Layanan data with optional filters for bidang_id, start_date, end_date, and search
             const whereClause = {};
             if (search) {
-                whereClause.name = { [Op.iLike]: `%${search}%` };
+                whereClause.name = { [Op.like]: `%${search}%` };
             }
             const whereClause2 = {};
             if (bidang_id) {
@@ -165,18 +117,17 @@ module.exports = {
                 })
             ]);
 
-            const modifiedLayananGets = layananGets.map(layanan => {
-                const { Bidang } = layanan.dataValues;
-                return {
-                    id: layanan.id,
-                    layanan_name: layanan.nama,
-                    layanan_createdAt: layanan.createdAt,
-                    bidang_id: Bidang.id,
-                    bidang_name: Bidang.nama,
-                    permohonanCount: layanan.Layanan_form_nums.length,
-                    userFeedback: layanan.User_feedback ? layanan.User_feedback.length : 0, 
-                };
-            });
+            // const modifiedLayananGets = layananGets.map(layanan => {
+            //     const { Bidang } = layanan.dataValues;
+            //     return {
+            //         id: layanan.id,
+            //         layanan_name: layanan.nama,
+            //         layanan_createdAt: layanan.createdAt,
+            //         bidang_id: Bidang.id,
+            //         bidang_name: Bidang.nama,
+            //         permohonanCount: layanan.Layanan_form_nums.length,
+            //     };
+            // });
 
             // Generate pagination
             const pagination = generatePagination(totalCount, pageNumber, pageSize, '/api/dashboard/superadmin');
@@ -184,10 +135,9 @@ module.exports = {
             // Construct final response object
             const data = {
                 permohonanCount,
-                userFeedback,
                 monthlyCounts,
                 countbyBidang: formattedCountByBidang,
-                layananData: modifiedLayananGets,
+                // layananData: modifiedLayananGets,
                 pagination
             };
 
@@ -208,18 +158,18 @@ module.exports = {
 
             const dateRangethisMonth = [firstDaythisMonth, lastDaythisMonth];
 
-            const instansiWhere = { instansi_id: data.instansi_id };
+            const bidangWhere = { bidang_id: req.user.bidang_id };
 
-            const datainstansi = await Instansi.findAll({
-                where: { id: data.instansi_id },
-                attributes: ['id', 'name', 'desc', 'image'],
+            const databidang = await Bidang.findAll({
+                where: { id: req.user.bidang_id },
+                attributes: ['id', 'nama', 'desc'],
             });
 
             const getTopLayanan = async (range) => {
                 const layanan = await Layanan.findAll({
-                    where: instansiWhere,
+                    where: bidangWhere,
                     include: {
-                        model: Layananformnum,
+                        model: Layanan_form_num,
                         attributes: ['id'],
                         required: false,
                         where: { createdAt: { [Op.between]: range } },
@@ -283,7 +233,7 @@ module.exports = {
             ]);
 
             res.status(200).json(response(200, 'success get data', {
-                datainstansi,
+                databidang,
                 top3LayananMonth,
                 totalLayananPerDay,
                 totalLayanan7Days,
