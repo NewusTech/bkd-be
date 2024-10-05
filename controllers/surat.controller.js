@@ -1,5 +1,5 @@
 const { response } = require('../helpers/response.formatter');
-const { Bidang, Layanan, Layanan_surat, Layanan_form_num, User_info, sequelize } = require('../models');
+const { Bidang, Layanan, Layanan_surat, Layanan_form_num, Bkd_profile, User_info, sequelize } = require('../models');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
@@ -8,7 +8,7 @@ const v = new Validator();
 
 module.exports = {
 
-    get: async (req, res) => {
+    getTemplate: async (req, res) => {
         try {
             let layanan = await Layanan.findOne({
                 where: {
@@ -18,7 +18,7 @@ module.exports = {
                 include: [
                     {
                         model: Bidang,
-                        attributes: ['id', 'nama', 'alamat', 'image', 'pj', 'nip_pj'],
+                        attributes: ['id', 'nama', 'pj', 'nip_pj'],
                     },
                     {
                         model: Layanan_surat
@@ -38,7 +38,7 @@ module.exports = {
     },
 
     //untuk admin
-    getsurat: async (req, res) => {
+    getOutputSurat: async (req, res) => {
         try {
             let layanan = await Layanan.findOne({
                 where: {
@@ -47,8 +47,8 @@ module.exports = {
                 attributes: ['id', 'nama'],
                 include: [
                     {
-                        model: Instansi,
-                        attributes: ['id', 'nama', 'alamat', 'image', 'pj', 'nip_pj'],
+                        model: Bidang,
+                        attributes: ['id', 'nama', 'pj', 'nip_pj'],
                     },
                     {
                         model: Layanan_surat,
@@ -84,11 +84,11 @@ module.exports = {
             let htmlContent = fs.readFileSync(templatePath, 'utf8');
 
             // Replace placeholders with actual data
-            const bidangImage = layanan.Bidang.image || '';
+            // const bidangImage = layanan.Bkd_profile.logo || '';
             const tanggalInfo =  new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-            htmlContent = htmlContent.replace('{{bidangImage}}', bidangImage);
+            // htmlContent = htmlContent.replace('{{bidangImage}}', bidangImage);
             htmlContent = htmlContent.replace('{{bidangName}}', layanan.Bidang.nama ?? '');
-            htmlContent = htmlContent.replace('{{bidangAlamat}}', layanan.Bidang.alamat ?? '');
+            // htmlContent = htmlContent.replace('{{bidangAlamat}}', layanan.Bidang.alamat ?? '');
             htmlContent = htmlContent.replace('{{layananHeader}}', layanan.Layanan_surat?.header ?? '');
             htmlContent = htmlContent.replace('{{layananBody}}', layanan.Layanan_surat?.body ?? '');
             htmlContent = htmlContent.replace('{{layananFooter}}', layanan.Layanan_surat?.footer ?? '');
@@ -118,9 +118,9 @@ module.exports = {
             await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
             // If an image URL is provided, wait for it to load
-            if (instansiImage) {
-                await page.waitForSelector('img.logo', { timeout: 60000 });
-            }
+            // if (bidangImage) {
+            //     await page.waitForSelector('img.logo', { timeout: 60000 });
+            // }
 
             // Generate PDF with 3 cm margins
             const pdfBuffer = await page.pdf({
@@ -150,7 +150,7 @@ module.exports = {
         }
     },
 
-    editinfosurat: async (req, res) => {
+    editTemplateSurat: async (req, res) => {
         const transaction = await sequelize.transaction();
 
         try {
