@@ -143,10 +143,13 @@ module.exports = {
                     npwp: user.npwp,
                     createdAt: user.createdAt,
                     updatedAt: user.updatedAt,
-                    Role: relatedRole ? relatedRole.name : null,
-                    Bidang: relatedBidang ? relatedBidang.nama : null
+                    // Role: relatedRole ? relatedRole.name : null,
+                    // Bidang: relatedBidang ? relatedBidang.nama : null
                 };
             });
+    
+            // Jika hanya ingin mengambil satu objek (contohnya objek pertama)
+            const formattedObject = formattedData[0] || {}; // Jika tidak ada data, kembalikan objek kosong.
     
             // Membuat pagination
             const pagination = generatePagination(totalCount, page, limit, '/api/user/dokumen/get');
@@ -155,7 +158,7 @@ module.exports = {
             res.status(200).json({
                 status: 200,
                 message: 'success get user dokumen pendukung',
-                data: formattedData,
+                data: formattedObject, // Mengirimkan objek tunggal
                 pagination: pagination
             });
     
@@ -168,6 +171,7 @@ module.exports = {
             console.log(err);
         }
     },
+    
 
     //mendapatkan data user dokumen berdasarkan id
     //UTK ADMIN NGECEK DATA PEMOHON
@@ -209,7 +213,7 @@ module.exports = {
     },
 
     //create data user dokumen
-    //dari sisi user untuk update data jabatan
+    //dari sisi user untuk update data dokumen
     createUserDokumen: async (req, res) => {
         const transaction = await sequelize.transaction();
         try {
