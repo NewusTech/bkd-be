@@ -7,136 +7,144 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            /* margin: 3cm; */
         }
 
-        .header,
-        .footer {
-            text-align: left;
-            margin-bottom: 25px;
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header img {
+            width: 80px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .title {
+            font-weight: bold;
+            text-align: center;
+            font-size: 16px;
+            text-transform: uppercase;
         }
 
         .content {
+            margin: 20px;
+        }
+
+        .info {
             margin-top: 20px;
         }
 
-        .logo {
+        .footer {
+            text-align: right;
+            margin-top: 40px;
+        }
+
+        .footer p {
             margin: 0;
-            width: 65px;
-            height: 65px;
         }
 
-        .flex {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 3px; /* Optional: adds some space between the logo and the text */
-        }
-
-        .flex .logo-container {
-            flex: 0 0 auto; /* Only takes as much space as the logo needs */
-        }
-
-        .flex .text-container {
-            flex: 1; /* This makes sure the text container takes up remaining space */
-            text-align: left; /* Align text to the left inside the text container */
-        }
-
-        .center {
-            text-align: center;
-        }
-
-        .righttab {
+        .signature {
+            margin-top: 40px;
             text-align: right;
         }
 
-        .horizontal-line {
-            border-bottom: 3px solid black; /* Adjust the thickness and color as needed */
-            margin: 10px 0; /* Adjust margin as needed */
+        .signature p {
+            margin: 0;
         }
 
-        /* Added border style for table */
-        table {
-            font-family: Arial, sans-serif;
-            width: 100%; /* Adjust width as needed */
+        .stamp {
+            margin-top: 20px;
+            text-align: center;
         }
 
-        p {
-            font-family: Arial, sans-serif;
-        }
-
-        .nospasi {
-            margin-bottom: 1px;
-            margin-top: 0px;
-            padding: 0px;
-        }
-
-        th, td {
-            text-align: left; /* Align text to the left */
-        }
-
-        th {
-            background-color: #f2f2f2; /* Add background color for table header */
+        .tembusan {
+            margin-top: 40px;
+            font-size: 12px;
         }
     </style>
 </head>
 
 <body>
-    <div class="header flex">
-        <!-- <div class="logo-container">
-            <img src="{{bidangImage}}" class="logo" />
-        </div> -->
-        <div class="text-container">
-            <h4 class="center" style="margin-top: 0px; margin-bottom: 2px;">PEMERINTAH KABUPATEN LAMPUNG TIMUR</h4>
-            <h4 class="center" style="margin-top: 0px; margin-bottom: 2px;">{{bidangName}}</h4>
-            <!-- <p class="center" style="margin-top: 0px; margin-bottom: 2px;">{{bidangAlamat}}</p> -->
+    <div class="header">
+        <img src="https://example.com/logo.png" alt="Logo">
+        <p><strong>PEMERINTAH KABUPATEN LAMPUNG TIMUR</strong><br>
+            <strong>BADAN KEPEGAWAIAN, PENDIDIKAN DAN PELATIHAN DAERAH</strong><br>
+            Kompleks Perkantoran Pemda Lampung Timur Sukadana (34194)
+        </p>
+    </div>
+
+    <div class="title">
+        <p><strong>{{layananHeader}}</strong><br>
+        Nomor: 851/26b/22-SK/2024</p>
+    </div>
+
+    <div class="content">
+        <p>1. Diberikan Cuti Tahunan untuk tahun 2024 kepada Pegawai Negeri Sipil:</p>
+        <table>
+            <tr>
+                <td>Nama</td>
+                <td>: {{bidangName}}</td>
+            </tr>
+            <tr>
+                <td>N I P</td>
+                <td>: 19701223 199310 1 001</td>
+            </tr>
+            <tr>
+                <td>Pangkat/Gol. Ruang</td>
+                <td>: Penata Tk. I (III/d)</td>
+            </tr>
+            <tr>
+                <td>Jabatan</td>
+                <td>: PERAWAT TERAMPIL PENYELIA PUSKESMAS<br>
+                    SEKAMPUNG KECAMATAN SEKAMPUNG</td>
+            </tr>
+            <tr>
+                <td>Unit Kerja</td>
+                <td>: DINAS KESEHATAN</td>
+            </tr>
+            <tr>
+                <td>Alamat</td>
+                <td>: Dusun Kendalisodo RT 013 RW 006 Desa Batangharjo<br>
+                    Kecamatan Batanghari Kabupaten Lampung Timur</td>
+            </tr>
+        </table>
+
+        <div class="info">
+            <p>Selama 12 (Dua Belas) Hari Kerja terhitung mulai tanggal 19-08-2024 sampai dengan 31-08-2024 untuk keperluan keluarga dengan ketentuan sebagai berikut:</p>
+            <ol>
+                <li>Sebelum menjalankan Cuti Tahunan Wajib menyerahkan pekerjaannya kepada atasan langsungnya.</li>
+                <li>Setelah selesai menjalankan Cuti Tahunan Wajib melaporkan diri kepada atasan langsungnya dan bekerja kembali sebagaimana biasa.</li>
+            </ol>
+            <p>2. Demikian Surat Izin Cuti Tahunan ini dibuat untuk dapat dipergunakan sebagaimana mestinya.</p>
         </div>
     </div>
-    <div class="horizontal-line"></div>
-    <div class="content">
-        <p class="righttab">Lampung Timur, {{tanggalInfo}}</p>
-        <p>{{layananHeader}}</p>
-        <p class="nospasi">Nomor : {{layanannomor}}</p>
-        <p class="nospasi">Perihal : {{layananperihal}}</p>
-        <p>{{layananBody}}</p>
-    </div>
-    <table>
-        <tr>
-            <td style="width: 35%; margin: 0; padding: 0;">Nama</td>
-            <td style="width: 65%; margin: 0; padding: 0;">: {{nama}}</td>
-        </tr>
-        <tr>
-            <td style="width: 35%; margin: 0; padding: 0;">NIK</td>
-            <td style="width: 65%; margin: 0; padding: 0;">: {{nik}}</td>
-        </tr>
-        <tr>
-            <td style="width: 35%; margin: 0; padding: 0;">Tempat / Tanggal Lahir</td>
-            <td style="width: 65%; margin: 0; padding: 0;">: {{tempat}} / {{tgl_lahir}}</td>
-        </tr>
-        <tr>
-            <td style="width: 35%; margin: 0; padding: 0;">Alamat</td>
-            <td style="width: 65%; margin: 0; padding: 0;">: {{alamat}}</td>
-        </tr>
-    </table>
+
     <div class="footer">
-        <p>{{layananFooter}}</p>
+        <p>Sukadana, 14 Agustus 2024</p>
+        <p>A.n. BUPATI LAMPUNG TIMUR</p>
+        <p>KEPALA BKPPD</p>
     </div>
-    <table>
-        <tr>
-            <td style="width: 50%;"></td>
-            <td style="width: 50%;" class="center">Kepala Dinas</td>
-        </tr>
-        <tr>
-            <td style="width: 50%;"></td>
-            <td style="width: 50%; padding-top: 90px;" class="center">{{nama_pj}}</td>
-        </tr>
-        <tr>
-            <td style="width: 50%;"></td>
-            <td style="width: 50%;" class="center">{{nip_pj}}</td>
-        </tr>
-    </table>
-    <p>{{layanancatatan}}</p>
-    <p>{{layanantembusan}}</p>
+
+    <div class="signature">
+        <p><strong>Drs. DANY SANATHANA, M.E., M.M.</strong><br>
+        Pembina<br>
+        NIP. 19840915 200101 1 005</p>
+    </div>
+
+    <div class="stamp">
+        <img src="https://example.com/stamp.png" alt="Stamp" width="150px">
+    </div>
+
+    <div class="tembusan">
+        <p><strong>TEMBUSAN:</strong></p>
+        <ol>
+            <li>Bupati Lampung Timur</li>
+            <li>Inspektur</li>
+            <li>Kepala Dinas Kesehatan Kabupaten Lampung Timur</li>
+        </ol>
+    </div>
 </body>
 
 </html>

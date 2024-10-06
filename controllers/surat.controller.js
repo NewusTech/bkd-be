@@ -37,7 +37,7 @@ module.exports = {
         }
     },
 
-    //untuk admin
+    //untuk admin pdf
     getOutputSurat: async (req, res) => {
         try {
             let layanan = await Layanan.findOne({
@@ -55,11 +55,14 @@ module.exports = {
                     }
                 ]
             });
-
+    
+            if (!layanan) {
+                return res.status(404).send('Data tidak ditemukan');
+            }
+    
             const idforminput = req.params.idforminput ?? null;
-
             let getdatauser;
-
+    
             if (idforminput) {
                 getdatauser = await Layanan_form_num.findOne({
                     where: {
@@ -69,86 +72,72 @@ module.exports = {
                     include: [
                         {
                             model: User_info,
-                            attributes: ['id', 'nama', 'alamat','nip', 'nik', 'telepon', 'tempat_lahir', 'tgl_lahir'],
-                        },
+                            attributes: ['id', 'nama', 'alamat', 'nik', 'tempat_lahir', 'tgl_lahir'],
+                        }
                     ]
                 });
             }
-
-            if (!layanan) {
-                return res.status(404).send('Data tidak ditemukan');
-            }
-
-            // Read HTML template
+    
+            // Baca template HTML
             const templatePath = path.resolve(__dirname, '../views/template.html');
             let htmlContent = fs.readFileSync(templatePath, 'utf8');
-
+    
+            // Log template HTML untuk memastikan tidak ada kesalahan
+            console.log(htmlContent);
+    
+            const tanggalInfo = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    
             // Replace placeholders with actual data
-            // const bidangImage = layanan.Bkd_profile.logo || '';
-            const tanggalInfo =  new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-            // htmlContent = htmlContent.replace('{{bidangImage}}', bidangImage);
             htmlContent = htmlContent.replace('{{bidangName}}', layanan.Bidang.nama ?? '');
-            // htmlContent = htmlContent.replace('{{bidangAlamat}}', layanan.Bidang.alamat ?? '');
             htmlContent = htmlContent.replace('{{layananHeader}}', layanan.Layanan_surat?.header ?? '');
             htmlContent = htmlContent.replace('{{layananBody}}', layanan.Layanan_surat?.body ?? '');
             htmlContent = htmlContent.replace('{{layananFooter}}', layanan.Layanan_surat?.footer ?? '');
             htmlContent = htmlContent.replace('{{layanannomor}}', layanan.Layanan_surat?.nomor ?? '');
-            htmlContent = htmlContent.replace('{{layanantembusan}}', layanan.Layanan_surat?.tembusan ?`Tembusan =  ${layanan.Layanan_surat?.tembusan}` : '');
             htmlContent = htmlContent.replace('{{layananperihal}}', layanan.Layanan_surat?.perihal ?? '');
-            htmlContent = htmlContent.replace('{{layanancatatan}}', layanan.Layanan_surat?.catatan ? `Catatan =  ${layanan.Layanan_surat?.catatan}` : '');
             htmlContent = htmlContent.replace('{{tanggalInfo}}', tanggalInfo);
-
-            htmlContent = htmlContent.replace('{{nama}}', getdatauser?.User_info?.nama ?? '');
-            htmlContent = htmlContent.replace('{{nik}}', getdatauser?.User_info?.nik ?? '');
-            htmlContent = htmlContent.replace('{{tempat}}', getdatauser?.User_info?.tempat_lahir ?? '');
+            htmlContent = htmlContent.replace('{{nama}}', getdatauser?.User_info?.nama ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{nik}}', getdatauser?.User_info?.nik ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{tempat}}', getdatauser?.User_info?.tempat_lahir ?? 'Tidak Ditemukan');
             htmlContent = htmlContent.replace('{{tgl_lahir}}', getdatauser?.User_info?.tgl_lahir ? new Date(getdatauser?.User_info?.tgl_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '');
-            htmlContent = htmlContent.replace('{{alamat}}', getdatauser?.User_info?.alamat ?? '');
-            htmlContent = htmlContent.replace('{{nama_pj}}', layanan?.Bidang?.pj ?? 'Fullan');
-            htmlContent = htmlContent.replace('{{nip_pj}}', layanan?.Bidang?.nip_pj ?? '1234567890');
-
-            // Launch Puppeteer with increased timeout
-            const browser = await puppeteer.launch({
-                headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox'],
-                timeout: 60000 // Increase timeout to 60 seconds
-            });
+            htmlContent = htmlContent.replace('{{alamat}}', getdatauser?.User_info?.alamat ?? 'Tidak Ditemukan');
+    
+            // Jalankan Puppeteer dan buat PDF
+            const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
             const page = await browser.newPage();
-
-            // Set HTML content and wait until all resources are loaded
             await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-
-            // If an image URL is provided, wait for it to load
-            // if (bidangImage) {
-            //     await page.waitForSelector('img.logo', { timeout: 60000 });
-            // }
-
-            // Generate PDF with 3 cm margins
+    
             const pdfBuffer = await page.pdf({
                 format: 'A4',
                 margin: {
-                    top: '1.16in',    // 3 cm
-                    right: '1.16in',  // 3 cm
-                    bottom: '1.16in', // 3 cm
-                    left: '1.16in'    // 3 cm
+                    top: '1.16in',
+                    right: '1.16in',
+                    bottom: '1.16in',
+                    left: '1.16in'
                 }
             });
-
+    
             await browser.close();
-
-            // Generate filename with current date and time
+    
             const currentDate = new Date().toISOString().replace(/:/g, '-');
             const filename = `laporan-${currentDate}.pdf`;
-
-            // Set response headers and send the PDF buffer
-            res.setHeader('Content-disposition', 'attachment; filename="' + filename + '"');
+    
+            // Simpan buffer PDF untuk debugging
+            fs.writeFileSync('output.pdf', pdfBuffer);
+    
+            // Set response headers
+            res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
             res.setHeader('Content-type', 'application/pdf');
-            res.send(pdfBuffer);
-
+            res.end(pdfBuffer);
+    
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
-            console.log(err);
+            console.error('Error generating PDF:', err);
+            res.status(500).json({
+                message: 'Internal Server Error',
+                error: err.message
+            });
         }
     },
+    
 
     editTemplateSurat: async (req, res) => {
         const transaction = await sequelize.transaction();
