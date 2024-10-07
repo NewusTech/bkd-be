@@ -140,7 +140,6 @@ module.exports = {
         }
     },
     
-
     //login user
     loginUser: async (req, res) => {
         try {
@@ -798,77 +797,4 @@ module.exports = {
             return res.status(500).json({ message: 'Internal server error.' });
         }
     },
-
-    getUserPermissions: async (req, res) => {
-        const { userId } = req.params;
-
-        try {
-            // Find the user
-            const user = await User.findByPk(userId, {
-                include: {
-                    model: Permission,
-                    through: Userpermission,
-                    as: 'permissions'
-                }
-            });
-
-            if (!user) {
-                return res.status(404).json({ message: 'User not found' });
-            }
-
-            res.status(200).json(response(200, 'success get data', { permissions: user?.permissions }));
-        } catch (error) {
-            logger.error(`Error : ${error}`);
-            logger.error(`Error message: ${error.message}`);
-            console.error('Error fetching user permissions:', error);
-            res.status(500).json({ message: 'Internal server error' });
-        }
-    },
-
-    updateUserpermissions: async (req, res) => {
-        const { userId, permissions } = req.body;
-
-        try {
-            // Find the user
-            const user = await User.findByPk(userId);
-
-            if (!user) {
-                return res.status(404).json({ message: 'User not found' });
-            }
-
-            // Find all permission records that match the given permission names
-            const permissionRecords = await Permission.findAll({
-                where: {
-                    id: permissions
-                }
-            });
-
-            if (permissionRecords.length !== permissions.length) {
-                return res.status(400).json({ message: 'Some permissions not found' });
-            }
-
-            // Get the ids of the found permissions
-            const permissionIds = permissionRecords.map(permission => permission.id);
-
-            // Remove old permissions
-            await Userpermission.destroy({
-                where: { user_id: userId }
-            });
-
-            // Add new permissions
-            const userPermissions = permissionIds.map(permissionId => ({
-                user_id: userId,
-                permission_id: permissionId
-            }));
-
-            await Userpermission.bulkCreate(userPermissions);
-
-            res.status(200).json({ message: 'Permissions updated successfully' });
-        } catch (error) {
-            logger.error(`Error : ${error}`);
-            logger.error(`Error message: ${error.message}`);
-            console.error('Error updating permissions:', error);
-            res.status(500).json({ message: 'Internal server error' });
-        }
-    }
 }
