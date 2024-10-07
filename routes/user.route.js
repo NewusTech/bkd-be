@@ -25,8 +25,4 @@ route.post('/forgot/password', userController.forgotPassword);
 
 route.post('/reset/:token', userController.resetPassword); 
 
-route.put('/permissions', [mid.checkRolesAndLogout(['Super Admin'])],userController.updateUserpermissions);
-
-route.get('/permissions/:userId', userController.getUserPermissions);
-
 module.exports = route;
