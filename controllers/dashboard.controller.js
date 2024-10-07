@@ -117,17 +117,17 @@ module.exports = {
                 })
             ]);
 
-            // const modifiedLayananGets = layananGets.map(layanan => {
-            //     const { Bidang } = layanan.dataValues;
-            //     return {
-            //         id: layanan.id,
-            //         layanan_name: layanan.nama,
-            //         layanan_createdAt: layanan.createdAt,
-            //         bidang_id: Bidang.id,
-            //         bidang_name: Bidang.nama,
-            //         permohonanCount: layanan.Layanan_form_nums.length,
-            //     };
-            // });
+            const modifiedLayananGets = layananGets.map(layanan => {
+                const { Bidang } = layanan.dataValues;
+                return {
+                    id: layanan.id,
+                    layanan_name: layanan.nama,
+                    layanan_createdAt: layanan.createdAt,
+                    bidang_id: Bidang.id,
+                    bidang_name: Bidang.nama,
+                    permohonanCount: layanan.Layanan_form_nums.length,
+                };
+            });
 
             // Generate pagination
             const pagination = generatePagination(totalCount, pageNumber, pageSize, '/api/dashboard/superadmin');
@@ -137,11 +137,11 @@ module.exports = {
                 permohonanCount,
                 monthlyCounts,
                 countbyBidang: formattedCountByBidang,
-                // layananData: modifiedLayananGets,
+                countbyLayanan: modifiedLayananGets,
                 pagination
             };
 
-            res.status(200).json(response(200, 'success get data', data));
+            res.status(200).json(response(200, 'success get data dashboard', data));
 
         } catch (err) {
             console.error(err);
