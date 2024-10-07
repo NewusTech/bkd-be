@@ -7,7 +7,7 @@ const v = new Validator();
 module.exports = {
 
     //membuat role
-    createrole: async (req, res) => {
+    createRole: async (req, res) => {
         try {
 
             //membuat schema untuk validasi
@@ -41,7 +41,7 @@ module.exports = {
     },
 
     //mendapatkan semua data role
-    getrole: async (req, res) => {
+    getDataRole: async (req, res) => {
         try {
             //mendapatkan data semua role
             let roleGets = await Role.findAll({});
@@ -55,7 +55,7 @@ module.exports = {
     },
 
     //mendapatkan data role berdasarkan id
-    getroleById: async (req, res) => {
+    getRoleById: async (req, res) => {
         try {
             //mendapatkan data role berdasarkan id
             let roleGet = await Role.findOne({
@@ -78,7 +78,7 @@ module.exports = {
     },
 
     //mengupdate role berdasarkan id
-    updaterole: async (req, res) => {
+    updateDataRole: async (req, res) => {
         try {
             //mendapatkan data role untuk pengecekan
             let roleGet = await Role.findOne({
@@ -137,7 +137,7 @@ module.exports = {
     },
 
     //menghapus role berdasarkan id
-    deleterole: async (req, res) => {
+    deleteDataRole: async (req, res) => {
         try {
 
             //mendapatkan data role untuk pengecekan
