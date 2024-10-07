@@ -151,99 +151,97 @@ module.exports = {
 
     getDashboardKepalaBidang: async (req, res) => {
         try {
+            // get parameter month dan year dari query
+            const { month, year } = req.query;
             const today = new Date();
-
-            const firstDaythisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            const lastDaythisMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
-
-            const dateRangethisMonth = [firstDaythisMonth, lastDaythisMonth];
-
+    
+            // Jika tidak ada parameter, bulan dan tahun saat ini sebagai default
+            const selectedYear = parseInt(year) || today.getFullYear();
+            const selectedMonth = parseInt(month) || today.getMonth() + 1;
+    
+            let firstDay, lastDay;
+            if (month) {
+                firstDay = new Date(selectedYear, selectedMonth - 1, 1);
+                lastDay = new Date(selectedYear, selectedMonth, 0, 23, 59, 59, 999);
+            } else {
+                firstDay = new Date(selectedYear, 0, 1);
+                lastDay = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
+            }
+    
+            const dateRange = [firstDay, lastDay];
+    
             const bidangWhere = { bidang_id: req.user.bidang_id };
-
+    
+            // Ambil data bidang berdasarkan user
             const databidang = await Bidang.findAll({
                 where: { id: req.user.bidang_id },
                 attributes: ['id', 'nama', 'desc'],
             });
-
-            const getTopLayanan = async (range) => {
+    
+            // Fungsi untuk mendapatkan layanan berdasarkan tanggal
+            const getAllLayanan = async (range) => {
                 const layanan = await Layanan.findAll({
                     where: bidangWhere,
                     include: {
                         model: Layanan_form_num,
-                        attributes: ['id'],
+                        attributes: ['id', 'status'],
                         required: false,
                         where: { createdAt: { [Op.between]: range } },
                     },
                 });
-
-                return layanan
-                    .map(l => ({ LayananId: l.id, LayananName: l.name, LayananformnumCount: l.Layananformnums.length }))
-                    .sort((a, b) => b.LayananformnumCount - a.LayananformnumCount)
-                    .slice(0, 3);
-            };
-
-            const getLast7Days = () => {
-                const dates = [];
-                for (let i = 6; i >= 0; i--) {
-                    const date = new Date(today);
-                    date.setDate(date.getDate() - i);
-                    date.setHours(0, 0, 0, 0);
-                    const endDate = new Date(date);
-                    endDate.setHours(23, 59, 59, 999);
-                    dates.push({ start: date, end: endDate });
-                }
-                return dates;
-            };
-
-            const totalLayananPerDay = await Promise.all(
-                getLast7Days().map(async ({ start, end }) => {
-                    const range = [start, end];
-                    const layanan = await getTopLayanan(range);
-
-                    return {
-                        date: start.toISOString(),
-                        top3: layanan,
-                    };
-                })
-            );
-
-            const calculateTotal7Days = (totalLayananPerDay) => {
-                const totalLayanan7Days = {};
-                totalLayananPerDay.forEach(day => {
-                    day.top3.forEach(layanan => {
-                        if (!totalLayanan7Days[layanan.LayananId]) {
-                            totalLayanan7Days[layanan.LayananId] = {
-                                LayananName: layanan.LayananName,
-                                LayananformnumCount: 0,
-                            };
-                        }
-                        totalLayanan7Days[layanan.LayananId].LayananformnumCount += layanan.LayananformnumCount;
-                    });
-                });
-                return Object.entries(totalLayanan7Days).map(([LayananId, { LayananName, LayananformnumCount }]) => ({
-                    LayananId: parseInt(LayananId),
-                    LayananName,
-                    LayananformnumCount,
+    
+                return layanan.map(l => ({
+                    LayananId: l.id,
+                    LayananName: l.nama,
+                    LayananformnumCount: l.Layanan_form_nums ? l.Layanan_form_nums.length : 0
                 }));
             };
-
-            const [top3LayananMonth, totalLayanan7Days] = await Promise.all([
-                getTopLayanan(dateRangethisMonth),
-                calculateTotal7Days(totalLayananPerDay),
+    
+            // untuk menghitung total permohonan berdasarkan status
+            const getTotalPermohonanByStatus = async (status, range) => {
+                return await Layanan_form_num.count({
+                    where: {
+                        status: status,
+                        createdAt: { [Op.between]: range }
+                    }
+                });
+            };
+    
+            const [totalMenungguVerifikasi, totalDisetujui, totalDitolak, totalDirevisi] = await Promise.all([
+                getTotalPermohonanByStatus(2, dateRange),  // Status Menunggu Verifikasi
+                getTotalPermohonanByStatus(9, dateRange),  // Status Disetujui
+                getTotalPermohonanByStatus(10, dateRange),  // Status Ditolak
+                getTotalPermohonanByStatus(3, dateRange)  // Status Direvisi
             ]);
-
+    
+            // Hitung total keseluruhan permohonan (semua status)
+            const totalKeseluruhanPermohonan = await Layanan_form_num.count({
+                where: {
+                    createdAt: { [Op.between]: dateRange }
+                }
+            });
+    
+            // Ambil data layanan berdasarkan tanggal
+            const allLayananMonth = await getAllLayanan(dateRange);
+    
             res.status(200).json(response(200, 'success get data', {
                 databidang,
-                top3LayananMonth,
-                totalLayananPerDay,
-                totalLayanan7Days,
+                allLayananMonth,
+                totalMenungguVerifikasi,
+                totalDisetujui,
+                totalDitolak,
+                totalDirevisi,
+                totalKeseluruhanPermohonan
             }));
-
         } catch (err) {
             console.error(err);
             res.status(500).json(response(500, 'internal server error', err));
         }
     },
+    
+    
+    
+    
 
     web_admin_survey: async (req, res) => {
         try {
