@@ -321,8 +321,8 @@ module.exports = {
     updateUserDokumen: async (req, res) => {
         const transaction = await sequelize.transaction();
         try {
-            const userId = req.user?.user_akun_id;
-    
+            const userId = req.user?.user_akun_id; // Ambil user_id dari user yang login
+            
             if (!userId) {
                 return res.status(400).json({
                     status: 400,
@@ -330,11 +330,9 @@ module.exports = {
                 });
             }
     
-            const dokumenId = req.params.id;
-    
+            // Cari dokumen berdasarkan user_id yang login
             let userDokumen = await User_dokumen.findOne({
                 where: {
-                    id: dokumenId,
                     user_id: userId,
                     deletedAt: null
                 },
@@ -408,11 +406,10 @@ module.exports = {
                 });
             }
     
-            // Update dokumen di database
+            // Update dokumen di database berdasarkan user_id
             await User_dokumen.update(updatedUserDokumen, {
                 where: {
-                    id: dokumenId,
-                    user_id: userId
+                    user_id: userId // hanya menggunakan user_id
                 },
                 transaction
             });
@@ -433,6 +430,7 @@ module.exports = {
             });
         }
     },
+    
     
 
     //menghapus user berdasarkan id
