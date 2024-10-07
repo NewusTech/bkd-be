@@ -23,16 +23,13 @@ module.exports = {
                 name: req.body.name,
             }
 
-            //validasi menggunakan module fastest-validator
             const validate = v.validate(roleCreateObj, schema);
             if (validate.length > 0) {
                 res.status(400).json(response(400, 'validation failed', validate));
                 return;
             }
 
-            //buat role
             let roleCreate = await Role.create(roleCreateObj);
-
             res.status(201).json(response(201, 'success create role', roleCreate));
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
@@ -107,14 +104,12 @@ module.exports = {
                 name: req.body.name,
             }
 
-            //validasi menggunakan module fastest-validator
             const validate = v.validate(roleUpdateObj, schema);
             if (validate.length > 0) {
                 res.status(400).json(response(400, 'validation failed', validate));
                 return;
             }
 
-            //update role
             await Role.update(roleUpdateObj, {
                 where: {
                     id: req.params.id,
@@ -127,8 +122,7 @@ module.exports = {
                     id: req.params.id,
                 }
             })
-
-            res.status(200).json(response(200, 'success update role', roleAfterUpdate));
+            res.status(200).json(response(200, 'success update data role', roleAfterUpdate));
 
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
@@ -159,7 +153,7 @@ module.exports = {
                 }
             })
 
-            res.status(200).json(response(200, 'success delete role'));
+            res.status(200).json(response(200, 'success delete data role'));
 
         } catch (err) {
             if (err.name === 'SequelizeForeignKeyConstraintError') {
