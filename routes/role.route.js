@@ -10,10 +10,10 @@ const mid = require('../middlewares/auth.middleware');
 const express = require('express');
 const route = express.Router();
 
-route.post('/role/create', [mid.checkRolesAndLogout(['Super Admin'])], roleController.createrole);
-route.get('/role/get', [mid.checkRolesAndLogout(['Super Admin'])], roleController.getrole); 
-route.get('/role/get/:id', [mid.checkRolesAndLogout(['Super Admin'])], roleController.getroleById); 
-route.put('/role/update/:id', [mid.checkRolesAndLogout(['Super Admin'])], roleController.updaterole); 
-route.delete('/role/delete/:id', [mid.checkRolesAndLogout(['Super Admin'])], roleController.deleterole);
+route.post('/user/role/create', [mid.checkRolesAndLogout(['Super Admin'])], roleController.createRole);
+route.get('/user/role/get', [mid.checkRolesAndLogout(['Super Admin'])], roleController.getDataRole); 
+route.get('/user/role/get/:id', [mid.checkRolesAndLogout(['Super Admin'])], roleController.getRoleById); 
+route.put('/user/role/update/:id', [mid.checkRolesAndLogout(['Super Admin'])], roleController.updateDataRole); 
+route.delete('/user/role/delete/:id', [mid.checkRolesAndLogout(['Super Admin'])], roleController.deleteDataRole);
 
 module.exports = route;
