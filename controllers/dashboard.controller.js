@@ -9,7 +9,7 @@ const { finished } = require('nodemailer/lib/xoauth2');
 module.exports = {
 
 
-    // get dashboard user
+    // get dashboard superadmin
     getDashboardSuperadmin: async (req, res) => {
         try {
             const { year, bidang_id, start_date, end_date, search, page, limit } = req.query;
@@ -149,6 +149,7 @@ module.exports = {
         }
     },
 
+    // get dashboard kepala bidang
     getDashboardKepalaBidang: async (req, res) => {
         try {
             // get parameter month dan year dari query
@@ -239,7 +240,96 @@ module.exports = {
         }
     },
     
+    // get dashboard admin verifikasi
+    getDashboardAdminVerifikasi: async (req, res) => {
+        try {
+            // get parameter month dan year dari query
+            const { month, year } = req.query;
+            const today = new Date();
     
+            // Jika tidak ada parameter, bulan dan tahun saat ini sebagai default
+            const selectedYear = parseInt(year) || today.getFullYear();
+            const selectedMonth = parseInt(month) || today.getMonth() + 1;
+    
+            let firstDay, lastDay;
+            if (month) {
+                firstDay = new Date(selectedYear, selectedMonth - 1, 1);
+                lastDay = new Date(selectedYear, selectedMonth, 0, 23, 59, 59, 999);
+            } else {
+                firstDay = new Date(selectedYear, 0, 1);
+                lastDay = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
+            }
+    
+            const dateRange = [firstDay, lastDay];
+    
+            const bidangWhere = { bidang_id: req.user.bidang_id };
+    
+            // Ambil data bidang berdasarkan user
+            const databidang = await Bidang.findAll({
+                where: { id: req.user.bidang_id },
+                attributes: ['id', 'nama', 'desc'],
+            });
+    
+            // Fungsi untuk mendapatkan layanan berdasarkan tanggal
+            const getAllLayanan = async (range) => {
+                const layanan = await Layanan.findAll({
+                    where: bidangWhere,
+                    include: {
+                        model: Layanan_form_num,
+                        attributes: ['id', 'status'],
+                        required: false,
+                        where: { createdAt: { [Op.between]: range } },
+                    },
+                });
+    
+                return layanan.map(l => ({
+                    LayananId: l.id,
+                    LayananName: l.nama,
+                    LayananformnumCount: l.Layanan_form_nums ? l.Layanan_form_nums.length : 0
+                }));
+            };
+    
+            // untuk menghitung total permohonan berdasarkan status
+            const getTotalPermohonanByStatus = async (status, range) => {
+                return await Layanan_form_num.count({
+                    where: {
+                        status: status,
+                        createdAt: { [Op.between]: range }
+                    }
+                });
+            };
+    
+            const [totalMenunggu, totalDisetujui, totalDitolak, totalDirevisi] = await Promise.all([
+                getTotalPermohonanByStatus(1, dateRange),  // Status Menunggu
+                getTotalPermohonanByStatus(9, dateRange),  // Status Disetujui
+                getTotalPermohonanByStatus(10, dateRange),  // Status Ditolak
+                getTotalPermohonanByStatus(3, dateRange)  // Status Direvisi
+            ]);
+    
+            // Hitung total keseluruhan permohonan (semua status)
+            const totalKeseluruhanPermohonan = await Layanan_form_num.count({
+                where: {
+                    createdAt: { [Op.between]: dateRange }
+                }
+            });
+    
+            // Ambil data layanan berdasarkan tanggal
+            const allLayananMonth = await getAllLayanan(dateRange);
+    
+            res.status(200).json(response(200, 'success get data', {
+                databidang,
+                allLayananMonth,
+                totalMenunggu,
+                totalDisetujui,
+                totalDitolak,
+                totalDirevisi,
+                totalKeseluruhanPermohonan
+            }));
+        } catch (err) {
+            console.error(err);
+            res.status(500).json(response(500, 'internal server error', err));
+        }
+    },
     
     
 
