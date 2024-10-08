@@ -293,6 +293,391 @@ module.exports = {
         }
     },
 
+    //mendapatkan data akun
+    //UTK ADMIN NGECEK DATA ADMIN
+    getAdminData: async (req, res) => {
+        try {
+            const search = req.query.search ?? null;
+            const role = req.query.role ?? null;
+            const bidang = req.query.bidang ?? null;
+            const layanan = req.query.layanan ?? null;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const showDeleted = req.query.showDeleted ?? null;
+            const offset = (page - 1) * limit;
+            let userGets;
+            let totalCount;
+    
+            const userWhereClause = {};
+            if (showDeleted !== null) {
+                userWhereClause.deletedAt = { [Op.not]: null };
+            } else {
+                userWhereClause.deletedAt = null;
+            }
+    
+            // Tambahkan pengecualian untuk role "user"
+            userWhereClause.role_id = { [Op.not]: '1' };
+
+            if (role) {
+                userWhereClause.role_id = role;
+            }
+            if (bidang) {
+                userWhereClause.bidang_id = bidang;
+            }
+            if (layanan) {
+                userWhereClause.layanan_id = layanan;
+            }
+    
+            const roleAndBidangSearch = {};
+            if (search) {
+                roleAndBidangSearch[Op.or] = [
+                    { '$User.Role.name$': { [Op.like]: `%${search}%` } },
+                    { '$User.Bidang.nama$': { [Op.like]: `%${search}%` } }
+                ];
+            }
+    
+            if (search) {
+                [userGets, totalCount] = await Promise.all([
+                    User_info.findAll({
+                        where: {
+                            [Op.or]: [
+                                { nip: { [Op.like]: `%${search}%` } },
+                                { name: { [Op.like]: `%${search}%` } },
+                                roleAndBidangSearch
+                            ]
+                        },
+                        include: [
+                            {
+                                model: User,
+                                where: userWhereClause,
+                                attributes: ['id'],
+                                include: [
+                                    {
+                                        model: Role,
+                                        attributes: ['id', 'name'],
+                                    },
+                                    {
+                                        model: Bidang,
+                                        attributes: ['id', 'nama'],
+                                    }
+                                ],
+                            },
+                            {
+                                model: Kecamatan,
+                                attributes: ['nama', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['nama', 'id'],
+                                as: 'Desa'
+                            }
+                        ],
+                        limit: limit,
+                        offset: offset
+                    }),
+                    User_info.count({
+                        where: {
+                            [Op.or]: [
+                                { nip: { [Op.like]: `%${search}%` } },
+                                { name: { [Op.like]: `%${search}%` } },
+                                roleAndBidangSearch
+                            ]
+                        },
+                        include: [
+                            {
+                                model: User,
+                                where: userWhereClause,
+                                attributes: ['id'],
+                                include: [
+                                    {
+                                        model: Role,
+                                        attributes: ['id', 'name'],
+                                    },
+                                    {
+                                        model: Bidang,
+                                        attributes: ['id', 'nama'],
+                                    }
+                                ],
+                            },
+                            {
+                                model: Kecamatan,
+                                attributes: ['nama', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['nama', 'id'],
+                                as: 'Desa'
+                            }
+                        ],
+                    })
+                ]);
+            } else {
+                [userGets, totalCount] = await Promise.all([
+                    User_info.findAll({
+                        limit: limit,
+                        offset: offset,
+                        include: [
+                            {
+                                model: User,
+                                where: userWhereClause,
+                                attributes: ['id'],
+                                include: [
+                                    {
+                                        model: Role,
+                                        attributes: ['id', 'name'],
+                                    },
+                                    {
+                                        model: Bidang,
+                                        attributes: ['id', 'nama'],
+                                    }
+                                ],
+                            },
+                            {
+                                model: Kecamatan,
+                                attributes: ['nama', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['nama', 'id'],
+                                as: 'Desa'
+                            }
+                        ],
+                    }),
+                    User_info.count({
+                        include: [
+                            {
+                                model: User,
+                                where: userWhereClause,
+                                attributes: ['id'],
+                                include: [
+                                    {
+                                        model: Role,
+                                        attributes: ['id', 'name'],
+                                    },
+                                    {
+                                        model: Bidang,
+                                        attributes: ['id', 'nama'],
+                                    }
+                                ],
+                            },
+                            {
+                                model: Kecamatan,
+                                attributes: ['nama', 'id'],
+                                as: 'Kecamatan'
+                            },
+                            {
+                                model: Desa,
+                                attributes: ['nama', 'id'],
+                                as: 'Desa'
+                            }
+                        ],
+                    })
+                ]);
+            }
+    
+            const pagination = generatePagination(totalCount, page, limit, '/api/user/alluserinfo/get');
+    
+            const formattedData = userGets.map(user => {
+                return {
+                    id: user.id,
+                    user_id: user?.User?.id,
+                    name: user.name,
+                    slug: user.slug,
+                    nip: user.nip,
+                    nik: user.nik,
+                    email: user.email,
+                    // telepon: user.telepon,
+                    // kecamatan_id: user.kecamatan_id,
+                    // kecamatan_nama: user.Kecamatan?.nama,
+                    // desa_id: user.desa_id,
+                    // desa_nama: user.Desa?.nama,
+                    // rt: user.rt,
+                    // rw: user.rw,
+                    // alamat: user.alamat,
+                    // agama: user.agama,
+                    // tempat_lahir: user.tempat_lahir,
+                    // tgl_lahir: user.tgl_lahir,
+                    // gender: user.gender,
+                    // goldar: user.goldar,
+                    createdAt: user.createdAt,
+                    updatedAt: user.updatedAt,
+                    Role: user.User.Role ? user.User.Role.name : null,
+                    Bidang: user.User.Bidang ? user.User.Bidang.nama : null
+                };
+            });
+    
+            res.status(200).json({
+                status: 200,
+                message: 'success get user',
+                data: formattedData,
+                pagination: pagination
+            });
+    
+        } catch (err) {
+            res.status(500).json({
+                status: 500,
+                message: 'internal server error',
+                error: err
+            });
+            console.log(err);
+        }
+    },
+    
+    //mendapatkan data akunpengguna berdasarkan slug
+    //UTK ADMIN NGECEK DATA ADMIN
+    getAdminBySlug: async (req, res) => {
+        try {
+            const { slug } = req.params;
+    
+            // Cari user berdasarkan slug
+            const user = await User_info.findOne({
+                where: { slug },
+                include: [
+                    {
+                        model: User,
+                        attributes: ['id'],
+                        include: [
+                            {
+                                model: Role,
+                                attributes: ['id', 'name'],
+                            },
+                            {
+                                model: Bidang,
+                                attributes: ['id', 'nama'],
+                            }
+                        ],
+                    },
+                    {
+                        model: Kecamatan,
+                        attributes: ['nama', 'id'],
+                        as: 'Kecamatan'
+                    },
+                    {
+                        model: Desa,
+                        attributes: ['nama', 'id'],
+                        as: 'Desa'
+                    }
+                ]
+            });
+    
+            // Jika user tidak ditemukan berdasarkan slug
+            if (!user) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User not found'
+                });
+            }
+    
+            // Format data user untuk respons
+            const formattedUser = {
+                id: user.id,
+                user_id: user?.User?.id,
+                name: user.name,
+                slug: user.slug,
+                nip: user.nip,
+                nik: user.nik,
+                email: user.email,
+                telepon: user.telepon,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+                Role: user.User.Role ? user.User.Role.name : null,
+                Bidang: user.User.Bidang ? user.User.Bidang.nama : null
+            };
+    
+            // Return success response
+            res.status(200).json({
+                status: 200,
+                message: 'success get user akun by slug',
+                data: formattedUser
+            });
+    
+        } catch (err) {
+            res.status(500).json({
+                status: 500,
+                message: 'internal server error',
+                error: err
+            });
+            console.log(err);
+        }
+    },
+    
+    updateAdminById: async (req, res) => {
+        try {
+            const { id } = req.params; // Ambil ID dari parameter URL
+            const { bidang_id, role_id, name, nip, email, password } = req.body;  // Data dari request body
+    
+            // Cari user berdasarkan ID
+            const user = await User.findOne({
+                where: { id },
+                include: [{
+                    model: User_info,
+                      // Pastikan nama asosiasi sesuai
+                }]
+            });
+    
+            if (!user) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User not found'
+                });
+            }
+    
+            // Update data user (kolom di tabel User)
+            const updatedUserData = {
+                name: name || user.name,
+                email: email || user.email,
+                nip: nip || user.nip,
+            };
+    
+            // Jika password diubah, lakukan hashing
+            if (password) {
+                const hashedPassword = passwordHash.generate(password);  // Hash password menggunakan password-hash
+                updatedUserData.password = hashedPassword;
+            }
+    
+            // Update data di tabel User
+            const [updatedUserCount] = await User.update(updatedUserData, { where: { id } });
+    
+            // Update data admin (Role dan Bidang) di tabel User_info
+            const updatedAdminData = {
+                role_id: role_id || user.User_info.role_id,  // Ambil dari User_info jika tidak ada
+                bidang_id: bidang_id || user.User_info.bidang_id  // Ambil dari User_info jika tidak ada
+            };
+    
+            // Lakukan update pada tabel User_info
+            const [updatedAdminCount] = await User_info.update(updatedAdminData, { where: { id: user.User_info.id } });
+    
+            // Cek apakah update berhasil
+            if (updatedUserCount === 0 && updatedAdminCount === 0) {
+                return res.status(400).json({
+                    status: 400,
+                    message: 'No changes were made'
+                });
+            }
+    
+            // Berikan response sukses
+            res.status(200).json({
+                status: 200,
+                message: 'Success update admin data',
+                updatedUserCount: updatedUserCount,  // Berapa baris yang di-update
+                updatedAdminCount: updatedAdminCount  // Berapa baris yang di-update
+            });
+    
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({
+                status: 500,
+                message: 'Internal server error',
+                error: err
+            });
+        }
+    },
+    
+    
+
     //create data person
     //dari sisi admin, jika user offline belum punya akun
     createUserInfo: async (req, res) => {
