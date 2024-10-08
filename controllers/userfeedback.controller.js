@@ -81,103 +81,6 @@ module.exports = {
         }
     },
     
-    // getHistoryByBidang: async (req, res) => {
-    //     try {
-    //         const bidang_id = Number(req.query.bidang_id);
-    //         const page = parseInt(req.query.page) || 1;
-    //         const limit = parseInt(req.query.limit) || 10;
-    //         const offset = (page - 1) * limit;
-    //         const start_date = req.query.start_date;
-    //         const end_date = req.query.end_date;
-    //         let history;
-    //         let totalCount;
-
-    //         const WhereClause = {};
-    //         if (bidang_id) {
-    //             WhereClause.bidang_id = bidang_id;
-    //         }
-    //         if (start_date && end_date) {
-    //             WhereClause.createdAt = {
-    //                 [Op.between]: [moment(start_date).startOf('day').toDate(), moment(end_date).endOf('day').toDate()]
-    //             };
-    //         } else if (start_date) {
-    //             WhereClause.createdAt = {
-    //                 [Op.gte]: moment(start_date).startOf('day').toDate()
-    //             };
-    //         } else if (end_date) {
-    //             WhereClause.createdAt = {
-    //                 [Op.lte]: moment(end_date).endOf('day').toDate()
-    //             };
-    //         }
-
-    //         [history, totalCount] = await Promise.all([
-    //             Layanan.findAll({
-    //                 include: [{
-    //                     model: User_feedback,
-    //                     // include: [{
-    //                     //     model: Surveyforminput,
-    //                     // }],
-    //                 }],
-    //                 where: WhereClause,
-    //                 limit: limit,
-    //                 offset: offset,
-    //                 // order: [['id', 'DESC']]
-    //             }),
-    //             Layanan.count({
-    //                 where: WhereClause,
-    //             })
-    //         ]);
-
-    //         // const calculateNilai = (surveyformnums) => {
-    //         //     let nilaiPerSurveyform = {};
-    //         //     let totalSurveyformnum = surveyformnums.length;
-
-    //         //     surveyformnums.forEach(surveyformnum => {
-    //         //         surveyformnum.Surveyforminputs.forEach(input => {
-    //         //             if (!nilaiPerSurveyform[input.surveyform_id]) {
-    //         //                 nilaiPerSurveyform[input.surveyform_id] = 0;
-    //         //             }
-    //         //             nilaiPerSurveyform[input.surveyform_id] += input.nilai || 0;
-    //         //         });
-    //         //     });
-
-    //         //     for (let surveyform_id in nilaiPerSurveyform) {
-    //         //         nilaiPerSurveyform[surveyform_id] = (nilaiPerSurveyform[surveyform_id] / totalSurveyformnum) * 0.11;
-    //         //     }
-
-    //         //     return nilaiPerSurveyform;
-    //         // };
-
-    //         // let formattedData = history.map(data => {
-    //         //     const surveyformnumsCount = data.Surveyformnums ? data.Surveyformnums.length : 0;
-    //         //     const surveyformnumsNilai = data.Surveyformnums ? calculateNilai(data.Surveyformnums) : 0;
-
-    //         //     let totalNilaiPerLayanan = Object.values(surveyformnumsNilai).reduce((sum, nilai) => sum + nilai, 0);
-
-    //         //     return {
-    //         //         id: data.id,
-    //         //         layanan_name: data.name || null,
-    //         //         Surveyformnums_count: surveyformnumsCount,
-    //         //         Surveyformnums_nilai: totalNilaiPerLayanan * 25,
-    //         //         created_at: data.createdAt
-    //         //     };
-    //         // });
-
-    //         const pagination = generatePagination(totalCount, page, limit, `/api/user/historysurvey`);
-
-    //         res.status(200).json({
-    //             status: 200,
-    //             message: 'success get',
-    //             data: formattedData,
-    //             pagination: pagination
-    //         });
-
-    //     } catch (err) {
-    //         res.status(500).json(response(500, 'Internal server error', err));
-    //         console.log(err);
-    //     }
-    // },
-
     getHistoryByBidang: async (req, res) => {
         try {
             const bidang_id = Number(req.query.bidang_id);
@@ -207,11 +110,19 @@ module.exports = {
                 };
             }
     
+            // Query untuk mendapatkan layanan berdasarkan bidang dengan feedback dan bidang terkait
             [history, totalCount] = await Promise.all([
                 Layanan.findAll({
-                    include: [{
-                        model: User_feedback,
-                    }],
+                    include: [
+                        {
+                            model: User_feedback,
+                            attributes: ['id', 'question_1', 'question_2', 'question_3', 'question_4'], // Ambil nilai untuk setiap pertanyaan
+                        },
+                        {
+                            model: Bidang,  // Sertakan model Bidang untuk mendapatkan nama bidang
+                            attributes: ['id', 'nama']  // Ambil ID dan nama Bidang
+                        }
+                    ],
                     where: WhereClause,
                     limit: limit,
                     offset: offset,
@@ -221,54 +132,162 @@ module.exports = {
                     where: WhereClause,
                 })
             ]);
-
-
-            // Loop melalui history untuk mengambil data User_info
-            let formattedData = [];
-            for (const data of history) {
-                const feedback = data.User_feedback.find(feedback => feedback !== null && feedback !== undefined) || {};
-                let userInfoData = null;
     
-                // Ambil data User_info berdasarkan userinfo_id dari User_feedback
-                if (feedback.length > 0 && feedback[0].userinfo_id) {
-                    const userInfo = await User_info.findOne({
-                        where: {
-                            id: feedback[0].userinfo_id
-                        },
-                        attributes: ['id', 'name', 'nip', 'gender', 'createdAt']
-                    });
+            // Fungsi untuk menghitung total nilai dari feedback dan mengonversi ke skala 100
+            const calculateTotalFeedbackAndNilai = (feedbacks) => {
+                const totalFeedback = feedbacks.length;
+            
+                const totalNilai = feedbacks.reduce((sum, feedback) => {
+                    const nilaiTotal = 
+                        (feedback.question_1 * 25) +
+                        (feedback.question_2 * 25) +
+                        (feedback.question_3 * 25) +
+                        (feedback.question_4 * 25);
+                    
+                    return sum + nilaiTotal;
+                }, 0);
+            
+                const nilaiRataRata = totalFeedback > 0 ? totalNilai / (totalFeedback * 4) : 0;  // Dibagi dengan 4 pertanyaan
+                return {
+                    totalFeedback,
+                    nilaiRataRata
+                };
+            };            
     
-                    if (userInfo) {
-                        userInfoData = {
-                            id: userInfo.id,
-                            name: userInfo.name,
-                            nip: userInfo.nip,
-                            gender: userInfo.gender,
-                            createdAt: userInfo.createdAt
-                        };
-                    }
-                }
+            // Format data untuk setiap layanan yang didapatkan
+            let formattedData = history.map(data => {
+                const feedbackSummary = calculateTotalFeedbackAndNilai(data.User_feedbacks);
     
-                formattedData.push({
+                return {
                     id: data.id,
                     layanan_name: data.nama || null,
-                    user_info: userInfoData,
+                    bidang_name: data.Bidang ? data.Bidang.nama : null,  // Ambil nama Bidang terkait
+                    total_feedback: feedbackSummary.totalFeedback,
+                    average_nilai: feedbackSummary.nilaiRataRata, // Nilai rata-rata di skala 100
                     created_at: data.createdAt
-                });
-            }
+                };
+            });
     
-            // Membuat pagination
-            const pagination = generatePagination(totalCount, page, limit, `/api/user/historysurvey`);
+            // Generate pagination
+            const pagination = generatePagination(totalCount, page, limit, `/api/user/history/feedback`);
     
+            // Return hasil
             res.status(200).json({
                 status: 200,
-                message: 'success get',
+                message: 'Success get data',
                 data: formattedData,
                 pagination: pagination
             });
     
         } catch (err) {
-            res.status(500).json(response(500, 'Internal server error', err));
+            res.status(500).json({
+                status: 500,
+                message: 'Internal server error',
+                error: err
+            });
+            console.log(err);
+        }
+    },
+
+    getHistoryByLayanan: async (req, res) => {
+        try {
+            const idlayanan = Number(req.params.idlayanan);
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const offset = (page - 1) * limit;
+            let layanan;
+            let history;
+            let totalCount;
+            const start_date = req.query.start_date;
+            const end_date = req.query.end_date;
+    
+            const WhereClause = {};
+            if (idlayanan) {
+                WhereClause.layanan_id = idlayanan;
+            }
+            if (start_date && end_date) {
+                WhereClause.createdAt = {
+                    [Op.between]: [moment(start_date).startOf('day').toDate(), moment(end_date).endOf('day').toDate()]
+                };
+            } else if (start_date) {
+                WhereClause.createdAt = {
+                    [Op.gte]: moment(start_date).startOf('day').toDate()
+                };
+            } else if (end_date) {
+                WhereClause.createdAt = {
+                    [Op.lte]: moment(end_date).endOf('day').toDate()
+                };
+            }
+    
+            [layanan, history, totalCount] = await Promise.all([
+                Layanan.findOne({
+                    where: {
+                        id: idlayanan
+                    },
+                    attributes: ['id', 'nama'],
+                }),
+                User_feedback.findAll({
+                    include: [
+                        {
+                            model: User_info,
+                            attributes: ['id', 'name', 'nip', 'gender'],
+                        },
+                    ],
+                    where: WhereClause,
+                    limit: limit,
+                    offset: offset
+                }),
+                User_feedback.count({
+                    where: WhereClause,
+                })
+            ]);
+    
+            // Fungsi untuk menghitung nilai per user
+            const calculateTotalNilai = (feedback) => {
+                const nilaiPerUser = 
+                    (feedback.question_1 * 25) + 
+                    (feedback.question_2 * 25) +
+                    (feedback.question_3 * 25) +
+                    (feedback.question_4 * 25);
+                    
+                return nilaiPerUser / 4;
+            };
+    
+            let formattedData = history.map(data => {
+                const totalNilai = calculateTotalNilai(data);
+    
+                return {
+                    id: data.id,
+                    name: data.User_info ? data.User_info.name : null,
+                    nip: data.User_info ? data.User_info.nip : null,
+                    gender: data.User_info ? data.User_info.gender : null,
+                    date: data.createdAt, 
+                    kritiksaran: data.feedback,
+                    nilai: totalNilai,
+                };
+            });
+    
+            // Menghitung nilai rata-rata keseluruhan untuk layanan tersebut
+            const totalNilaiKeseluruhan = formattedData.reduce((sum, item) => sum + item.nilai, 0);
+            const rataRataNilaiKeseluruhan = totalNilaiKeseluruhan / totalCount;
+    
+            const pagination = generatePagination(totalCount, page, limit, `/api/user/historysurvey/${idlayanan}`);
+    
+            res.status(200).json({
+                status: 200,
+                message: 'Success get data',
+                data: formattedData,
+                layanan: layanan,
+                rataRataNilaiKeseluruhan: rataRataNilaiKeseluruhan,  // Rata-rata keseluruhan dari semua user
+                pagination: pagination
+            });
+    
+        } catch (err) {
+            res.status(500).json({
+                status: 500,
+                message: 'Internal server error',
+                error: err
+            });
             console.log(err);
         }
     },
