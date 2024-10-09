@@ -80,6 +80,8 @@ module.exports = {
     getLayanan: async (req, res) => {
         try {
             const search = req.query.search ?? null;
+            const bidang_id = req.query.bidang_id ?? null;
+            const layanan_id = req.query.layanan_id ?? null;
             const showDeleted = req.query.showDeleted === 'true' ?? false;
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
@@ -88,6 +90,14 @@ module.exports = {
             let totalCount;
     
             const whereCondition = {};
+
+            if (bidang_id) {
+                whereCondition.bidang_id = bidang_id;
+            }
+
+            if (layanan_id) {
+                whereCondition.id = layanan_id;
+            }
     
             // Tambahkan pencarian berdasarkan nama layanan
             if (search) {
