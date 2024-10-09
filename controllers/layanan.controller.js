@@ -1,6 +1,6 @@
 const { response } = require('../helpers/response.formatter');
 
-const { Layanan, Bidang } = require('../models');
+const { Layanan, Bidang, Layanan_form_num } = require('../models');
 require('dotenv').config()
 
 const slugify = require('slugify');
@@ -162,7 +162,6 @@ module.exports = {
             logger.error(`Error message: ${err.message}`);
         }
     },
-    
 
     //get semua data layanan by bidang
     getLayananByBidang: async (req, res) => {
@@ -375,5 +374,104 @@ module.exports = {
             console.log(err);
         }
     },
+
+    getReportLayanan: async (req, res) => {
+        try {
+            const bidang_id = Number(req.query.bidang_id);
+            const start_date = req.query.start_date;
+            const end_date = req.query.end_date;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const offset = (page - 1) * limit;
+            let report;
+            let totalCount;
+    
+            const WhereClause = {};
+            const WhereClause2 = {};
+    
+            if (bidang_id) {
+                WhereClause.bidang_id = bidang_id;
+            }
+            if (start_date && end_date) {
+                WhereClause2.createdAt = {
+                    [Op.between]: [new Date(start_date), new Date(end_date)]
+                };
+            } else if (start_date) {
+                WhereClause2.createdAt = {
+                    [Op.gte]: new Date(start_date)
+                };
+            } else if (end_date) {
+                WhereClause2.createdAt = {
+                    [Op.lte]: new Date(end_date)
+                };
+            }
+    
+            const includeOptions = [{
+                model: Layanan_form_num,
+                attributes: ['id', 'status'],
+                required: false,
+            }];
+    
+            if (Object.keys(WhereClause2).length > 0) {
+                includeOptions[0].where = WhereClause2;
+            }
+    
+            [report, totalCount] = await Promise.all([
+                Layanan.findAll({
+                    include: includeOptions,
+                    where: WhereClause,
+                    limit: limit,
+                    offset: offset,
+                    attributes: ['id', 'nama', 'slug'],
+                }),
+                Layanan.count({
+                    where: WhereClause,
+                })
+            ]);
+    
+            let total_selesai = 0;
+            let total_gagal = 0;
+    
+            const transformedReport = report.map(layanan => {
+                const statusCounts = { selesai: 0, gagal: 0 };
+    
+                layanan.Layanan_form_nums.forEach(formnum => {
+                    // Status 9 untuk "selesai"
+                    if (formnum.status === 9) statusCounts.selesai++;
+                    // Status 10 untuk "gagal"
+                    if (formnum.status === 10) statusCounts.gagal++;
+                });
+    
+                total_selesai += statusCounts.selesai;
+                total_gagal += statusCounts.gagal;
+    
+                return {
+                    id: layanan.id,
+                    nama: layanan.nama,
+                    slug: layanan.slug,
+                    image: layanan.image,
+                    ...statusCounts
+                };
+            });
+    
+            const pagination = generatePagination(totalCount, page, limit, `/api/user/layanan/report/get`);
+    
+            res.status(200).json({
+                status: 200,
+                message: 'success get',
+                data: {
+                    report: transformedReport,
+                    total_selesai: total_selesai,
+                    total_gagal: total_gagal,
+                },
+                pagination: pagination
+            });
+    
+        } catch (err) {
+            res.status(500).json(response(500, 'Internal server error', err));
+            console.log(err);
+        }
+    },
+    
 
 }

@@ -565,10 +565,10 @@ module.exports = {
 
             if (req.user.role === 'Kepala Bidang' || req.user.role === 'Admin Verifikasi') {
                 WhereClause2.bidang_id = req.user.bidang_id;
-              } else if (req.user.role === 'Super Admin') {
+              } else if (req.user.role === 'Super Admin' || req.user.role === 'Kepala Dinas' || req.user.role === 'Sekretaris Dinas') {
               }
 
-            if (req.user.role === 'Admin Verifikasi') {
+            if (req.user.role === 'Admin Verifikasi' || req.user.role === 'Kepala Bidang') {
                 WhereClause.layanan_id = req.user.layanan_id;
             }
 
@@ -615,7 +615,7 @@ module.exports = {
 
             if (search) {
                 WhereClause3[Op.or] = [
-                    { name: { [Op.like]: `%${search}%` } },
+                    { nama: { [Op.like]: `%${search}%` } },
                     { '$Layanan.nama$': { [Op.like]: `%${search}%` } },
                     { '$Layanan->Bidang.nama$': { [Op.like]: `%${search}%` } }
                 ];
