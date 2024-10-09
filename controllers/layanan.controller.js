@@ -56,7 +56,8 @@ module.exports = {
             }
             let dataGets = await Layanan.findOne({
                 where: {
-                    slug: layananCreateObj.slug
+                    slug: layananCreateObj.slug,
+                    deletedAt: null
                 }
             }
             );
