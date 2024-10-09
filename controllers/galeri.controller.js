@@ -4,6 +4,7 @@ const Validator = require("fastest-validator");
 const v = new Validator();
 const { generatePagination } = require('../pagination/pagination');
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { Op, Sequelize} = require('sequelize');
 const slugify = require('slugify');
 const logger = require('../errorHandler/logger');
 
@@ -76,18 +77,32 @@ module.exports = {
     //mendapatkan semua data Galeri
     getGaleri: async (req, res) => {
         try {
+
+            const search = req.query.search ?? null;
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const offset = (page - 1) * limit;
             let GaleriGets;
             let totalCount;
 
+            const whereCondition = {};
+
+            // Tambahkan pencarian berdasarkan title layanan
+            if (search) {
+                whereCondition[Op.or] = [
+                    { title: { [Op.like]: `%${search}%` } } // Menggunakan 'LIKE' untuk MySQL, gunakan 'ILIKE' untuk PostgreSQL
+                ];
+            }
+
             [GaleriGets, totalCount] = await Promise.all([
                 Galeri.findAll({
+                    where: whereCondition,
                     limit: limit,
                     offset: offset
                 }),
-                Galeri.count()
+                Galeri.count({ 
+                    where: whereCondition
+                })
             ]);
 
             const pagination = generatePagination(totalCount, page, limit, '/api/user/galeri/get');
