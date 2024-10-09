@@ -115,7 +115,7 @@ module.exports = {
     
             // Menambahkan kondisi search jika ada
             if (search) {
-                whereCondition[Op.or] = [{ nama: { [Op.iLike]: `%${search}%` } }];
+                whereCondition[Op.or] = [{ nama: { [Op.like]: `%${search}%` } }];
             }
     
             // Mengambil data struktur BKD dan menghitung total count
@@ -234,7 +234,10 @@ module.exports = {
             let bkdstrukturUpdateObj = {
                 title: req.body.title || bkdstrukturGet.title,
                 slug: req.body.title ? slugify(req.body.title, { lower: true }) : bkdstrukturGet.slug,
+                nip: req.body.nip || bkdstrukturGet.nip,
                 jabatan: req.body.jabatan || bkdstrukturGet.jabatan,
+                golongan: req.body.golongan || bkdstrukturGet.golongan,
+                status: req.body.status || bkdstrukturGet.status,
                 image: req.file ? imageKey : bkdstrukturGet.image,
             };
     
