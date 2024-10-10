@@ -232,8 +232,8 @@ module.exports = {
     
             // Buat object bkdstruktur
             let bkdstrukturUpdateObj = {
-                title: req.body.title || bkdstrukturGet.title,
-                slug: req.body.title ? slugify(req.body.title, { lower: true }) : bkdstrukturGet.slug,
+                nama: req.body.nama || bkdstrukturGet.nama,
+                slug: req.body.nama ? slugify(req.body.nama, { lower: true }) : bkdstrukturGet.slug,
                 nip: req.body.nip || bkdstrukturGet.nip,
                 jabatan: req.body.jabatan || bkdstrukturGet.jabatan,
                 golongan: req.body.golongan || bkdstrukturGet.golongan,
