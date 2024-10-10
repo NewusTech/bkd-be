@@ -380,18 +380,30 @@ module.exports = {
             const bidang_id = Number(req.query.bidang_id);
             const start_date = req.query.start_date;
             const end_date = req.query.end_date;
+            const showDeleted = req.query.showDeleted ?? null;
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const offset = (page - 1) * limit;
             let report;
             let totalCount;
     
+            const whereCondition = {};
             const WhereClause = {};
             const WhereClause2 = {};
+
+            if (showDeleted !== null) {
+                whereCondition.deletedAt = { [Op.not]: null };
+            } else {
+                whereCondition.deletedAt = null;
+            }
+
     
+            // Filter berdasarkan bidang_id
             if (bidang_id) {
                 WhereClause.bidang_id = bidang_id;
             }
+    
+            // Filter berdasarkan tanggal
             if (start_date && end_date) {
                 WhereClause2.createdAt = {
                     [Op.between]: [new Date(start_date), new Date(end_date)]
@@ -416,22 +428,26 @@ module.exports = {
                 includeOptions[0].where = WhereClause2;
             }
     
+            // Ambil data dan hitung total count tanpa filter deletedAt, Sequelize akan otomatis melakukan filter karena paranoid
             [report, totalCount] = await Promise.all([
                 Layanan.findAll({
                     include: includeOptions,
                     where: WhereClause,
+                    where: whereCondition,
                     limit: limit,
                     offset: offset,
-                    attributes: ['id', 'nama', 'slug'],
+                    attributes: ['id', 'nama', 'slug'], // tambahkan atribut lainnya jika diperlukan
                 }),
                 Layanan.count({
                     where: WhereClause,
+                    where: whereCondition
                 })
             ]);
     
             let total_selesai = 0;
             let total_gagal = 0;
     
+            // Transformasi data layanan
             const transformedReport = report.map(layanan => {
                 const statusCounts = { selesai: 0, gagal: 0 };
     
@@ -456,6 +472,7 @@ module.exports = {
     
             const pagination = generatePagination(totalCount, page, limit, `/api/user/layanan/report/get`);
     
+            // Kembalikan respons JSON
             res.status(200).json({
                 status: 200,
                 message: 'success get',
@@ -468,10 +485,13 @@ module.exports = {
             });
     
         } catch (err) {
-            res.status(500).json(response(500, 'Internal server error', err));
+            res.status(500).json({ message: 'Internal server error', error: err });
             console.log(err);
         }
     },
+
+    
+    
     
 
 }
