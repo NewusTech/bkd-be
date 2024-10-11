@@ -38,8 +38,39 @@ module.exports = {
         }
     },
 
+    getPdf: async (req, res) => {
+        try {
+            let layanan = await Layanan_form_num.findOne({
+                where: {
+                    id: req.params.idlayanan,
+                   
+                },
+                attributes: ['id','fileoutput'],
+                include: [
+                    {
+                        model: Layanan
+                    }
+                ]
+            });
+    
+            if (!layanan) {
+                return res.status(404).send('Data tidak ditemukan'); // Jika data tidak ditemukan
+            }
+    
+            // Mengembalikan response dengan data layanan termasuk fileoutput
+            res.status(200).json(response(200, 'success get data', layanan));
+    
+        } catch (err) {
+            // Menangani error dan mengembalikan response error
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err); // Log error ke console untuk debugging
+        }
+    },
+    
+
+
      //untuk admin pdf
-     getOutputSurat: async (req, res) => {
+    getOutputSurat: async (req, res) => {
         try {
             let layanan = await Layanan.findOne({
                 where: {
@@ -67,16 +98,17 @@ module.exports = {
             if (idforminput) {
                 getdatauser = await Layanan_form_num.findOne({
                     where: {
-                        id: idforminput
+                      id: req.params.idforminput,
                     },
                     attributes: ['id', 'userinfo_id'],
                     include: [
-                        {
-                            model: User_info,
-                            attributes: ['id', 'name', 'alamat', 'nik', 'nip', 'tempat_lahir', 'tgl_lahir'],
-                        }
+                      {
+                        model: User_info,
+                        as: 'UserInfo', // Menggunakan alias yang benar
+                        attributes: ['id', 'name', 'alamat', 'nik', 'nip', 'tempat_lahir', 'tgl_lahir'],
+                      }
                     ]
-                });
+                  });
             }
 
             // Baca template HTML
@@ -106,13 +138,13 @@ module.exports = {
             htmlContent = htmlContent.replace('{{layananTembusan}}', layanan.Layanan_surat?.tembusan ?? '');
             htmlContent = htmlContent.replace('{{tahunInfo}}', tahunInfo);
             htmlContent = htmlContent.replace('{{tanggalInfo}}', tanggalInfo);
-            htmlContent = htmlContent.replace('{{nama}}', getdatauser?.User_info?.name ?? 'Tidak Ditemukan');
-            htmlContent = htmlContent.replace('{{nik}}', getdatauser?.User_info?.nik ?? 'Tidak Ditemukan');
-            htmlContent = htmlContent.replace('{{nip}}', getdatauser?.User_info?.nip ?? 'Tidak Ditemukan');
-            htmlContent = htmlContent.replace('{{unitKerja}}', getdatauser?.User_info?.unit_kerja ?? 'Tidak Ditemukan');
-            htmlContent = htmlContent.replace('{{tempat}}', getdatauser?.User_info?.tempat_lahir ?? 'Tidak Ditemukan');
-            htmlContent = htmlContent.replace('{{tgl_lahir}}', getdatauser?.User_info?.tgl_lahir ? new Date(getdatauser?.User_info?.tgl_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '');
-            htmlContent = htmlContent.replace('{{alamat}}', getdatauser?.User_info?.alamat ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{nama}}', getdatauser?.UserInfo?.name ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{nik}}', getdatauser?.UserInfo?.nik ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{nip}}', getdatauser?.UserInfo?.nip ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{unitKerja}}', getdatauser?.UserInfo?.unit_kerja ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{tempat}}', getdatauser?.UserInfo?.tempat_lahir ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{tgl_lahir}}', getdatauser?.UserInfo?.tgl_lahir ? new Date(getdatauser?.UserInfo?.tgl_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '');
+            htmlContent = htmlContent.replace('{{alamat}}', getdatauser?.UserInfo?.alamat ?? 'Tidak Ditemukan');
 
             htmlContent = htmlContent.replace('{{nama_pj}}', layanan?.Bidang?.pj ?? 'A. DHANY SAMANTHA D.,S.E,.M.M.');
             htmlContent = htmlContent.replace('{{nip_pj}}', layanan?.Bidang?.nip_pj ?? '198409152010011005');
@@ -153,8 +185,6 @@ module.exports = {
             });
         }
     },
-
-    
 
     editTemplateSurat: async (req, res) => {
         const transaction = await sequelize.transaction();
