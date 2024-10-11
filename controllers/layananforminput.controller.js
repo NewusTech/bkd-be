@@ -568,9 +568,9 @@ module.exports = {
               } else if (req.user.role === 'Super Admin' || req.user.role === 'Kepala Dinas' || req.user.role === 'Sekretaris Dinas') {
               }
 
-            if (req.user.role === 'Admin Verifikasi' || req.user.role === 'Kepala Bidang') {
-                WhereClause.layanan_id = req.user.layanan_id;
-            }
+            // if (req.user.role === 'Admin Verifikasi' || req.user.role === 'Kepala Bidang') {
+            //     WhereClause.layanan_id = req.user.layanan_id;
+            // }
 
             if (range == 'today') {
                 WhereClause.createdAt = {
