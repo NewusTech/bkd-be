@@ -42,7 +42,7 @@ module.exports = {
         try {
             let layanan = await Layanan_form_num.findOne({
                 where: {
-                    id: req.params.idlayanan,
+                    id: req.params.idlayananformnum,
                    
                 },
                 attributes: ['id','fileoutput'],
