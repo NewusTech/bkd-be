@@ -206,16 +206,21 @@ module.exports = {
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
             const offset = (page - 1) * limit;
-            let layanan;
-            let history;
-            let totalCount;
             const start_date = req.query.start_date;
             const end_date = req.query.end_date;
     
+            let layanan;
+            let history;
+            let totalCount;
+    
             const WhereClause = {};
+    
+            // Filter berdasarkan idlayanan
             if (idlayanan) {
                 WhereClause.layanan_id = idlayanan;
             }
+    
+            // Filter berdasarkan tanggal (start_date dan end_date)
             if (start_date && end_date) {
                 WhereClause.createdAt = {
                     [Op.between]: [moment(start_date).startOf('day').toDate(), moment(end_date).endOf('day').toDate()]
@@ -230,6 +235,7 @@ module.exports = {
                 };
             }
     
+            // Query untuk mendapatkan data layanan, history, dan jumlah total data
             [layanan, history, totalCount] = await Promise.all([
                 Layanan.findOne({
                     where: {
@@ -253,7 +259,7 @@ module.exports = {
                 })
             ]);
     
-            // Fungsi untuk menghitung nilai per user
+            // Fungsi untuk menghitung nilai per user berdasarkan feedback
             const calculateTotalNilai = (feedback) => {
                 const nilaiPerUser = 
                     (feedback.question_1 * 25) + 
@@ -264,6 +270,7 @@ module.exports = {
                 return nilaiPerUser / 4;
             };
     
+            // Format data yang akan ditampilkan
             let formattedData = history.map(data => {
                 const totalNilai = calculateTotalNilai(data);
     
@@ -274,22 +281,24 @@ module.exports = {
                     gender: data.User_info ? data.User_info.gender : null,
                     date: data.createdAt, 
                     kritiksaran: data.feedback,
-                    nilai: totalNilai,
+                    nilai: totalNilai, // Nilai rata-rata per user
                 };
             });
     
             // Menghitung nilai rata-rata keseluruhan untuk layanan tersebut
             const totalNilaiKeseluruhan = formattedData.reduce((sum, item) => sum + item.nilai, 0);
-            const rataRataNilaiKeseluruhan = totalNilaiKeseluruhan / totalCount;
+            const rataRataNilaiKeseluruhan = totalCount > 0 ? totalNilaiKeseluruhan / totalCount : 0; // Cek untuk menghindari pembagian dengan nol
     
+            // Generate pagination
             const pagination = generatePagination(totalCount, page, limit, `/api/user/historysurvey/${idlayanan}`);
     
+            // Return hasil
             res.status(200).json({
                 status: 200,
                 message: 'Success get data',
                 data: formattedData,
                 layanan: layanan,
-                rataRataNilaiKeseluruhan: rataRataNilaiKeseluruhan,  // Rata-rata keseluruhan dari semua user
+                rataRataNilaiKeseluruhan: rataRataNilaiKeseluruhan.toFixed(2),  // Rata-rata keseluruhan dari semua user
                 pagination: pagination
             });
     
@@ -302,6 +311,7 @@ module.exports = {
             console.log(err);
         }
     },
+    
 
     // user get inputan feedback nya
     getHistoryForUser: async (req, res) => {
