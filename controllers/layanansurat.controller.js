@@ -14,11 +14,11 @@ module.exports = {
                 where: {
                     id: req.params.idlayanan
                 },
-                attributes: ['id', 'name'],
+                attributes: ['id', 'nama'],
                 include: [
                     {
                         model: Bidang,
-                        attributes: ['id', 'name', 'alamat', 'image', 'pj', 'nip_pj'],
+                        attributes: ['id', 'nama', 'pj', 'nip_pj'],
                     },
                     {
                         model: Layanan_surat
@@ -174,8 +174,11 @@ module.exports = {
 
             // membuat schema untuk validasi
             const schema = {
-                // instansi_pj: { type: "string", optional: true },
-                // nip_pj: { type: "string", optional: true },
+                nama_pj: { type: "string" },
+                nip_pj: { type: "string" },
+                pangkat_pj: { type: "string" },
+                jabatan_pj: { type: "string" },
+                unitkerja_pj: { type: "string"},
                 header: { type: "string", optional: true },
                 body: { type: "string", optional: true },
                 footer: { type: "string", optional: true },
@@ -187,8 +190,11 @@ module.exports = {
 
             // buat object layanan
             let layananUpdateObj = {
-                // instansi_pj: req.body.instansi_pj,
-                // nip_pj: req.body.nip_pj,
+                nama_pj: req.body.nama_pj,
+                nip_pj: req.body.nip_pj,
+                pangkat_pj: req.body.pangkat_pj,
+                jabatan_pj: req.body.jabatan_pj,
+                unitkerja_pj: req.body.unitkerja_pj,
                 header: req.body.header,
                 body: req.body.body,
                 footer: req.body.footer,
@@ -219,11 +225,15 @@ module.exports = {
             }
 
             // first or create layanansurat
-            if (layananUpdateObj.header || layananUpdateObj.body || layananUpdateObj.footer || layananUpdateObj.nomor || layananUpdateObj.catatan || layananUpdateObj.tembusan || layananUpdateObj.perihal) {
+            if (layananUpdateObj.header || layananUpdateObj.body || layananUpdateObj.nama_pj || layananUpdateObj.nip_pj || layananUpdateObj.pangkat_pj || layananUpdateObj.jabatan_pj || layananUpdateObj.unitkerja_pj ||  layananUpdateObj.footer || layananUpdateObj.nomor || layananUpdateObj.catatan || layananUpdateObj.tembusan || layananUpdateObj.perihal) {
                 let layanansuratUpdateObj = {};
                 if (layananUpdateObj.header) layanansuratUpdateObj.header = layananUpdateObj.header;
                 if (layananUpdateObj.body) layanansuratUpdateObj.body = layananUpdateObj.body;
-                if (layananUpdateObj.footer) layanansuratUpdateObj.footer = layananUpdateObj.footer;
+                if (layananUpdateObj.nama_pj) layanansuratUpdateObj.nama_pj = layananUpdateObj.nama_pj;
+                if (layananUpdateObj.nip_pj) layanansuratUpdateObj.nip_pj = layananUpdateObj.nip_pj;
+                if (layananUpdateObj.pangkat_pj) layanansuratUpdateObj.pangkat_pj = layananUpdateObj.pangkat_pj;
+                if (layananUpdateObj.jabatan_pj) layanansuratUpdateObj.jabatan_pj = layananUpdateObj.jabatan_pj;
+                if (layananUpdateObj.unitkerja_pj) layanansuratUpdateObj.unitkerja_pj = layananUpdateObj.unitkerja_pj;
                 if (layananUpdateObj.nomor) layanansuratUpdateObj.nomor = layananUpdateObj.nomor;
                 if (layananUpdateObj.catatan) layanansuratUpdateObj.catatan = layananUpdateObj.catatan;
                 if (layananUpdateObj.tembusan) layanansuratUpdateObj.tembusan = layananUpdateObj.tembusan;
