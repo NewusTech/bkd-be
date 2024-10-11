@@ -12,7 +12,7 @@ const upload = multer({ storage: storage });
 
 route.post('/user/input/form/create/:idlayanan', [mid.checkRolesAndLogout(['User', 'Super Admin'])], upload.any(), layananforminput.inputForm);
 route.put('/user/input/form/update/:idlayanannum', [mid.checkRolesAndLogout(['User', 'Super Admin'])], upload.any(), layananforminput.updateDataForm);
-route.get('/user/input/form/detail/:idlayanannum', [mid.checkRolesAndLogout(['User', 'Super Admin'])], layananforminput.getDetailInputForm);
+route.get('/user/input/form/detail/:idlayanannum', [mid.checkRolesAndLogout(['User', 'Super Admin', 'Admin Verifikasi', 'Kepala Bidang', 'Sekretaris Dinas', 'Kepala Dinas', 'Sekretaris Daerah'])], layananforminput.getDetailInputForm);
 
 route.put('/user/input/form/updatestatus/:idlayanannum', [mid.checkRolesAndLogout(['Super Admin'])], upload.any(), layananforminput.updateStatusPengajuan);
 

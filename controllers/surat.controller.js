@@ -38,8 +38,8 @@ module.exports = {
         }
     },
 
-    //untuk admin pdf
-    getOutputSurat: async (req, res) => {
+     //untuk admin pdf
+     getOutputSurat: async (req, res) => {
         try {
             let layanan = await Layanan.findOne({
                 where: {
@@ -56,14 +56,14 @@ module.exports = {
                     }
                 ]
             });
-    
+
             if (!layanan) {
                 return res.status(404).send('Data tidak ditemukan');
             }
-    
+
             const idforminput = req.params.idforminput ?? null;
             let getdatauser;
-    
+
             if (idforminput) {
                 getdatauser = await Layanan_form_num.findOne({
                     where: {
@@ -78,17 +78,17 @@ module.exports = {
                     ]
                 });
             }
-    
+
             // Baca template HTML
             const templatePath = path.resolve(__dirname, '../views/template.html');
             let htmlContent = fs.readFileSync(templatePath, 'utf8');
-    
+
             // Log template HTML untuk memastikan tidak ada kesalahan
             console.log(htmlContent);
-    
+
             const tanggalInfo = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
             const tahunInfo = new Date().toLocaleDateString('id-ID', { year: 'numeric' });
-    
+
             // Replace placeholders with actual data
             htmlContent = htmlContent.replace('{{bidangName}}', layanan.Bidang.nama ?? '');
             htmlContent = htmlContent.replace('{{layananName}}', layanan?.nama ?? '');
@@ -116,12 +116,12 @@ module.exports = {
 
             htmlContent = htmlContent.replace('{{nama_pj}}', layanan?.Bidang?.pj ?? 'A. DHANY SAMANTHA D.,S.E,.M.M.');
             htmlContent = htmlContent.replace('{{nip_pj}}', layanan?.Bidang?.nip_pj ?? '198409152010011005');
-    
+
             // Jalankan Puppeteer dan buat PDF
             const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
             const page = await browser.newPage();
             await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-    
+
             const pdfBuffer = await page.pdf({
                 format: 'A4',
                 margin: {
@@ -131,20 +131,20 @@ module.exports = {
                     left: '1.08in'
                 }
             });
-    
+
             await browser.close();
-    
+
             const currentDate = new Date().toISOString().replace(/:/g, '-');
             const filename = `laporan-${currentDate}.pdf`;
-    
+
             // Simpan buffer PDF untuk debugging
             fs.writeFileSync('output.pdf', pdfBuffer);
-    
+
             // Set response headers
             res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
             res.setHeader('Content-type', 'application/pdf');
             res.end(pdfBuffer);
-    
+
         } catch (err) {
             console.error('Error generating PDF:', err);
             res.status(500).json({
@@ -153,6 +153,7 @@ module.exports = {
             });
         }
     },
+
     
 
     editTemplateSurat: async (req, res) => {

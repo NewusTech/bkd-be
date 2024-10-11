@@ -7,7 +7,7 @@ const route = express.Router();
 
 route.get('/user/history/form', [mid.checkRolesAndLogout(['Super Admin', 'User', 'Admin Verifikasi', 'Kepala Bidang', 'Sekretaris Dinas', 'Kepala Dinas'])], layananforminput.getHistoryFormUser);
 
-route.get('/user/history/dokumen', [mid.checkRolesAndLogout(['Super Admin', 'User'])], layananforminput.getHistoryDokumen);
+route.get('/user/history/dokumen', [mid.checkRolesAndLogout(['Super Admin', 'User', 'Admin Verifikasi', 'Kepala Bidang', 'Sekretaris Dinas', 'Kepala Dinas'])], layananforminput.getHistoryDokumen);
 
 route.get('/user/history/form/:idforminput', [mid.checkRolesAndLogout([ 'Super Admin', 'User', 'Admin Verifikasi', 'Kepala Bidang', 'Sekretaris Dinas', 'Kepala Dinas'])], layananforminput.getHistoryById);
 

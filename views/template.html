@@ -7,38 +7,85 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            font-size: 14px;
+            margin: 0;
+            padding: 20px;
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
         }
 
         .header img {
-            width: 80px;
-            height: auto;
-            display: block;
-            margin: 0 auto;
+            width: 55px;
+            height: 65px;
+            margin-right: 10px;
         }
 
-        .title {
-            font-weight: bold;
+        .text-container {
+            flex: 1;
             text-align: center;
+        }
+
+        .header p {
+            margin: 0;
+        }
+
+        .header h1,
+        .header h2 {
+            margin: 2px 0;
             font-size: 16px;
-            text-transform: uppercase;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .horizontal-line {
+            border-bottom: 2px solid black;
+            margin: 5px 0;
         }
 
         .content {
-            margin: 20px;
+            margin: 10px 0;
         }
 
-        .info {
-            margin-top: 20px;
+        .content p {
+            margin: 5px 0;
+            line-height: 1.2;
+        }
+
+        .content .info {
+            margin-top: 10px;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 5px;
+            table-layout: fixed; /* Agar kolom lebar tabel tetap */
+        }
+
+        table tr td {
+            padding: 2px 0;
+            vertical-align: top;
+            font-size: 14px;
+        }
+
+        table .label {
+            width: 30%; /* Lebar kolom label */
+        }
+
+        table .data {
+            width: 70%; /* Lebar kolom data */
         }
 
         .footer {
+            margin-top: 20px;
             text-align: right;
-            margin-top: 40px;
         }
 
         .footer p {
@@ -46,7 +93,7 @@
         }
 
         .signature {
-            margin-top: 40px;
+            margin-top: 50px;
             text-align: right;
         }
 
@@ -55,96 +102,119 @@
         }
 
         .stamp {
-            margin-top: 20px;
             text-align: center;
+            margin-top: 10px;
+        }
+
+        .stamp img {
+            width: 150px;
         }
 
         .tembusan {
-            margin-top: 40px;
-            font-size: 12px;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        /* Khusus untuk bagian layananName dan layanannomor */
+        .centered-content {
+            text-align: center;
         }
     </style>
 </head>
 
 <body>
     <div class="header">
-        <img src="https://example.com/logo.png" alt="Logo">
-        <p><strong>PEMERINTAH KABUPATEN LAMPUNG TIMUR</strong><br>
-            <strong>BADAN KEPEGAWAIAN, PENDIDIKAN DAN PELATIHAN DAERAH</strong><br>
-            Kompleks Perkantoran Pemda Lampung Timur Sukadana (34194)
-        </p>
+        <div class="logo-container">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Lambang_Kabupaten_Lampung_Timur.png/640px-Lambang_Kabupaten_Lampung_Timur.png" alt="Logo">
+        </div>
+        <div class="text-container">
+            <h4 style="margin-top: 0px; margin-bottom: 2px;">PEMERINTAH KABUPATEN LAMPUNG TIMUR</h4>
+            <h4 style="margin-top: 0px; margin-bottom: 2px;">{{layananHeader}}</h4>
+            <p style="margin-top: 0px; margin-bottom: 2px;">Kompleks Perkantoran Pemda Lampung Timur Sukadana (34194)</p>
+        </div>
     </div>
 
-    <div class="title">
-        <p><strong>{{layananHeader}}</strong><br>
-        Nomor: 851/26b/22-SK/2024</p>
+    <div class="horizontal-line"></div>
+
+    <!-- Hanya bagian ini yang rata tengah -->
+    <div class="content centered-content">
+        <p><strong>{{layananName}}</strong></p>
+        <p>Nomor: {{layanannomor}}</p>
     </div>
 
     <div class="content">
-        <p>1. Diberikan Cuti Tahunan untuk tahun 2024 kepada Pegawai Negeri Sipil:</p>
+        <p>Yang bertandatangan di bawah ini :</p>
         <table>
             <tr>
-                <td>Nama</td>
-                <td>: {{bidangName}}</td>
+                <td class="label">Nama</td>
+                <td class="data">: {{layananNamaPj}}</td>
             </tr>
             <tr>
-                <td>N I P</td>
-                <td>: 19701223 199310 1 001</td>
+                <td class="label">N I P</td>
+                <td class="data">: {{layananNIPPj}}</td>
             </tr>
             <tr>
-                <td>Pangkat/Gol. Ruang</td>
-                <td>: Penata Tk. I (III/d)</td>
+                <td class="label">Pangkat/Gol. Ruang</td>
+                <td class="data">: {{layananPangkatPj}}</td>
             </tr>
             <tr>
-                <td>Jabatan</td>
-                <td>: PERAWAT TERAMPIL PENYELIA PUSKESMAS<br>
-                    SEKAMPUNG KECAMATAN SEKAMPUNG</td>
+                <td class="label">Jabatan</td>
+                <td class="data">: {{layananJabatanPj}}</td>
             </tr>
             <tr>
-                <td>Unit Kerja</td>
-                <td>: DINAS KESEHATAN</td>
+                <td class="label">Unit Kerja</td>
+                <td class="data">: {{layananUnitPj}}</td>
+            </tr>
+        </table>
+
+        <p>Diberikan {{layananNama}} untuk tahun {{tahunInfo}} kepada Pegawai Negeri Sipil :</p>
+        <table>
+            <tr>
+                <td class="label">Nama</td>
+                <td class="data">: {{nama}}</td>
             </tr>
             <tr>
-                <td>Alamat</td>
-                <td>: Dusun Kendalisodo RT 013 RW 006 Desa Batangharjo<br>
-                    Kecamatan Batanghari Kabupaten Lampung Timur</td>
+                <td class="label">N I P</td>
+                <td class="data">: {{nip}}</td>
+            </tr>
+            <tr>
+                <td class="label">Pangkat/Gol. Ruang</td>
+                <td class="data">: Penata Tk. I (III/d)</td>
+            </tr>
+            <tr>
+                <td class="label">Jabatan</td>
+                <td class="data">: PERAWAT TERAMPIL PENYELIA PUSKESMAS SEKAMPUNG KECAMATAN SEKAMPUNG</td>
+            </tr>
+            <tr>
+                <td class="label">Unit Kerja</td>
+                <td class="data">: {{unitKerja}}</td>
+            </tr>
+            <tr>
+                <td class="label">Alamat</td>
+                <td class="data">: {{alamat}}</td>
             </tr>
         </table>
 
         <div class="info">
-            <p>Selama 12 (Dua Belas) Hari Kerja terhitung mulai tanggal 19-08-2024 sampai dengan 31-08-2024 untuk keperluan keluarga dengan ketentuan sebagai berikut:</p>
-            <ol>
-                <li>Sebelum menjalankan Cuti Tahunan Wajib menyerahkan pekerjaannya kepada atasan langsungnya.</li>
-                <li>Setelah selesai menjalankan Cuti Tahunan Wajib melaporkan diri kepada atasan langsungnya dan bekerja kembali sebagaimana biasa.</li>
-            </ol>
-            <p>2. Demikian Surat Izin Cuti Tahunan ini dibuat untuk dapat dipergunakan sebagaimana mestinya.</p>
+            <p>{{layananBody}}</p>
         </div>
     </div>
 
     <div class="footer">
-        <p>Sukadana, 14 Agustus 2024</p>
+        <p>Sukadana, {{tanggalInfo}}</p>
         <p>A.n. BUPATI LAMPUNG TIMUR</p>
         <p>KEPALA BKPPD</p>
     </div>
 
     <div class="signature">
-        <p><strong>Drs. DANY SANATHANA, M.E., M.M.</strong><br>
-        Pembina<br>
-        NIP. 19840915 200101 1 005</p>
-    </div>
-
-    <div class="stamp">
-        <img src="https://example.com/stamp.png" alt="Stamp" width="150px">
+        <p>{{layananFooter}}</p>
     </div>
 
     <div class="tembusan">
         <p><strong>TEMBUSAN:</strong></p>
-        <ol>
-            <li>Bupati Lampung Timur</li>
-            <li>Inspektur</li>
-            <li>Kepala Dinas Kesehatan Kabupaten Lampung Timur</li>
-        </ol>
+        <p>{{layananTembusan}}</p>
     </div>
+
 </body>
 
 </html>
