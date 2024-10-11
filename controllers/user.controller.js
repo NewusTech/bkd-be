@@ -599,6 +599,7 @@ module.exports = {
                 tgl_lahir: userGet.User_info?.tgl_lahir,
                 gender: userGet.User_info?.gender,
                 goldar: userGet.User_info?.goldar,
+                unit_kerja: userGet.User_info?.unit_kerja,
                 image_profile: userGet.User_info?.image_profile,
                 bidang_id: userGet.Bidang?.id,
                 bidang_title: userGet.Bidang?.nama,
