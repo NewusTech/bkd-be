@@ -12,7 +12,8 @@ module.exports = {
         try {
             let layanan = await Layanan.findOne({
                 where: {
-                    id: req.params.idlayanan
+                    id: req.params.idlayanan,
+                    deletedAt : null,
                 },
                 attributes: ['id', 'nama'],
                 include: [
@@ -72,7 +73,7 @@ module.exports = {
                     include: [
                         {
                             model: User_info,
-                            attributes: ['id', 'nama', 'alamat', 'nik', 'tempat_lahir', 'tgl_lahir'],
+                            attributes: ['id', 'name', 'alamat', 'nik', 'nip', 'tempat_lahir', 'tgl_lahir'],
                         }
                     ]
                 });
@@ -86,20 +87,35 @@ module.exports = {
             console.log(htmlContent);
     
             const tanggalInfo = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+            const tahunInfo = new Date().toLocaleDateString('id-ID', { year: 'numeric' });
     
             // Replace placeholders with actual data
             htmlContent = htmlContent.replace('{{bidangName}}', layanan.Bidang.nama ?? '');
+            htmlContent = htmlContent.replace('{{layananName}}', layanan?.nama ?? '');
+            htmlContent = htmlContent.replace('{{layananNama}}', layanan?.nama ?? '');
             htmlContent = htmlContent.replace('{{layananHeader}}', layanan.Layanan_surat?.header ?? '');
             htmlContent = htmlContent.replace('{{layananBody}}', layanan.Layanan_surat?.body ?? '');
             htmlContent = htmlContent.replace('{{layananFooter}}', layanan.Layanan_surat?.footer ?? '');
             htmlContent = htmlContent.replace('{{layanannomor}}', layanan.Layanan_surat?.nomor ?? '');
             htmlContent = htmlContent.replace('{{layananperihal}}', layanan.Layanan_surat?.perihal ?? '');
+            htmlContent = htmlContent.replace('{{layananNamaPj}}', layanan.Layanan_surat?.nama_pj ?? '');
+            htmlContent = htmlContent.replace('{{layananNIPPj}}', layanan.Layanan_surat?.nip_pj ?? '');
+            htmlContent = htmlContent.replace('{{layananPangkatPj}}', layanan.Layanan_surat?.pangkat_pj ?? '');
+            htmlContent = htmlContent.replace('{{layananJabatanPj}}', layanan.Layanan_surat?.jabatan_pj ?? '');
+            htmlContent = htmlContent.replace('{{layananUnitPj}}', layanan.Layanan_surat?.unitkerja_pj ?? '');
+            htmlContent = htmlContent.replace('{{layananTembusan}}', layanan.Layanan_surat?.tembusan ?? '');
+            htmlContent = htmlContent.replace('{{tahunInfo}}', tahunInfo);
             htmlContent = htmlContent.replace('{{tanggalInfo}}', tanggalInfo);
-            htmlContent = htmlContent.replace('{{nama}}', getdatauser?.User_info?.nama ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{nama}}', getdatauser?.User_info?.name ?? 'Tidak Ditemukan');
             htmlContent = htmlContent.replace('{{nik}}', getdatauser?.User_info?.nik ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{nip}}', getdatauser?.User_info?.nip ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{unitKerja}}', getdatauser?.User_info?.unit_kerja ?? 'Tidak Ditemukan');
             htmlContent = htmlContent.replace('{{tempat}}', getdatauser?.User_info?.tempat_lahir ?? 'Tidak Ditemukan');
             htmlContent = htmlContent.replace('{{tgl_lahir}}', getdatauser?.User_info?.tgl_lahir ? new Date(getdatauser?.User_info?.tgl_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '');
             htmlContent = htmlContent.replace('{{alamat}}', getdatauser?.User_info?.alamat ?? 'Tidak Ditemukan');
+
+            htmlContent = htmlContent.replace('{{nama_pj}}', layanan?.Bidang?.pj ?? 'A. DHANY SAMANTHA D.,S.E,.M.M.');
+            htmlContent = htmlContent.replace('{{nip_pj}}', layanan?.Bidang?.nip_pj ?? '198409152010011005');
     
             // Jalankan Puppeteer dan buat PDF
             const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
@@ -109,10 +125,10 @@ module.exports = {
             const pdfBuffer = await page.pdf({
                 format: 'A4',
                 margin: {
-                    top: '1.16in',
-                    right: '1.16in',
-                    bottom: '1.16in',
-                    left: '1.16in'
+                    top: '0.6in',
+                    right: '1.08in',
+                    bottom: '1.08in',
+                    left: '1.08in'
                 }
             });
     
@@ -149,6 +165,7 @@ module.exports = {
                     id: req.params.idlayanan
                 },
                 include: [
+                    // { model: Layanan },
                     { model: Bidang },
                     { model: Layanan_surat }
                 ],
