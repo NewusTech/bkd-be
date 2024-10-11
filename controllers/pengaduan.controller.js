@@ -124,9 +124,9 @@ module.exports = {
             } else if (req.user.role === 'Super Admin') {
             }
 
-            if (req.user.role === 'Admin Verifikasi') {
-                whereCondition.layanan_id = data.layanan_id;
-            }
+            // if (req.user.role === 'Admin Verifikasi') {
+            //     whereCondition.layanan_id = req.user.layanan_id;
+            // }
 
             if (search) {
                 whereCondition[Op.or] = [
