@@ -698,7 +698,7 @@ module.exports = {
             // Membuat schema untuk validasi
             const schema = {
                 name: { type: "string", min: 2 },
-                unit_kerja: { type: "string", min: 2 },
+                unit_kerja: { type: "string", min: 2, optional: true},
                 nip: { type: "string", min: 18 },
                 nik: { type: "string", length: 16 },
                 email: { type: "string", min: 5, max: 50, pattern: /^\S+@\S+\.\S+$/, optional: true },
