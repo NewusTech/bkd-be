@@ -1,5 +1,5 @@
 const { response } = require('../helpers/response.formatter');
-const { Bidang, Layanan, Layanan_surat, Layanan_form_num, Bkd_profile, User_info, sequelize } = require('../models');
+const { Bidang, Layanan, Layanan_surat, Layanan_form_num, Pangkat, User_jabatan, User_kepangkatan, User_info, User, sequelize } = require('../models');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
@@ -54,21 +54,16 @@ module.exports = {
             });
     
             if (!layanan) {
-                return res.status(404).send('Data tidak ditemukan'); // Jika data tidak ditemukan
+                return res.status(404).send('Data tidak ditemukan');
             }
     
-            // Mengembalikan response dengan data layanan termasuk fileoutput
             res.status(200).json(response(200, 'success get data', layanan));
-    
         } catch (err) {
-            // Menangani error dan mengembalikan response error
             res.status(500).json(response(500, 'internal server error', err));
-            console.log(err); // Log error ke console untuk debugging
+            console.log(err);
         }
     },
     
-
-
      //untuk admin pdf
     getOutputSurat: async (req, res) => {
         try {
@@ -93,7 +88,7 @@ module.exports = {
             }
 
             const idforminput = req.params.idforminput ?? null;
-            let getdatauser;
+            let getdatauser, userJabatan, userPangkat, dataPangkat;
 
             if (idforminput) {
                 getdatauser = await Layanan_form_num.findOne({
@@ -104,11 +99,46 @@ module.exports = {
                     include: [
                       {
                         model: User_info,
-                        // as: 'UserInfo', // Menggunakan alias yang benar
                         attributes: ['id', 'name', 'alamat', 'nik', 'nip', 'tempat_lahir', 'tgl_lahir'],
+                        include: [
+                            {
+                                model: User,
+                                attributes: ['id'],
+                            }
+                        ]
                       }
                     ]
                   });
+            }
+
+            if (getdatauser && getdatauser.User_info) {
+                userJabatan = await User_jabatan.findOne({
+                    where: {
+                        user_id: getdatauser.User_info.id
+                    },
+                    attributes: ['nama_jabatan'],
+                    order: [['id', 'DESC']]
+                });
+            
+                if (getdatauser && getdatauser.User_info) {
+                    userPangkat = await User_kepangkatan.findOne({
+                        where: {
+                            user_id: getdatauser.User_info.id
+                        },
+                        attributes: ['pangkat_id'],
+                        order: [['id', 'DESC']]
+                    });
+                
+                    if (userPangkat) {
+                        // Ambil data pangkat berdasarkan pangkat_id yang diambil dari user_kepangkatan
+                        dataPangkat = await Pangkat.findOne({
+                            where: {
+                                id: userPangkat.pangkat_id
+                            },
+                            attributes: ['nama']
+                        });
+                    }
+                }                
             }
 
             // Baca template HTML
@@ -119,9 +149,8 @@ module.exports = {
             console.log(htmlContent);
 
             const tanggalInfo = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
-            const tahunInfo = new Date().toLocaleDateString('id-ID', { year: 'numeric' });
+            const tahunInfo = new Date().toLocaleDateString('id-ID', { year: 'numeric' }); 
 
-            // Replace placeholders with actual data
             htmlContent = htmlContent.replace('{{bidangName}}', layanan.Bidang.nama ?? '');
             htmlContent = htmlContent.replace('{{layananName}}', layanan?.nama ?? '');
             htmlContent = htmlContent.replace('{{layananNama}}', layanan?.nama ?? '');
@@ -141,6 +170,8 @@ module.exports = {
             htmlContent = htmlContent.replace('{{nama}}', getdatauser?.User_info?.name ?? 'Tidak Ditemukan');
             htmlContent = htmlContent.replace('{{nik}}', getdatauser?.User_info?.nik ?? 'Tidak Ditemukan');
             htmlContent = htmlContent.replace('{{nip}}', getdatauser?.User_info?.nip ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{namaJabatan}}', userJabatan?.nama_jabatan ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{namaKepangkatan}}', dataPangkat?.nama ?? 'Tidak Ditemukan');
             htmlContent = htmlContent.replace('{{unitKerja}}', getdatauser?.User_info?.unit_kerja ?? 'Tidak Ditemukan');
             htmlContent = htmlContent.replace('{{tempat}}', getdatauser?.User_info?.tempat_lahir ?? 'Tidak Ditemukan');
             htmlContent = htmlContent.replace('{{tgl_lahir}}', getdatauser?.User_info?.tgl_lahir ? new Date(getdatauser?.User_info?.tgl_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '');
@@ -169,14 +200,12 @@ module.exports = {
             const currentDate = new Date().toISOString().replace(/:/g, '-');
             const filename = `laporan-${currentDate}.pdf`;
 
-            // Simpan buffer PDF untuk debugging
             fs.writeFileSync('output.pdf', pdfBuffer);
 
             // Set response headers
             res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
             res.setHeader('Content-type', 'application/pdf');
             res.end(pdfBuffer);
-
         } catch (err) {
             console.error('Error generating PDF:', err);
             res.status(500).json({
