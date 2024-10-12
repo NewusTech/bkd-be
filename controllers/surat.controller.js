@@ -104,7 +104,7 @@ module.exports = {
                     include: [
                       {
                         model: User_info,
-                        as: 'UserInfo', // Menggunakan alias yang benar
+                        // as: 'UserInfo', // Menggunakan alias yang benar
                         attributes: ['id', 'name', 'alamat', 'nik', 'nip', 'tempat_lahir', 'tgl_lahir'],
                       }
                     ]
@@ -138,13 +138,13 @@ module.exports = {
             htmlContent = htmlContent.replace('{{layananTembusan}}', layanan.Layanan_surat?.tembusan ?? '');
             htmlContent = htmlContent.replace('{{tahunInfo}}', tahunInfo);
             htmlContent = htmlContent.replace('{{tanggalInfo}}', tanggalInfo);
-            htmlContent = htmlContent.replace('{{nama}}', getdatauser?.UserInfo?.name ?? 'Tidak Ditemukan');
-            htmlContent = htmlContent.replace('{{nik}}', getdatauser?.UserInfo?.nik ?? 'Tidak Ditemukan');
-            htmlContent = htmlContent.replace('{{nip}}', getdatauser?.UserInfo?.nip ?? 'Tidak Ditemukan');
-            htmlContent = htmlContent.replace('{{unitKerja}}', getdatauser?.UserInfo?.unit_kerja ?? 'Tidak Ditemukan');
-            htmlContent = htmlContent.replace('{{tempat}}', getdatauser?.UserInfo?.tempat_lahir ?? 'Tidak Ditemukan');
-            htmlContent = htmlContent.replace('{{tgl_lahir}}', getdatauser?.UserInfo?.tgl_lahir ? new Date(getdatauser?.UserInfo?.tgl_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '');
-            htmlContent = htmlContent.replace('{{alamat}}', getdatauser?.UserInfo?.alamat ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{nama}}', getdatauser?.User_info?.name ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{nik}}', getdatauser?.User_info?.nik ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{nip}}', getdatauser?.User_info?.nip ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{unitKerja}}', getdatauser?.User_info?.unit_kerja ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{tempat}}', getdatauser?.User_info?.tempat_lahir ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{tgl_lahir}}', getdatauser?.User_info?.tgl_lahir ? new Date(getdatauser?.User_info?.tgl_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '');
+            htmlContent = htmlContent.replace('{{alamat}}', getdatauser?.User_info?.alamat ?? 'Tidak Ditemukan');
 
             htmlContent = htmlContent.replace('{{nama_pj}}', layanan?.Bidang?.pj ?? 'A. DHANY SAMANTHA D.,S.E,.M.M.');
             htmlContent = htmlContent.replace('{{nip_pj}}', layanan?.Bidang?.nip_pj ?? '198409152010011005');

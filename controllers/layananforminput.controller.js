@@ -286,7 +286,7 @@ module.exports = {
     
             const uploadParams = {
                 Bucket: process.env.AWS_BUCKET,
-                Key: `${process.env.PATH_AWS}/berita/${uniqueFileName}`,
+                Key: `${process.env.PATH_AWS}/file_output/${uniqueFileName}`,
                 Body: pdfBuffer,
                 ACL: 'public-read',
                 ContentType: 'application/pdf'
