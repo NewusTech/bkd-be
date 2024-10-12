@@ -27,7 +27,7 @@ jobs:
           cd /home/newus-backend-bkd/htdocs/backend-bkd.newus.id
           npx sequelize-cli db:migrate
     - name: Run NPM
-      run: npm ci
+      run: npm install
     - name : restart PM2
       run : |
           APP_NAME="backend-bkd.newus.id"
