@@ -19,10 +19,10 @@ const s3Client = new S3Client({
 });
 
 module.exports = {
+
   //membuat selected struktur bkd
   createSelectedStruktur: async (req, res) => {
     try {
-      // Hitung jumlah data yang ada di tabel Selected_struktur
       const selectedStrukturCount = await Selected_struktur.count();
 
       // Jika jumlah data sudah 18, kirimkan error
@@ -37,7 +37,7 @@ module.exports = {
         bkdstruktur_id: req.body.bkdstruktur_id,
       };
 
-      // Buat select blog
+      // Buat selected struktur
       let selectedstrukturCreate = await Selected_struktur.create(
         selectedstrukturCreateObj
       );
@@ -60,14 +60,25 @@ module.exports = {
   //mendapatkan semua data selected struktur bkd
   getSelectedStruktur: async (req, res) => {
     try {
+      const { search } = req.query;
+
+      let whereCondition = {};
+
+      if (search) {
+        whereCondition = {
+          [Op.or]: [
+            { nama: { [Op.like]: `%${search}%` } },
+            { jabatan: { [Op.like]: `%${search}%` } },
+          ],
+        };
+      }
+
       const selectedStruktur = await Selected_struktur.findAll({
-        // where: {
-        //   deletedAt: null, // Filter hanya data yang tidak dihapus (soft delete)
-        // },
         include: [
           {
             model: Bkd_struktur,
             as: "struktur",
+            where: whereCondition,
             attributes: [
               "id",
               "nama",
@@ -77,9 +88,6 @@ module.exports = {
               "createdAt",
               "updatedAt",
             ],
-            // where: {
-            //   deletedAt: null, // Filter di Bkd_struktur juga untuk data yang tidak dihapus
-            // },
           },
         ],
       });
@@ -109,6 +117,8 @@ module.exports = {
     }
   },
 
+
+
   //mendapatkan data selected bkd struktur berdasarkan id
   getSelectedStrukturByID: async (req, res) => {
     try {
@@ -118,7 +128,6 @@ module.exports = {
           {
             model: Bkd_struktur,
             as: "struktur",
-            // attributes: ['id', 'title', 'image', 'webLink'],
           },
         ],
       });
