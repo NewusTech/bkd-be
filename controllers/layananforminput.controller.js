@@ -44,282 +44,12 @@ const s3Client = new S3Client({
 
 module.exports = {
 
-    //input form user
-    // inputForm: async (req, res) => {
-    //     const transaction = await sequelize.transaction();
-
-    //     try {
-    //         const folderPaths = {
-    //             fileinput: "dir_bkd/file_pemohon",
-    //         };
-
-    //         const idlayanan = req.params.idlayanan;
-    //         const iduser = req.user.role === "User" ? req.user.userId : req.body.userId;
-    //         // const isonline = req.body.isonline ?? 'true';
-    //         const statusinput = 1;
-
-    //         if (!iduser) {
-    //             throw new Error('User ID is required');
-    //         }
-
-    //         const { datainput } = req.body;
-    //         let { datafile } = req.body;
-
-    //         const today = new Date();
-    //         const todayStr = today.toISOString().split('T')[0]; // Format YYYY-MM-DD
-            
-    //         const countToday = await Layanan_form_num.count({
-    //             where: {
-    //                 createdAt: {
-    //                     [Op.gte]: new Date(todayStr + 'T00:00:00Z'),
-    //                     [Op.lte]: new Date(todayStr + 'T23:59:59Z')
-    //                 },
-    //                 layanan_id: idlayanan
-    //             }
-    //         });
-            
-    //         const urut = String(countToday + 1).padStart(4, '0'); // Menambah 1 pada count dan pad dengan '0' hingga 4 digit\
-    //         const tanggalFormat = today.toISOString().slice(2, 10).replace(/-/g, '');
-            
-    //         // Generate random code instead of using dataLayanan.code
-    //         const randomCode = crypto.randomBytes(3).toString('hex'); 
-            
-    //         // New noRequest format
-    //         const noRequest = `${randomCode}-${tanggalFormat}-${urut}`;
-
-    //         let layananID = {
-    //             userinfo_id: Number(iduser),
-    //             no_request: noRequest,
-    //             layanan_id: Number(idlayanan),
-    //             // isonline: isonline,
-    //             status: Number(statusinput)
-    //         };
-
-    //         const createdLayananformnum = await Layanan_form_num.create(layananID, { transaction });
-
-    //         const updatedDatainput = datainput.map(item => ({
-    //             ...item,
-    //             layananformnum_id: createdLayananformnum.id
-    //         }));
-
-    //         const files = req.files;
-    //         let redisUploadPromises = files.map(async (file) => {
-    //             const { fieldname, mimetype, buffer, originalname } = file;
-
-    //             const now = new Date();
-    //             const timestamp = now.toISOString().replace(/[-:.]/g, '');
-    //             const uniqueFilename = `${originalname.split('.')[0]}_${timestamp}`;
-
-    //             const redisKey = `upload:${iduser}:${fieldname}`;
-    //             await redisClient.set(redisKey, JSON.stringify({
-    //                 buffer,
-    //                 mimetype,
-    //                 originalname,
-    //                 uniqueFilename,
-    //                 folderPath: folderPaths.fileinput
-    //             }), 'EX', 60 * 60);
-
-    //             const fileUrl = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${folderPaths.fileinput}/${uniqueFilename}`;
-
-    //             // Extract index from fieldname (e.g., 'datafile[0][data]' -> 0)
-    //             const index = parseInt(fieldname.match(/\d+/)[0], 10);
-    //             datafile[index].data = fileUrl;
-    //         });
-
-    //         await Promise.all(redisUploadPromises);
-
-    //         // Update datafile with layananformnum_id
-    //         if (datafile) {
-    //             datafile = datafile.map(item => ({
-    //                 ...item,
-    //                 layananformnum_id: createdLayananformnum.id
-    //             }));
-    //         }
-
-    //         const createdLayananforminput = await Layanan_form_input.bulkCreate(updatedDatainput, { transaction });
-    //         let createdLayananformfile;
-    //         if (datafile) {
-    //             createdLayananformfile = await Layanan_form_input.bulkCreate(datafile, { transaction });
-    //         }
-
-    //         await transaction.commit();
-
-    //         // Mulai proses background untuk mengunggah ke S3
-    //         setTimeout(async () => {
-    //             for (const file of files) {
-    //                 const { fieldname } = file;
-    //                 const redisKey = `upload:${iduser}:${fieldname}`;
-    //                 const fileData = await redisClient.get(redisKey);
-
-    //                 if (fileData) {
-    //                     const { buffer, mimetype, originalname, uniqueFilename, folderPath } = JSON.parse(fileData);
-    //                     const uploadParams = {
-    //                         Bucket: process.env.AWS_BUCKET,
-    //                         Key: `${folderPath}/${uniqueFilename}`,
-    //                         Body: Buffer.from(buffer),
-    //                         ACL: 'public-read',
-    //                         ContentType: mimetype
-    //                     };
-    //                     const command = new PutObjectCommand(uploadParams);
-    //                     await s3Client.send(command);
-    //                     await redisClient.del(redisKey); // Hapus dari Redis setelah berhasil diunggah
-    //                 }
-    //             }
-    //         }, 0); // Jalankan segera dalam background
-
-    //         res.status(201).json(response(201, 'Success create layananforminput', { input: createdLayananforminput, file: createdLayananformfile }));
-    //     } catch (err) {
-    //         await transaction.rollback();
-    //         res.status(500).json(response(500, 'Internal server error', err));
-    //         console.error(err);
-    //     }
-    // },
-
-    // inputForm: async (req, res) => {
-    //     const transaction = await sequelize.transaction();
-    //     try {
-    //         const folderPaths = {
-    //             fileinput: "dir_bkd/file_pemohon",
-    //             fileoutput: "berita", // path untuk testing
-    //         };
-    
-    //         const idlayanan = req.params.idlayanan;
-    //         const iduser = req.user.role === "User" ? req.user.userId : req.body.userId;
-    //         const statusinput = 1;
-    
-    //         if (!iduser) {
-    //             throw new Error('User ID is required');
-    //         }
-    
-    //         const { datainput } = req.body;
-    //         let { datafile } = req.body;
-    
-    //         const today = new Date();
-    //         const todayStr = today.toISOString().split('T')[0];
-    
-    //         const countToday = await Layanan_form_num.count({
-    //             where: {
-    //                 createdAt: {
-    //                     [Op.gte]: new Date(todayStr + 'T00:00:00Z'),
-    //                     [Op.lte]: new Date(todayStr + 'T23:59:59Z')
-    //                 },
-    //                 layanan_id: idlayanan
-    //             }
-    //         });
-    
-    //         const urut = String(countToday + 1).padStart(4, '0');
-    //         const tanggalFormat = today.toISOString().slice(2, 10).replace(/-/g, '');
-    
-    //         const randomCode = crypto.randomBytes(3).toString('hex');
-    //         const noRequest = `${randomCode}-${tanggalFormat}-${urut}`;
-    
-    //         let layananID = {
-    //             userinfo_id: Number(iduser),
-    //             no_request: noRequest,
-    //             layanan_id: Number(idlayanan),
-    //             status: Number(statusinput)
-    //         };
-    
-    //         const createdLayananformnum = await Layanan_form_num.create(layananID, { transaction });
-            
-    //         // Setelah create, ambil ID dari Layanan_form_num yang baru dibuat
-    //         const idforminput = createdLayananformnum.id;
-    
-    //         const updatedDatainput = datainput.map(item => ({
-    //             ...item,
-    //             layananformnum_id: idforminput
-    //         }));
-    
-    //         const files = req.files;
-    //         let redisUploadPromises = files.map(async (file) => {
-    //             const { fieldname, mimetype, buffer, originalname } = file;
-    
-    //             const now = new Date();
-    //             const timestamp = now.toISOString().replace(/[-:.]/g, '');
-    //             const uniqueFilename = `${originalname.split('.')[0]}_${timestamp}`;
-    
-    //             const redisKey = `upload:${iduser}:${fieldname}`;
-    //             await redisClient.set(redisKey, JSON.stringify({
-    //                 buffer,
-    //                 mimetype,
-    //                 originalname,
-    //                 uniqueFilename,
-    //                 folderPath: folderPaths.fileinput
-    //             }), 'EX', 60 * 60);
-    
-    //             const fileUrl = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${folderPaths.fileinput}/${uniqueFilename}`;
-    
-    //             const index = parseInt(fieldname.match(/\d+/)[0], 10);
-    //             datafile[index].data = fileUrl;
-    //         });
-    
-    //         await Promise.all(redisUploadPromises);
-    
-    //         if (datafile) {
-    //             datafile = datafile.map(item => ({
-    //                 ...item,
-    //                 layananformnum_id: idforminput
-    //             }));
-    //         }
-    
-    //         const createdLayananforminput = await Layanan_form_input.bulkCreate(updatedDatainput, { transaction });
-    //         let createdLayananformfile;
-    //         if (datafile) {
-    //             createdLayananformfile = await Layanan_form_input.bulkCreate(datafile, { transaction });
-    //         }
-    
-    //         // Memanggil API generate PDF menggunakan idforminput yang baru saja dibuat
-    //         let apiURL = `https://backend-bkd.newus.id/api/user/surat/${idlayanan}/${idforminput}`;
-
-    //         // http://localhost:3000/api/user/surat/:idlayanan/:idforminput
-
-    //         const responsePDF = await axios.get(apiURL, { 
-    //             responseType: 'arraybuffer',
-    //             headers: { 'Cache-Control': 'no-cache' }
-    //         });
-    //         const pdfBuffer = responsePDF.data;
-            
-    //         // Mengirim request POST dengan body yang berisi idlayanan dan idforminput
-    //         // Upload PDF ke AWS S3
-    //         const timestamp = new Date().getTime();
-    //         const uniqueFileName = `${timestamp}-${noRequest}.pdf`;
-    
-    //         const uploadParams = {
-    //             Bucket: process.env.AWS_BUCKET,
-    //             Key: `${process.env.PATH_AWS}/file_output/${uniqueFileName}`,
-    //             Body: pdfBuffer,
-    //             ACL: 'public-read',
-    //             ContentType: 'application/pdf'
-    //         };
-    
-    //         const command = new PutObjectCommand(uploadParams);
-    //         await s3Client.send(command);
-    
-    //         const fileOutputPath = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
-    
-    //         // Update field fileoutput di tabel Layanan_form_num
-    //         await Layanan_form_num.update(
-    //             { fileoutput: fileOutputPath },
-    //             { where: { id: idforminput }, transaction }
-    //         );
-    
-    //         await transaction.commit();
-    
-    //         res.status(201).json(response(201, 'Success create layananforminput and uploaded PDF', { input: createdLayananforminput, file: createdLayananformfile }));
-    
-    //     } catch (err) {
-    //         await transaction.rollback();
-    //         res.status(500).json(response(500, 'Internal server error', err));
-    //         console.error(err);
-    //     }
-    // },
-
     inputForm: async (req, res) => {
         const transaction = await sequelize.transaction();
         try {
             const folderPaths = {
                 fileinput: "dir_bkd/file_pemohon",
-                fileoutput: "berita", // path untuk testing
+                fileoutput: "fileoutput", // path untuk testing
             };
     
             const idlayanan = req.params.idlayanan;
@@ -473,10 +203,6 @@ module.exports = {
         }
     },
     
-    
-
-    
-
     //get input form user
     getDetailInputForm: async (req, res) => {
         try {
@@ -771,6 +497,288 @@ module.exports = {
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
+        }
+    },
+
+    // uploadSign: async (req, res) => {
+    //     try {
+    //         // Mendapatkan data layanan form num untuk pengecekan
+    //         let signGet = await Layanan_form_num.findOne({
+    //             where: {
+    //                 id: req.params.idlayanannum,
+    //             }
+    //         });
+    
+    //         // Cek apakah data layanan form num ada
+    //         if (!signGet) {
+    //             return res.status(404).json(response(404, 'Layanan form num not found'));
+    //         }
+    
+    //         // Membuat schema untuk validasi
+    //         const schema = {
+    //             sign: { type: "string", optional: true },
+    //         };
+    
+    //         let signKey;
+    
+    //         if (!req.file) {
+    //             return res.status(400).json(response(400, 'File tidak ditemukan dalam request'));
+    //         }
+
+    //         if (req.file) {
+    //             console.log('File diterima:', req.file);
+    
+    //             const timestamp = new Date().getTime();
+    //             const uniqueFileName = `${timestamp}-${req.file.originalname}`;
+    
+    //             // Pengaturan upload ke AWS S3
+    //             const uploadParams = {
+    //                 Bucket: process.env.AWS_BUCKET,
+    //                 Key: `${process.env.PATH_AWS}/sign/${uniqueFileName}`,
+    //                 Body: req.file.buffer,
+    //                 ACL: 'public-read',
+    //                 ContentType: req.file.mimetype
+    //             };
+    
+    //             const command = new PutObjectCommand(uploadParams);
+    //             await s3Client.send(command);
+    
+    //             // Menyimpan URL file yang diunggah
+    //             signKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
+    //             console.log('Sign key setelah upload:', signKey); // Debug untuk memastikan signKey terbentuk
+    //         }
+    
+    //         // Buat object untuk update
+    //         let signUpdateObj = {
+    //             sign: signKey || signGet.sign, // Pakai file baru jika ada, jika tidak, pakai file lama
+    //         };
+    
+    //         // Validasi menggunakan fastest-validator
+    //         const validate = v.validate(signUpdateObj, schema);
+    //         if (validate !== true) {
+    //             return res.status(400).json(response(400, 'Validation failed', validate));
+    //         }
+    
+    //         // Update data di database
+    //         const updateResult = await Layanan_form_num.update(signUpdateObj, {
+    //             where: {
+    //                 id: req.params.idlayanannum,
+    //             }
+    //         });
+    
+    //         setTimeout(async () => {
+    //             try {
+    //                 console.log('Memanggil API generate PDF...');
+                    
+    //                 // Memanggil API generate PDF menggunakan idforminput yang baru saja dibuat
+
+    //                 let idlayanan = signGet?.layanan_id;
+    //                 let idforminput = signGet?.id;
+
+    //                 let apiURL = `http://localhost:3000/api/user/surat/${idlayanan}/${idforminput}`;
+    //                 console.log(`URL: ${apiURL}`);
+    
+    //                 const responsePDF = await axios.get(apiURL, { 
+    //                     responseType: 'arraybuffer',
+    //                     headers: { 'Cache-Control': 'no-cache' }
+    //                 });
+    
+    //                 const pdfBuffer = responsePDF.data;
+    //                 console.log('PDF berhasil diambil dari API.');
+    
+    //                 // Upload PDF ke AWS S3
+    //                 const timestamp = new Date().getTime();
+    //                 const uniqueFileName = `${timestamp}-${noRequest}.pdf`;
+    
+    //                 const uploadParams = {
+    //                     Bucket: process.env.AWS_BUCKET,
+    //                     Key: `${process.env.PATH_AWS}/file_output/${uniqueFileName}`,
+    //                     Body: pdfBuffer,
+    //                     ACL: 'public-read',
+    //                     ContentType: 'application/pdf'
+    //                 };
+    
+    //                 const command = new PutObjectCommand(uploadParams);
+    //                 await s3Client.send(command);
+    
+    //                 const fileOutputPath = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
+    
+    //                 console.log('PDF berhasil di-upload ke AWS S3:', fileOutputPath);
+    
+    //                 // Update field fileoutput di tabel Layanan_form_num
+    //                 const [affectedRows] = await Layanan_form_num.update(
+    //                     { fileoutput: fileOutputPath },
+    //                     { where: { id: idforminput } }
+    //                 );
+    
+    //                 if (affectedRows === 0) {
+    //                     console.error('Gagal update field fileoutput.');
+    //                 } else {
+    //                     console.log('Field fileoutput berhasil diupdate.');
+    //                 }
+    
+    //             } catch (error) {
+    //                 console.error('Error fetching or uploading PDF:', error);
+    //             }
+    //         }, 3000);
+    
+    //         // Mendapatkan data layanan form num setelah update
+    //         let signAfterUpdate = await Layanan_form_num.findOne({
+    //             where: {
+    //                 id: req.params.idlayanannum, // Menggunakan ID dari params
+    //             }
+    //         });
+    
+    //         // Debug data setelah update
+    //         console.log('Data setelah update:', signAfterUpdate);
+    
+    //         // Response sukses
+    //         return res.status(200).json(response(200, 'Success upload sign', signAfterUpdate));
+    
+    //     } catch (err) {
+    //         console.error('Error:', err);
+    //         return res.status(500).json(response(500, 'Internal server error', err.message));
+    //     }
+    // },
+
+    uploadSign: async (req, res) => {
+        try {
+            // Mendapatkan data layanan form num untuk pengecekan
+            let signGet = await Layanan_form_num.findOne({
+                where: {
+                    id: req.params.idlayanannum,
+                }
+            });
+    
+            // Cek apakah data layanan form num ada
+            if (!signGet) {
+                return res.status(404).json(response(404, 'Layanan form num not found'));
+            }
+    
+            // Membuat schema untuk validasi
+            const schema = {
+                sign: { type: "string", optional: true },
+            };
+    
+            let signKey;
+    
+            // Cek apakah file diterima dari request
+            if (!req.file) {
+                return res.status(400).json(response(400, 'File tidak ditemukan dalam request'));
+            }
+    
+            if (req.file) {
+                console.log('File diterima:', req.file);
+    
+                const timestamp = new Date().getTime();
+                const uniqueFileName = `${timestamp}-${req.file.originalname}`;
+    
+                // Pengaturan upload ke AWS S3
+                const uploadParams = {
+                    Bucket: process.env.AWS_BUCKET,
+                    Key: `${process.env.PATH_AWS}/sign/${uniqueFileName}`,
+                    Body: req.file.buffer,
+                    ACL: 'public-read',
+                    ContentType: req.file.mimetype
+                };
+    
+                const command = new PutObjectCommand(uploadParams);
+                await s3Client.send(command);
+    
+                // Menyimpan URL file yang diunggah
+                signKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
+                console.log('Sign key setelah upload:', signKey); // Debug untuk memastikan signKey terbentuk
+            }
+    
+            // Buat object untuk update
+            let signUpdateObj = {
+                sign: signKey || signGet.sign, // Pakai file baru jika ada, jika tidak, pakai file lama
+            };
+    
+            // Validasi menggunakan fastest-validator
+            const validate = v.validate(signUpdateObj, schema);
+            if (validate !== true) {
+                return res.status(400).json(response(400, 'Validation failed', validate));
+            }
+    
+            // Update data di database
+            await Layanan_form_num.update(signUpdateObj, {
+                where: {
+                    id: req.params.idlayanannum,
+                }
+            });
+    
+            // Set timeout untuk memanggil API generate PDF dan upload hasilnya
+            setTimeout(async () => {
+                try {
+                    console.log('Memanggil API generate PDF...');
+    
+                    // Memanggil API generate PDF menggunakan idlayanan dan idforminput yang baru saja dibuat
+                    let idlayanan = signGet?.layanan_id;
+                    let idforminput = signGet?.id;
+    
+                    let apiURL = `https://backend-bkd.newus.id/api/user/surat/${idlayanan}/${idforminput}`;
+                    console.log(`URL: ${apiURL}`);
+    
+                    const responsePDF = await axios.get(apiURL, {
+                        responseType: 'arraybuffer',
+                        headers: { 'Cache-Control': 'no-cache' }
+                    });
+    
+                    const pdfBuffer = responsePDF.data;
+                    console.log('PDF berhasil diambil dari API.');
+    
+                    // Upload PDF ke AWS S3
+                    const timestamp = new Date().getTime();
+                    const uniqueFileName = `${timestamp}-${idforminput}.pdf`;
+    
+                    const uploadParams = {
+                        Bucket: process.env.AWS_BUCKET,
+                        Key: `${process.env.PATH_AWS}/file_output/${uniqueFileName}`,
+                        Body: pdfBuffer,
+                        ACL: 'public-read',
+                        ContentType: 'application/pdf'
+                    };
+    
+                    const command = new PutObjectCommand(uploadParams);
+                    await s3Client.send(command);
+    
+                    const fileOutputPath = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
+                    console.log('PDF berhasil di-upload ke AWS S3:', fileOutputPath);
+    
+                    // Update field fileoutput di tabel Layanan_form_num
+                    const [affectedRows] = await Layanan_form_num.update(
+                        { fileoutput: fileOutputPath },
+                        { where: { id: idforminput } }
+                    );
+    
+                    if (affectedRows === 0) {
+                        console.error('Gagal update field fileoutput.');
+                    } else {
+                        console.log('Field fileoutput berhasil diupdate.');
+                    }
+    
+                } catch (error) {
+                    console.error('Error fetching or uploading PDF:', error);
+                }
+            }, 5000);
+    
+            // Mendapatkan data layanan form num setelah update
+            let signAfterUpdate = await Layanan_form_num.findOne({
+                where: {
+                    id: req.params.idlayanannum, // Menggunakan ID dari params
+                }
+            });
+    
+            // Debug data setelah update
+            console.log('Data setelah update:', signAfterUpdate);
+    
+            // Response sukses
+            return res.status(200).json(response(200, 'Success upload sign', signAfterUpdate));
+    
+        } catch (err) {
+            console.error('Error:', err);
+            return res.status(500).json(response(500, 'Internal server error', err.message));
         }
     },
     
@@ -1511,7 +1519,7 @@ module.exports = {
 
             // Generate filename
             const currentDate = new Date().toISOString().replace(/:/g, '-');
-            const filename = `laporan-${currentDate}.pdf`;
+            const filename = `surat-output-${currentDate}.pdf`;
 
             // Send PDF buffer
             res.setHeader('Content-disposition', 'attachment; filename="' + filename + '"');

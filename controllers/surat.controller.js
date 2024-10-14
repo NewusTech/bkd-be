@@ -95,7 +95,7 @@ module.exports = {
                     where: {
                       id: req.params.idforminput,
                     },
-                    attributes: ['id', 'userinfo_id'],
+                    attributes: ['id', 'userinfo_id', 'sign'],
                     include: [
                       {
                         model: User_info,
@@ -176,6 +176,7 @@ module.exports = {
             htmlContent = htmlContent.replace('{{tempat}}', getdatauser?.User_info?.tempat_lahir ?? 'Tidak Ditemukan');
             htmlContent = htmlContent.replace('{{tgl_lahir}}', getdatauser?.User_info?.tgl_lahir ? new Date(getdatauser?.User_info?.tgl_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '');
             htmlContent = htmlContent.replace('{{alamat}}', getdatauser?.User_info?.alamat ?? 'Tidak Ditemukan');
+            htmlContent = htmlContent.replace('{{layananSign}}', getdatauser?.sign ?? 'Tidak Ditemukan');
 
             htmlContent = htmlContent.replace('{{nama_pj}}', layanan?.Bidang?.pj ?? 'A. DHANY SAMANTHA D.,S.E,.M.M.');
             htmlContent = htmlContent.replace('{{nip_pj}}', layanan?.Bidang?.nip_pj ?? '198409152010011005');
@@ -198,7 +199,7 @@ module.exports = {
             await browser.close();
 
             const currentDate = new Date().toISOString().replace(/:/g, '-');
-            const filename = `laporan-${currentDate}.pdf`;
+            const filename = `surat-${currentDate}.pdf`;
 
             fs.writeFileSync('output.pdf', pdfBuffer);
 

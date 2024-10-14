@@ -25,6 +25,7 @@ module.exports = (sequelize, DataTypes) => {
     no_request: DataTypes.STRING,
     layanan_id: DataTypes.INTEGER,
     fileoutput: DataTypes.STRING,
+    sign: DataTypes.STRING,
     pesan: DataTypes.STRING,
     tgl_selesai: DataTypes.DATEONLY,
     isonline: DataTypes.INTEGER,
