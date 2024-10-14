@@ -16,6 +16,7 @@ const puppeteer = require("puppeteer");
 const { generatePagination } = require("../pagination/pagination");
 
 module.exports = {
+  
   //input feedback user
   createFeedback: async (req, res) => {
     const transaction = await sequelize.transaction();
@@ -30,7 +31,7 @@ module.exports = {
 
       const { datainput } = req.body;
 
-      // Cek apakah layanan ID valid dan mengambil bidang terkait
+      // Cek apakah layanan ID valid
       let dataLayanan = await Layanan.findOne({
         where: {
           id: idlayanan,
@@ -49,21 +50,26 @@ module.exports = {
         throw new Error("Layanan not found");
       }
 
-      // Menghitung jumlah feedback yang sudah ada untuk layanan tersebut
-      const count = await User_feedback.count({
+      const bidangId = dataLayanan.Bidang?.id;
+
+      // Cek apakah user sudah pernah memberikan feedback untuk layanan ini
+      const feedbackExists = await User_feedback.findOne({
         where: {
           layanan_id: idlayanan,
+          userinfo_id: iduser,
         },
       });
 
-      // Ambil bidang_id dari data layanan
-      const bidangId = dataLayanan.Bidang?.id;
+      // Jika user sudah memberikan feedback, berikan respons bahwa feedback sudah ada
+      if (feedbackExists) {
+        return res.status(400).json(response(400, "User sudah input survey"));
+      }
 
-      // Memasukkan nilai feedback dari pengguna, termasuk bidang_id
+      // Memasukkan nilai feedback dari pengguna,
       let layananID = {
-        userinfo_id: Number(iduser), // Get id user dari token
+        userinfo_id: Number(iduser),
         layanan_id: Number(idlayanan),
-        bidang_id: bidangId, // Tambahkan bidang_id ke feedback
+        bidang_id: bidangId,
         question_1: req.body.question_1 ?? null,
         question_2: req.body.question_2 ?? null,
         question_3: req.body.question_3 ?? null,
@@ -80,12 +86,12 @@ module.exports = {
       await transaction.commit();
       res.status(201).json(response(201, "Success create", createdFeedback));
     } catch (err) {
-      // Rollback transaksi jika ada error
       await transaction.rollback();
       res.status(500).json(response(500, "Internal server error", err));
       console.error(err);
     }
   },
+
 
   getHistoryByBidang: async (req, res) => {
     try {
