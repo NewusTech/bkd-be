@@ -121,10 +121,10 @@ module.exports = {
       if (search) {
         WhereCondition[Op.or] = [
           {
-            nama: { [Op.iLike]: `%${search}%` },
+            nama: { [Op.like]: `%${search}%` },
           },
           {
-            "$Bidang.nama$": { [Op.iLike]: `%${search}%` },
+            "$Bidang.nama$": { [Op.like]: `%${search}%` },
           },
         ];
       }
@@ -184,7 +184,7 @@ module.exports = {
               model: Bidang, // Sertakan model Bidang untuk mendapatkan nama bidang
               attributes: ["id", "nama"], // Ambil ID dan nama Bidang
               where: search
-                ? { nama: { [Op.iLike]: `%${search}%` } }
+                ? { nama: { [Op.like]: `%${search}%` } }
                 : undefined,
             },
           ],

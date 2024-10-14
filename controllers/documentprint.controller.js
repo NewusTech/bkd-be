@@ -380,8 +380,8 @@ module.exports = {
 
       if (search) {
         whereCondition[Op.or] = [
-          { nama: { [Op.iLike]: `%${search}%` } },
-          { nip: { [Op.iLike]: `%${search}%` } },
+          { nama: { [Op.like]: `%${search}%` } },
+          { nip: { [Op.like]: `%${search}%` } },
         ];
       }
 
