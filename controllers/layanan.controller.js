@@ -105,9 +105,9 @@ module.exports = {
       if (search) {
         whereCondition[Op.or] = [
           {
-            nama: { [Op.iLike]: `%${search}%` },
+            nama: { [Op.like]: `%${search}%` },
           },
-          // Menggunakan 'LIKE' untuk MySQL, gunakan 'ILIKE' untuk PostgreSQL
+          // Menggunakan 'LIKE' untuk MySQL, gunakan 'like' untuk PostgreSQL
         ];
       }
 
@@ -201,7 +201,7 @@ module.exports = {
       // }
 
       if (search) {
-        whereCondition[Op.and] = [{ name: { [Op.iLike]: `%${search}%` } }];
+        whereCondition[Op.and] = [{ name: { [Op.like]: `%${search}%` } }];
       }
 
       if (showDeleted) {
@@ -430,7 +430,7 @@ module.exports = {
       if (search) {
         whereCondition[Op.or] = [
           {
-            nama: { [Op.iLike]: `%${search}%` }, // Menggunakan 'LIKE' untuk MySQL, gunakan 'ILIKE' untuk PostgreSQL
+            nama: { [Op.like]: `%${search}%` }, // Menggunakan 'LIKE' untuk MySQL, gunakan 'like' untuk PostgreSQL
           },
         ];
       }

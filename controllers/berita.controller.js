@@ -110,7 +110,7 @@ module.exports = {
       }
 
       if (search) {
-        whereCondition[Op.or] = [{ title: { [Op.iLike]: `%${search}%` } }];
+        whereCondition[Op.or] = [{ title: { [Op.like]: `%${search}%` } }];
       }
 
       if (start_date && end_date) {
