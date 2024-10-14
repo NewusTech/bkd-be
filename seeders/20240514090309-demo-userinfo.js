@@ -28,9 +28,9 @@ module.exports = {
         updatedAt: new Date()
       },
       {
-        name: 'Admin Verifikasi',
-        nip: 'adminverifikasi',
-        slug: "adminverifikasi-20240620041615213",
+        name: 'Admin Verifikasi Mutasi',
+        nip: 'adminverifikasimutasi',
+        slug: "adminverifikasimutasi-20240620041615213",
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -38,6 +38,48 @@ module.exports = {
         name: 'Kepala Bidang Mutasi',
         nip: 'kepalabidangmutasi',
         slug: "kepalabidangmutasi-20240620041615213",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Admin Verifikasi Diklat',
+        nip: 'adminverifikasidiklat',
+        slug: "adminverifikasidiklat-20240620041615213",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Kepala Bidang Diklat',
+        nip: 'kepalabidangdiklat',
+        slug: "kepalabidangdiklat-20240620041615213",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Admin Verifikasi Pengadaan',
+        nip: 'adminverifikasipengadaan',
+        slug: "adminverifikasipengadaan-20240620041615213",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Kepala Bidang Pengadaan',
+        nip: 'kepalabidangpengadaan',
+        slug: "kepalabidangpengadaan-20240620041615213",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Admin Verifikasi Pembinaan',
+        nip: 'adminverifikasipembinaan',
+        slug: "adminverifikasipembinaan-20240620041615213",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'Kepala Bidang Pembinaan',
+        nip: 'kepalabidangpembinaan',
+        slug: "kepalabidangpembinaan-20240620041615213",
         createdAt: new Date(),
         updatedAt: new Date()
       },

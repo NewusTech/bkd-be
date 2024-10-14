@@ -21,7 +21,7 @@ module.exports = {
         penanggung_jawab: 'Sub Bagian Pensiun BKD',
         ketentuan: 'Pensiun otomatis berlaku bagi PNS yang sudah mencapai usia pensiun, atau dapat diajukan lebih awal berdasarkan permohonan.',
         langkah: '1. Ajukan berkas pensiun ke BKD, 2. Tunggu proses verifikasi, 3. Penerbitan SK pensiun, 4. Terima hak pensiun.',
-        bidang_id: 2,
+        bidang_id: 4,
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -33,7 +33,7 @@ module.exports = {
         penanggung_jawab: 'Sub Bagian Mutasi BKD',
         ketentuan: 'Pengajuan mutasi dapat dilakukan jika ada kebutuhan organisasi dan disetujui oleh kedua instansi terkait.',
         langkah: '1. Ajukan permohonan mutasi, 2. Tunggu verifikasi dan persetujuan, 3. Terima surat keputusan mutasi, 4. Proses serah terima tugas.',
-        bidang_id: 2,
+        bidang_id: 1,
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -45,7 +45,7 @@ module.exports = {
         penanggung_jawab: 'Sub Bagian Cuti BKD',
         ketentuan: 'Cuti diberikan sesuai dengan ketentuan peraturan perundang-undangan dan kebijakan instansi.',
         langkah: '1. Ajukan permohonan cuti ke BKD, 2. Tunggu proses persetujuan, 3. Terima surat cuti, 4. Jalankan cuti sesuai waktu yang disetujui.',
-        bidang_id: 2,
+        bidang_id: 4,
         createdAt: new Date(),
         updatedAt: new Date()
       },
