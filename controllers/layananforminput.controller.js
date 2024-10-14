@@ -147,7 +147,7 @@ module.exports = {
                     console.log('Memanggil API generate PDF...');
                     
                     // Memanggil API generate PDF menggunakan idforminput yang baru saja dibuat
-                    let apiURL = `https://backend-bkd.newus.id/api/user/surat/${idlayanan}/${idforminput}`;
+                    let apiURL = `${process.env.SERVER_URL}/user/surat/${idlayanan}/${idforminput}`;
                     console.log(`URL: ${apiURL}`);
     
                     const responsePDF = await axios.get(apiURL, { 
@@ -576,7 +576,7 @@ module.exports = {
                     let idlayanan = signGet?.layanan_id;
                     let idforminput = signGet?.id;
     
-                    let apiURL = `https://backend-bkd.newus.id/api/user/surat/${idlayanan}/${idforminput}`;
+                    let apiURL = `${process.env.SERVER_URL}/user/surat/${idlayanan}/${idforminput}`;
                     console.log(`URL: ${apiURL}`);
     
                     const responsePDF = await axios.get(apiURL, {
