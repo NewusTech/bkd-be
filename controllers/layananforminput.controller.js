@@ -55,6 +55,7 @@ const s3Client = new S3Client({
 });
 
 module.exports = {
+  
   inputForm: async (req, res) => {
     const transaction = await sequelize.transaction();
     try {
@@ -346,7 +347,6 @@ module.exports = {
         Layanan_form_inputs: formattedInputData ?? null,
         status: layananformnumData?.status,
         fileoutput: layananformnumData?.fileoutput,
-        filesertif: layananformnumData?.filesertif,
       };
 
       res.status(200).json(response(200, "success get data", result));
@@ -363,7 +363,7 @@ module.exports = {
       const { datainput, status } = req.body;
       const idlayanannum = req.params.idlayanannum;
 
-      // Update data entries
+      // Update data yang masuk
       let updateDataPromises = [];
       if (datainput && Array.isArray(datainput)) {
         updateDataPromises = datainput.map((item) =>
@@ -374,7 +374,7 @@ module.exports = {
               transaction,
             }
           ).catch((err) => {
-            console.error("Error updating data:", err);
+            console.error("Error updating data permohonan:", err);
             return null;
           })
         );
@@ -408,10 +408,9 @@ module.exports = {
 
         const fileUrl = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${folderPath.fileinput}/${uniqueFilename}`;
 
-        // Extract index from fieldname (e.g., 'datafile[0][data]' -> 0)
+        // Extract index
         const index = parseInt(fieldname.match(/\d+/)[0], 10);
 
-        // Assuming datafile[index].id is available in req.body to identify the correct record
         await Layanan_form_input.update(
           { data: fileUrl },
           {
@@ -449,7 +448,7 @@ module.exports = {
               folderPath,
             } = JSON.parse(fileData);
             const uploadParams = {
-              Bucket: process.env.AWS_S3_BUCKET,
+              Bucket: process.env.AWS_BUCKET,
               Key: `${folderPath}/${uniqueFilename}`,
               Body: Buffer.from(buffer),
               ACL: "public-read",
@@ -457,12 +456,12 @@ module.exports = {
             };
             const command = new PutObjectCommand(uploadParams);
             await s3Client.send(command);
-            await redisClient.del(redisKey); // Hapus dari Redis setelah berhasil diunggah
+            await redisClient.del(redisKey);
           }
         }
-      }, 0); // Jalankan segera dalam background
+      }, 0);
 
-      res.status(200).json(response(200, "Success update layananforminput"));
+      res.status(200).json(response(200, "Success update layanan form input"));
     } catch (err) {
       await transaction.rollback();
       res.status(500).json(response(500, "Internal server error", err));
