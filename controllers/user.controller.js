@@ -653,65 +653,6 @@ module.exports = {
         }
     },
 
-    changePassword: async (req, res) => {
-        const slug = req.params.slug;
-        const { oldPassword, newPassword, confirmNewPassword } = req.body;
-
-        if (!oldPassword || !newPassword || !confirmNewPassword) {
-            return res.status(400).json({ message: 'Semua kolom wajib diisi.' });
-        }
-
-        if (newPassword !== confirmNewPassword) {
-            return res.status(400).json({ message: 'Kata sandi baru tidak cocok.' });
-        }
-
-        try {
-            const user = await User.findOne({ where: { slug } });
-            if (!user) {
-                return res.status(404).json({ message: 'Pengguna tidak ditemukan.' });
-            }
-
-            if (!passwordHash.verify(oldPassword, user.password)) {
-                return res.status(400).json({ message: 'Kata sandi lama salah.' });
-            }
-
-            user.password = passwordHash.generate(newPassword);
-            await user.save();
-
-            return res.status(200).json({ message: 'Password has been updated.' });
-        } catch (err) {
-            console.error(err);
-            return res.status(500).json({ message: 'Internal server error.' });
-        }
-    },
-
-    changePasswordFromAdmin: async (req, res) => {
-        const slug = req.params.slug;
-        const { newPassword, confirmNewPassword } = req.body;
-
-        if (!newPassword || !confirmNewPassword) {
-            return res.status(400).json({ message: 'Semua kolom wajib diisi.' });
-        }
-
-        if (newPassword !== confirmNewPassword) {
-            return res.status(400).json({ message: 'Kata sandi baru tidak cocok.' });
-        }
-
-        try {
-            const user = await User.findOne({ where: { slug } });
-            if (!user) {
-                return res.status(404).json({ message: 'Pengguna tidak ditemukan.' });
-            }
-
-            user.password = passwordHash.generate(newPassword);
-            await user.save();
-
-            return res.status(200).json({ message: 'Password has been updated.' });
-        } catch (err) {
-            console.error(err);
-            return res.status(500).json({ message: 'Internal server error.' });
-        }
-    },
 
     forgotPassword: async (req, res) => {
         const { email } = req.body;
@@ -740,7 +681,7 @@ module.exports = {
             await user.save();
 
             const mailOptions = {
-                to: user?.Userinfo?.email,
+                to: user?.User_info?.email,
                 from: process.env.EMAIL_NAME,
                 subject: 'Password Reset',
                 text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
@@ -793,6 +734,38 @@ module.exports = {
             await user.save();
 
             return res.status(200).json({ message: 'Password berhasil diganti.' });
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Internal server error.' });
+        }
+    },
+
+    changePassword: async (req, res) => {
+        const slug = req.params.slug;
+        const { oldPassword, newPassword, confirmNewPassword } = req.body;
+
+        if (!oldPassword || !newPassword || !confirmNewPassword) {
+            return res.status(400).json({ message: 'Fields is required.' });
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            return res.status(400).json({ message: 'New password doesn`t match' });
+        }
+
+        try {
+            const user = await User.findOne({ where: { slug } });
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+
+            if (!passwordHash.verify(oldPassword, user.password)) {
+                return res.status(400).json({ message: 'Old password is incorrect' });
+            }
+
+            user.password = passwordHash.generate(newPassword);
+            await user.save();
+
+            return res.status(200).json({ message: 'Password has been updated.' });
         } catch (err) {
             console.error(err);
             return res.status(500).json({ message: 'Internal server error.' });
