@@ -116,41 +116,42 @@ module.exports = {
       }));
 
       const files = req.files;
-      let redisUploadPromises = files.map(async (file) => {
+      let s3UploadPromises = files.map(async (file) => {
         const { fieldname, mimetype, buffer, originalname } = file;
-
+        
         const now = new Date();
+        
         const timestamp = now.toISOString().replace(/[-:.]/g, "");
-        const uniqueFilename = `${originalname.split(".")[0]}_${timestamp}`;
+        const uniqueFilename = `${originalname.split(".")[0]}_${timestamp}.pdf`;
+        
+        const uploadParams = {
+          Bucket: process.env.AWS_BUCKET,
+          Key: `${folderPaths.fileinput}/${uniqueFilename}`, // Path di S3
+          Body: buffer,
+          ContentType: mimetype,
+          ACL: "public-read",
+          };
+          
+          const command = new PutObjectCommand(uploadParams);
+          await s3Client.send(command);
+          
+          // URL file di S3 setelah berhasil di-upload
+          
+          const fileUrl = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
+          
+          const index = parseInt(fieldname.match(/\d+/)[0], 10);
+          datafile[index].data = fileUrl;
+        });
 
-        const redisKey = `upload:${iduser}:${fieldname}`;
-        await redisClient.set(
-          redisKey,
-          JSON.stringify({
-            buffer,
-            mimetype,
-            originalname,
-            uniqueFilename,
-            folderPath: folderPaths.fileinput,
-          }),
-          "EX",
-          60 * 60
-        );
+        await Promise.all(s3UploadPromises);
+        
+        if (datafile) {
+          datafile = datafile.map((item) => ({
+            ...item,
+            layananformnum_id: idforminput,
+          }));
+        }
 
-        const fileUrl = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${folderPaths.fileinput}/${uniqueFilename}`;
-
-        const index = parseInt(fieldname.match(/\d+/)[0], 10);
-        datafile[index].data = fileUrl;
-      });
-
-      await Promise.all(redisUploadPromises);
-
-      if (datafile) {
-        datafile = datafile.map((item) => ({
-          ...item,
-          layananformnum_id: idforminput,
-        }));
-      }
 
       const createdLayananforminput = await Layanan_form_input.bulkCreate(
         updatedDatainput,
@@ -172,7 +173,7 @@ module.exports = {
           console.log("Memanggil API generate PDF...");
 
           // Memanggil API generate PDF menggunakan idforminput yang baru saja dibuat
-          let apiURL = `${process.env.SERVER_URL}/user/surat/${idlayanan}/${idforminput}`;
+          let apiURL = `http://localhost:3000/api/user/surat/${idlayanan}/${idforminput}`;
           console.log(`URL: ${apiURL}`);
 
           const responsePDF = await axios.get(apiURL, {
