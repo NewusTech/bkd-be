@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   Banner.init({
     image: DataTypes.STRING,
+    image_potrait: DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'Banner',
