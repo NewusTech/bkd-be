@@ -653,93 +653,6 @@ module.exports = {
         }
     },
 
-
-    forgotPassword: async (req, res) => {
-        const { email } = req.body;
-
-        try {
-            const user = await User.findOne({
-                include: [
-                    {
-                        model: User_info,
-                        attributes: ['email'],
-                        where: { email },
-                    }
-                ]
-            },);
-
-            if (!user) {
-                return res.status(404).json({ message: 'Email tidak terdaftar.' });
-            }
-
-            const token = crypto.randomBytes(20).toString('hex');
-            const resetpasswordexpires = Date.now() + 3600000;
-
-            user.resetpasswordtoken = token;
-            user.resetpasswordexpires = resetpasswordexpires;
-
-            await user.save();
-
-            const mailOptions = {
-                to: user?.User_info?.email,
-                from: process.env.EMAIL_NAME,
-                subject: 'Password Reset',
-                text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
-                Please click on the following link, or paste this into your browser to complete the process:\n\n
-                ${process.env.WEBSITE_URL}new-password/${token}\n\n
-                If you did not request this, please ignore this email and your password will remain unchanged.\n`
-            };
-
-            transporter.sendMail(mailOptions, (err) => {
-                if (err) {
-                    console.error('There was an error: ', err);
-                    return res.status(500).json({ message: `${process.env.EMAIL_NAME} ${process.env.EMAIL_PW}Error sending the email.  ${err}` });
-                }
-                res.status(200).json({ message: 'Email telah dikirim ke dengan instruksi lebih lanjut.' });
-            });
-
-        } catch (err) {
-            console.error(err);
-            return res.status(500).json({ message: 'Internal server error.' });
-        }
-    },
-
-    resetPassword: async (req, res) => {
-        const { token } = req.params;
-        const { newPassword, confirmNewPassword } = req.body;
-
-        if (!newPassword || !confirmNewPassword) {
-            return res.status(400).json({ message: 'Semua kolom wajib diisi.' });
-        }
-
-        if (newPassword !== confirmNewPassword) {
-            return res.status(400).json({ message: 'Kata sandi baru tidak cocok.' });
-        }
-
-        try {
-            const user = await User.findOne({
-                where: {
-                    resetpasswordtoken: token,
-                    resetpasswordexpires: { [Op.gt]: Date.now() }
-                }
-            });
-
-            if (!user) {
-                return res.status(400).json({ message: 'Token reset kata sandi tidak valid atau telah kedaluwarsa.' });
-            }
-
-            user.password = passwordHash.generate(newPassword);
-            user.resetpasswordtoken = null;
-            user.resetpasswordexpires = null;
-            await user.save();
-
-            return res.status(200).json({ message: 'Password berhasil diganti.' });
-        } catch (err) {
-            console.error(err);
-            return res.status(500).json({ message: 'Internal server error.' });
-        }
-    },
-
     changePassword: async (req, res) => {
         const slug = req.params.slug;
         const { oldPassword, newPassword, confirmNewPassword } = req.body;
@@ -766,6 +679,95 @@ module.exports = {
             await user.save();
 
             return res.status(200).json({ message: 'Password has been updated.' });
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Internal server error.' });
+        }
+    },
+
+    forgotPassword: async (req, res) => {
+        const { email } = req.body;
+
+        try {
+            const user = await User.findOne({
+                include: [
+                    {
+                        model: User_info,
+                        attributes: ['email', 'name'],
+                        where: { email },
+                    }
+                ]
+            },);
+
+            if (!user) {
+                return res.status(404).json({ message: 'Email tidak terdaftar.' });
+            }
+
+            console.log("aaaaaaa", user?.User_info?.email)
+            const token = crypto.randomBytes(20).toString('hex');
+            const resetpasswordexpires = Date.now() + 3600000;
+
+            user.resetpasswordtoken = token;
+            user.resetpasswordexpires = resetpasswordexpires;
+
+            await user.save();
+
+            const mailOptions = {
+                to: user?.User_info?.email,
+                from: process.env.EMAIL_NAME,
+                subject: 'Password Reset',
+                text: `Halo ${user?.User_info?.name},\n\n
+                Kami menerima permintaan untuk mengatur ulang kata sandi akun Anda.
+                Untuk mengatur ulang kata sandi, silakan klik tautan berikut atau salin dan tempelkan ke browser Anda:\n
+                ${process.env.WEBSITE_URL}/new-password/${token}\n\n
+                Jika Anda tidak merasa meminta pengaturan ulang kata sandi ini, abaikan email ini. Kata sandi akun Anda tidak akan berubah.\n\n
+                Terima kasih.`
+            };
+
+            transporter.sendMail(mailOptions, (err) => {
+                if (err) {
+                    console.error('There was an error: ', err);
+                    return res.status(500).json({ message: `${process.env.EMAIL_NAME} ${process.env.EMAIL_PW}Error sending the email.  ${err}` });
+                }
+                res.status(200).json({ message: 'Email telah dikirim ke dengan instruksi lebih lanjut.' });
+            });
+
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Internal server error.' });
+        }
+    },
+
+    resetPassword: async (req, res) => {
+        const { token } = req.params;
+        const { newPassword, confirmNewPassword } = req.body;
+
+        if (!newPassword || !confirmNewPassword) {
+            return res.status(400).json({ message: 'Field is required' });
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            return res.status(400).json({ message: 'New password doesn`t match' });
+        }
+
+        try {
+            const user = await User.findOne({
+                where: {
+                    resetpasswordtoken: token,
+                    resetpasswordexpires: { [Op.gt]: Date.now() }
+                }
+            });
+
+            if (!user) {
+                return res.status(400).json({ message: 'Token is invalid or has expired.' });
+            }
+
+            user.password = passwordHash.generate(newPassword);
+            user.resetpasswordtoken = null;
+            user.resetpasswordexpires = null;
+            await user.save();
+
+            return res.status(200).json({ message: 'Password successfully changed' });
         } catch (err) {
             console.error(err);
             return res.status(500).json({ message: 'Internal server error.' });

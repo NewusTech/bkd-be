@@ -17,8 +17,8 @@ route.delete('/user/delete/:slug', [mid.checkRolesAndLogout(['Super Admin'])], u
 //API BUAT USER
 route.get('/user/get', [mid.checkRolesAndLogout(['User', 'Admin Verifikasi', 'Super Admin', 'Kepala Bidang', 'Sekretaris Dinas', 'Kepala Dinas', 'Sekretaris Daerah'])], userController.getForUser); 
 
-route.post('/forgot/password', userController.forgotPassword); 
-route.post('/reset/:token', userController.resetPassword); 
+route.post('/user/forgot/password', userController.forgotPassword); 
+route.post('/user/reset/password/:token', userController.resetPassword); 
 route.post('/user/change/password/:slug', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userController.changePassword); 
 
 module.exports = route;
