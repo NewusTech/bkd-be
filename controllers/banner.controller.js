@@ -24,45 +24,74 @@ module.exports = {
                     type: "string",
                     optional: true
                 },
+                image_potrait: {
+                    type: "string",
+                    optional: false
+                },
             }
-
-            if (req.file) {
+    
+            let imageKey, imagePotraitKey;
+    
+            // Proses upload untuk image
+            if (req.files?.image) {
                 const timestamp = new Date().getTime();
-                const uniqueFileName = `${timestamp}-${req.file.originalname}`;
-
+                const uniqueFileName = `${timestamp}-${req.files.image[0].originalname}`;
+    
                 const uploadParams = {
                     Bucket: process.env.AWS_BUCKET,
                     Key: `${process.env.PATH_AWS}/banner/${uniqueFileName}`,
-                    Body: req.file.buffer,
+                    Body: req.files.image[0].buffer,
                     ACL: 'public-read',
-                    ContentType: req.file.mimetype
+                    ContentType: req.files.image[0].mimetype
                 };
-
+    
                 const command = new PutObjectCommand(uploadParams);
-
+    
                 await s3Client.send(command);
-
+    
                 imageKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
             }
-            
-            let BannerCreateObj = {
-                image: req.file ? imageKey : null,
+    
+            if (req.files?.image_potrait) {
+                const timestamp = new Date().getTime();
+                const uniqueFileNamePotrait = `${timestamp}-${req.files.image_potrait[0].originalname}`;
+    
+                const uploadParamsPotrait = {
+                    Bucket: process.env.AWS_BUCKET,
+                    Key: `${process.env.PATH_AWS}/banner/${uniqueFileNamePotrait}`,
+                    Body: req.files.image_potrait[0].buffer,
+                    ACL: 'public-read',
+                    ContentType: req.files.image_potrait[0].mimetype
+                };
+    
+                const commandPotrait = new PutObjectCommand(uploadParamsPotrait);
+    
+                await s3Client.send(commandPotrait);
+    
+                imagePotraitKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParamsPotrait.Key}`;
             }
 
+            let BannerCreateObj = {
+                image: imageKey || null,
+                image_potrait: imagePotraitKey
+            }
+    
+            // Validasi data input
             const validate = v.validate(BannerCreateObj, schema);
             if (validate.length > 0) {
                 res.status(400).json(response(400, 'validation failed', validate));
                 return;
             }
-
+    
             let BannerCreate = await Banner.create(BannerCreateObj);
-
+    
             res.status(201).json(response(201, 'success create Banner', BannerCreate));
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
     },
+    
 
     //mendapatkan semua data Banner
     getBanner: async (req, res) => {
@@ -124,66 +153,98 @@ module.exports = {
                 where: {
                     id: req.params.id
                 }
-            })
-
-            //cek apakah data Banner ada
+            });
+    
+            // Cek apakah data Banner ada
             if (!BannerGet) {
                 res.status(404).json(response(404, 'Banner not found'));
                 return;
             }
+    
             const schema = {
                 image: {
                     type: "string",
                     optional: true
                 },
-            }
-
-            if (req.file) {
+                image_potrait: {
+                    type: "string",
+                    optional: true
+                },
+            };
+    
+            let imageKey, imagePotraitKey;
+    
+            // Upload image jika ada
+            if (req.files?.image) {
                 const timestamp = new Date().getTime();
-                const uniqueFileName = `${timestamp}-${req.file.originalname}`;
-
+                const uniqueFileName = `${timestamp}-${req.files.image[0].originalname}`;
+    
                 const uploadParams = {
                     Bucket: process.env.AWS_BUCKET,
                     Key: `${process.env.PATH_AWS}/banner/${uniqueFileName}`,
-                    Body: req.file.buffer,
+                    Body: req.files.image[0].buffer,
                     ACL: 'public-read',
-                    ContentType: req.file.mimetype
+                    ContentType: req.files.image[0].mimetype
                 };
-
+    
                 const command = new PutObjectCommand(uploadParams);
                 await s3Client.send(command);
-                
+    
                 imageKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
             }
-
-            //buat object Banner
-            let BannerUpdateObj = {
-                image: req.file ? imageKey : BannerGet.image,
+    
+            // Upload image_potrait jika ada
+            if (req.files?.image_potrait) {
+                const timestamp = new Date().getTime();
+                const uniqueFileNamePotrait = `${timestamp}-${req.files.image_potrait[0].originalname}`;
+    
+                const uploadParamsPotrait = {
+                    Bucket: process.env.AWS_BUCKET,
+                    Key: `${process.env.PATH_AWS}/banner/${uniqueFileNamePotrait}`,
+                    Body: req.files.image_potrait[0].buffer,
+                    ACL: 'public-read',
+                    ContentType: req.files.image_potrait[0].mimetype
+                };
+    
+                const commandPotrait = new PutObjectCommand(uploadParamsPotrait);
+                await s3Client.send(commandPotrait);
+    
+                imagePotraitKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParamsPotrait.Key}`;
             }
+    
+            // Buat object BannerUpdateObj
+            let BannerUpdateObj = {
+                image: imageKey || BannerGet.image,
+                image_potrait: imagePotraitKey || BannerGet.image_potrait
+            };
+    
             const validate = v.validate(BannerUpdateObj, schema);
             if (validate.length > 0) {
                 res.status(400).json(response(400, 'validation failed', validate));
                 return;
             }
-
+    
+            // Update data Banner
             await Banner.update(BannerUpdateObj, {
                 where: {
                     id: req.params.id,
                 }
-            })
-
+            });
+    
+            // Ambil data setelah update
             let BannerAfterUpdate = await Banner.findOne({
                 where: {
                     id: req.params.id,
                 }
-            })
-
+            });
+    
             res.status(200).json(response(200, 'success update Banner', BannerAfterUpdate));
         } catch (err) {
             res.status(500).json(response(500, 'internal server error', err));
             console.log(err);
         }
     },
+    
 
     //menghapus Banner berdasarkan id
     deleteBanner: async (req, res) => {
