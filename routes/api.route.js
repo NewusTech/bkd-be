@@ -35,6 +35,7 @@ const dashboardRoute = require("./dashboard.route");
 const suratRoute = require("./surat.route");
 const roleRoute = require("./role.route");
 const documentRoute = require("./documentprint.route");
+const strukturRoute = require("./struktur.route");
 
 module.exports = function (app, urlApi) {
   app.use(urlApi, userRoute);
@@ -74,4 +75,5 @@ module.exports = function (app, urlApi) {
   app.use(urlApi, suratRoute);
   app.use(urlApi, roleRoute);
   app.use(urlApi, documentRoute);
+  app.use(urlApi, strukturRoute);
 };
