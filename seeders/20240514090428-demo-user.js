@@ -43,7 +43,7 @@ module.exports = {
         userinfo_id: 5,
         slug: "adminverifikasidiklat-20240620041615213",
         password: passwordHash.generate('123456'),
-        bidang_id: 1,
+        bidang_id: 2,
         role_id: 3,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -61,7 +61,7 @@ module.exports = {
         userinfo_id: 7,
         slug: "adminverifikasipengadaan-20240620041615213",
         password: passwordHash.generate('123456'),
-        bidang_id: 2,
+        bidang_id: 3,
         role_id: 3,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -70,7 +70,7 @@ module.exports = {
         userinfo_id: 8,
         slug: "kepalabidangpengadaan-20240620041615213",
         password: passwordHash.generate('123456'),
-        bidang_id: 2,
+        bidang_id: 3,
         role_id: 4,
         createdAt: new Date(),
         updatedAt: new Date()
