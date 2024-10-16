@@ -288,6 +288,14 @@ module.exports = {
         return;
       }
 
+      // Cek apakah user sudah input feedback
+      let feedbackGet = await User_feedback.findOne({
+        where: {
+          userinfo_id: layananformnumData.userinfo_id,
+          layanan_id: layananformnumData.layanan_id,
+        },
+      });
+
       // Format the Layananforminput data
       let formattedInputData = layananformnumData?.Layanan_form_inputs?.map(
         (datafilter) => {
@@ -348,6 +356,7 @@ module.exports = {
         Layanan_form_inputs: formattedInputData ?? null,
         status: layananformnumData?.status,
         fileoutput: layananformnumData?.fileoutput,
+        user_feedback: feedbackGet ? true : false, 
       };
 
       res.status(200).json(response(200, "success get data", result));
@@ -356,6 +365,7 @@ module.exports = {
       console.log(err);
     }
   },
+
 
   updateDataForm: async (req, res) => {
     const transaction = await sequelize.transaction();
@@ -1239,7 +1249,7 @@ module.exports = {
         return;
       }
 
-      let surveyGet = await User_feedback.findOne({
+      let feedbackGet = await User_feedback.findOne({
         where: {
           userinfo_id: Layananformnumget.userinfo_id,
           layanan_id: Layananformnumget.layanan_id,
@@ -1270,7 +1280,7 @@ module.exports = {
             ? Layananformnumget?.Layanan?.Bidang.nama
             : null,
         fileoutput: Layananformnumget?.fileoutput,
-        input_skm: surveyGet ? true : false,
+        user_feedback: feedbackGet ? true : false,
         createdAt: Layananformnumget?.createdAt,
         updatedAt: Layananformnumget?.updatedAt,
       };
