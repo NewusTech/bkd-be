@@ -722,7 +722,7 @@ module.exports = {
                 text: `Halo ${user?.User_info?.name},\n\n
                 Kami menerima permintaan untuk mengatur ulang kata sandi akun Anda.
                 Untuk mengatur ulang kata sandi, silakan klik tautan berikut atau salin dan tempelkan ke browser Anda:\n
-                ${process.env.WEBSITE_URL}/new-password/${token}\n\n
+                ${process.env.WEBSITE_URL}/${token}\n\n
                 Jika Anda tidak merasa meminta pengaturan ulang kata sandi ini, abaikan email ini. Kata sandi akun Anda tidak akan berubah.\n\n
                 Terima kasih.`
             };
