@@ -656,34 +656,37 @@ module.exports = {
     changePassword: async (req, res) => {
         const slug = req.params.slug;
         const { oldPassword, newPassword, confirmNewPassword } = req.body;
-
+    
+        // Validasi input
         if (!oldPassword || !newPassword || !confirmNewPassword) {
-            return res.status(400).json({ message: 'Fields is required.' });
+            return res.status(400).json({ status: 400, message: 'Fields are required.' });
         }
-
+    
         if (newPassword !== confirmNewPassword) {
-            return res.status(400).json({ message: 'New password doesn`t match' });
+            return res.status(400).json({ status: 400, message: 'New password doesn`t match' });
         }
-
+    
         try {
             const user = await User.findOne({ where: { slug } });
             if (!user) {
-                return res.status(404).json({ message: 'User not found' });
+                return res.status(404).json({ status: 404, message: 'User not found' });
             }
-
+    
             if (!passwordHash.verify(oldPassword, user.password)) {
-                return res.status(400).json({ message: 'Old password is incorrect' });
+                return res.status(400).json({ status: 400, message: 'Old password is incorrect' });
             }
-
+    
             user.password = passwordHash.generate(newPassword);
             await user.save();
-
-            return res.status(200).json({ message: 'Password has been updated.' });
+    
+            // Return response success
+            return res.status(201).json({ status: 201, message: 'Password has been updated.' });
         } catch (err) {
             console.error(err);
-            return res.status(500).json({ message: 'Internal server error.' });
+            return res.status(500).json({ status: 500, message: 'Internal server error.' });
         }
     },
+    
 
     forgotPassword: async (req, res) => {
         const { email } = req.body;
