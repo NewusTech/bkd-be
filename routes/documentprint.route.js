@@ -21,9 +21,32 @@ route.get("/admin/document/print/user-complaint/get", [
   DocumentPrintController.getUserComplaintPrint,
 ]);
 
+route.get(
+  "/admin/document/excel/print/application/get",
+  mid.checkRolesAndLogout(["Super Admin"]),
+  DocumentPrintController.getApplicationHistoryExcelPrint
+);
+
+route.get(
+  "/admin/document/excel/print/user-complaint/get",
+  mid.checkRolesAndLogout(["Super Admin"]),
+  DocumentPrintController.getUserComplaintExcelPrint
+);
+
+route.get(
+  "/admin/document/excel/print/staff-bkd/get",
+  mid.checkRolesAndLogout(["Super Admin"]),
+  DocumentPrintController.getStaffBKDExcelPrint
+);
+
 route.get("/admin/document/print/satisfaction-index/:layananId/get", [
   mid.checkRolesAndLogout(["Super Admin"]),
   DocumentPrintController.getSatisfactionHistoryDetailPrint,
+]);
+
+route.get("/admin/document/excel/print/satisfaction-index/:layananId/get", [
+  mid.checkRolesAndLogout(["Super Admin"]),
+  DocumentPrintController.getSatisfactionHistoryDetailExcelPrint,
 ]);
 
 module.exports = route;
