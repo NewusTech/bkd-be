@@ -787,8 +787,8 @@ module.exports = {
 
         worksheet.getRow(index + 6).values = [
           index + 1,
-          item.nama,
-          item.nip,
+          item?.User_info?.name,
+          item?.User_info?.nip,
           item?.Layanan?.nama,
           createdAtDate,
           statusText,
@@ -825,7 +825,10 @@ module.exports = {
               color: { argb: "FFFFFF" },
             };
             worksheet.getCell(cell).fill = {
-              pattern: "#3572EF",
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "3572EF" },
+              bgColor: { argb: "3572EF" },
             };
             worksheet.getCell(cell).alignment = {
               vertical: "middle",
@@ -1020,7 +1023,10 @@ module.exports = {
               color: { argb: "FFFFFF" },
             };
             worksheet.getCell(cell).fill = {
-              pattern: "#3572EF",
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "3572EF" },
+              bgColor: { argb: "3572EF" },
             };
             worksheet.getCell(cell).alignment = {
               vertical: "middle",
@@ -1146,7 +1152,10 @@ module.exports = {
               color: { argb: "FFFFFF" },
             };
             worksheet.getCell(cell).fill = {
-              pattern: "#3572EF",
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "3572EF" },
+              bgColor: { argb: "3572EF" },
             };
             worksheet.getCell(cell).alignment = {
               vertical: "middle",
@@ -1338,7 +1347,10 @@ module.exports = {
               color: { argb: "FFFFFF" },
             };
             worksheet.getCell(cell).fill = {
-              pattern: "#3572EF",
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "3572EF" },
+              bgColor: { argb: "3572EF" },
             };
             worksheet.getCell(cell).alignment = {
               vertical: "middle",
