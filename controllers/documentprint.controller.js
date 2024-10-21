@@ -726,6 +726,15 @@ module.exports = {
         }),
       ]);
 
+      worksheet.columns = [
+        { width: 5 },
+        { width: 40 },
+        { width: 25 },
+        { width: 40 },
+        { width: 30 },
+        { width: 30 },
+      ];
+
       worksheet.mergeCells("A3:F3");
 
       worksheet.getCell(
@@ -919,6 +928,15 @@ module.exports = {
       const workbook = new exceljs.Workbook();
       const worksheet = workbook.addWorksheet("Riwayat Pengaduan");
 
+      worksheet.columns = [
+        { width: 5 },
+        { width: 30 },
+        { width: 40 },
+        { width: 40 },
+        { width: 40 },
+        { width: 25 },
+      ];
+
       worksheet.mergeCells("A3:F3");
 
       worksheet.getCell(
@@ -1030,6 +1048,13 @@ module.exports = {
 
       const workbook = new exceljs.Workbook();
       const worksheet = workbook.addWorksheet("Staf BKD Lampung Timur");
+
+      worksheet.columns = [
+        { width: 5 },
+        { width: 40 },
+        { width: 40 },
+        { width: 25 },
+      ];
 
       worksheet.mergeCells("A3:D3");
 
@@ -1174,6 +1199,16 @@ module.exports = {
 
       const workbook = new exceljs.Workbook();
       const worksheet = workbook.addWorksheet("Indeks Kepuasan");
+
+      worksheet.columns = [
+        { width: 5 },
+        { width: 40 },
+        { width: 30 },
+        { width: 25 },
+        { width: 30 },
+        { width: 60 },
+        { width: 20 },
+      ];
 
       worksheet.mergeCells("A3:G3");
 
