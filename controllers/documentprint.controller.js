@@ -730,8 +730,8 @@ module.exports = {
         { width: 5 },
         { width: 40 },
         { width: 25 },
-        { width: 40 },
-        { width: 30 },
+        { width: 60 },
+        { width: 25 },
         { width: 30 },
       ];
 
@@ -780,7 +780,7 @@ module.exports = {
       applicationPrints[0].forEach((item, index) => {
         const createdAtDate = new Date(item.createdAt).toLocaleDateString(
           "id-ID",
-          { day: "2-digit", month: "short", year: "numeric" }
+          { day: "2-digit", month: "long", year: "numeric" }
         );
 
         const statusText = statusApp(item?.status);
@@ -805,12 +805,13 @@ module.exports = {
         };
       });
 
-      for (let i = 7; i <= 8 + applicationPrints[0].length; i++) {
+      for (let i = 5; i < 6 + applicationPrints[0].length; i++) {
         ["A", "B", "C", "D", "E", "F"].forEach((j) => {
           let cell = `${j}${i}`;
+
           worksheet.getCell(cell).alignment = {
             vertical: "middle",
-            horizontal: "center",
+            horizontal: "left",
           };
           worksheet.getCell(cell).border = {
             bottom: { style: "thin", color: { argb: "00000000" } },
@@ -818,9 +819,30 @@ module.exports = {
             left: { style: "thin", color: { argb: "00000000" } },
             top: { style: "thin", color: { argb: "00000000" } },
           };
-          if (i === 7 || i === 8) {
+          if (i === 5) {
             worksheet.getCell(cell).font = {
               bold: true,
+              color: { argb: "FFFFFF" },
+            };
+            worksheet.getCell(cell).fill = {
+              pattern: "#3572EF",
+            };
+            worksheet.getCell(cell).alignment = {
+              vertical: "middle",
+              horizontal: "left",
+            };
+            worksheet.getCell(cell).border = {
+              bottom: { style: "thin", color: { argb: "00000000" } },
+              right: { style: "thin", color: { argb: "00000000" } },
+              left: { style: "thin", color: { argb: "00000000" } },
+              top: { style: "thin", color: { argb: "00000000" } },
+            };
+          }
+
+          if (i !== 5) {
+            worksheet.getCell(cell).alignment = {
+              vertical: "middle",
+              horizontal: "left",
             };
           }
         });
@@ -930,10 +952,10 @@ module.exports = {
 
       worksheet.columns = [
         { width: 5 },
-        { width: 30 },
-        { width: 40 },
-        { width: 40 },
-        { width: 40 },
+        { width: 25 },
+        { width: 50 },
+        { width: 60 },
+        { width: 70 },
         { width: 25 },
       ];
 
@@ -979,12 +1001,12 @@ module.exports = {
         };
       });
 
-      for (let i = 7; i <= 8 + userComplaints[0].length; i++) {
+      for (let i = 5; i < 6 + userComplaints[0].length; i++) {
         ["A", "B", "C", "D", "E", "F"].forEach((j) => {
           let cell = `${j}${i}`;
           worksheet.getCell(cell).alignment = {
             vertical: "middle",
-            horizontal: "center",
+            horizontal: "left",
           };
           worksheet.getCell(cell).border = {
             bottom: { style: "thin", color: { argb: "00000000" } },
@@ -992,9 +1014,30 @@ module.exports = {
             left: { style: "thin", color: { argb: "00000000" } },
             top: { style: "thin", color: { argb: "00000000" } },
           };
-          if (i === 7 || i === 8) {
+          if (i === 5) {
             worksheet.getCell(cell).font = {
               bold: true,
+              color: { argb: "FFFFFF" },
+            };
+            worksheet.getCell(cell).fill = {
+              pattern: "#3572EF",
+            };
+            worksheet.getCell(cell).alignment = {
+              vertical: "middle",
+              horizontal: "left",
+            };
+            worksheet.getCell(cell).border = {
+              bottom: { style: "thin", color: { argb: "00000000" } },
+              right: { style: "thin", color: { argb: "00000000" } },
+              left: { style: "thin", color: { argb: "00000000" } },
+              top: { style: "thin", color: { argb: "00000000" } },
+            };
+          }
+
+          if (i !== 5) {
+            worksheet.getCell(cell).alignment = {
+              vertical: "middle",
+              horizontal: "left",
             };
           }
         });
@@ -1051,8 +1094,8 @@ module.exports = {
 
       worksheet.columns = [
         { width: 5 },
-        { width: 40 },
-        { width: 40 },
+        { width: 60 },
+        { width: 60 },
         { width: 25 },
       ];
 
@@ -1083,12 +1126,13 @@ module.exports = {
         };
       });
 
-      for (let i = 7; i <= 8 + structures[0].length; i++) {
+      for (let i = 5; i < 6 + structures[0].length; i++) {
         ["A", "B", "C", "D", "E", "F"].forEach((j) => {
           let cell = `${j}${i}`;
+
           worksheet.getCell(cell).alignment = {
             vertical: "middle",
-            horizontal: "center",
+            horizontal: "left",
           };
           worksheet.getCell(cell).border = {
             bottom: { style: "thin", color: { argb: "00000000" } },
@@ -1096,9 +1140,30 @@ module.exports = {
             left: { style: "thin", color: { argb: "00000000" } },
             top: { style: "thin", color: { argb: "00000000" } },
           };
-          if (i === 7 || i === 8) {
+          if (i === 5) {
             worksheet.getCell(cell).font = {
               bold: true,
+              color: { argb: "FFFFFF" },
+            };
+            worksheet.getCell(cell).fill = {
+              pattern: "#3572EF",
+            };
+            worksheet.getCell(cell).alignment = {
+              vertical: "middle",
+              horizontal: "left",
+            };
+            worksheet.getCell(cell).border = {
+              bottom: { style: "thin", color: { argb: "00000000" } },
+              right: { style: "thin", color: { argb: "00000000" } },
+              left: { style: "thin", color: { argb: "00000000" } },
+              top: { style: "thin", color: { argb: "00000000" } },
+            };
+          }
+
+          if (i !== 5) {
+            worksheet.getCell(cell).alignment = {
+              vertical: "middle",
+              horizontal: "left",
             };
           }
         });
@@ -1202,12 +1267,12 @@ module.exports = {
 
       worksheet.columns = [
         { width: 5 },
-        { width: 40 },
-        { width: 30 },
-        { width: 25 },
-        { width: 30 },
         { width: 60 },
+        { width: 30 },
         { width: 20 },
+        { width: 25 },
+        { width: 70 },
+        { width: 10 },
       ];
 
       worksheet.mergeCells("A3:G3");
@@ -1254,12 +1319,12 @@ module.exports = {
         };
       });
 
-      for (let i = 7; i <= 8 + structures[0].length; i++) {
+      for (let i = 5; i < 6 + structures[0].length; i++) {
         ["A", "B", "C", "D", "E", "F", "G"].forEach((j) => {
           let cell = `${j}${i}`;
           worksheet.getCell(cell).alignment = {
             vertical: "middle",
-            horizontal: "center",
+            horizontal: "left",
           };
           worksheet.getCell(cell).border = {
             bottom: { style: "thin", color: { argb: "00000000" } },
@@ -1267,9 +1332,30 @@ module.exports = {
             left: { style: "thin", color: { argb: "00000000" } },
             top: { style: "thin", color: { argb: "00000000" } },
           };
-          if (i === 7 || i === 8) {
+          if (i === 5) {
             worksheet.getCell(cell).font = {
               bold: true,
+              color: { argb: "FFFFFF" },
+            };
+            worksheet.getCell(cell).fill = {
+              pattern: "#3572EF",
+            };
+            worksheet.getCell(cell).alignment = {
+              vertical: "middle",
+              horizontal: "left",
+            };
+            worksheet.getCell(cell).border = {
+              bottom: { style: "thin", color: { argb: "00000000" } },
+              right: { style: "thin", color: { argb: "00000000" } },
+              left: { style: "thin", color: { argb: "00000000" } },
+              top: { style: "thin", color: { argb: "00000000" } },
+            };
+          }
+
+          if (i !== 5) {
+            worksheet.getCell(cell).alignment = {
+              vertical: "middle",
+              horizontal: "left",
             };
           }
         });
