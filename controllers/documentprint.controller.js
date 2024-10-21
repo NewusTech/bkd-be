@@ -1132,7 +1132,7 @@ module.exports = {
       });
 
       for (let i = 5; i < 6 + structures[0].length; i++) {
-        ["A", "B", "C", "D", "E", "F"].forEach((j) => {
+        ["A", "B", "C", "D"].forEach((j) => {
           let cell = `${j}${i}`;
 
           worksheet.getCell(cell).alignment = {
@@ -1327,7 +1327,7 @@ module.exports = {
         };
       });
 
-      for (let i = 5; i < 6 + structures[0].length; i++) {
+      for (let i = 5; i < 6 + history.length; i++) {
         ["A", "B", "C", "D", "E", "F", "G"].forEach((j) => {
           let cell = `${j}${i}`;
           worksheet.getCell(cell).alignment = {
