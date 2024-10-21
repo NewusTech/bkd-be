@@ -989,7 +989,6 @@ module.exports = {
           item?.Layanan?.Bidang?.nama,
           item?.Layanan?.nama,
           item?.judul_pengaduan,
-          statusText,
           `${item?.status === 1 ? "Selesai" : "Menunggu"}`,
         ];
       });
