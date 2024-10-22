@@ -105,6 +105,8 @@ module.exports = {
       const bidang_id = req.query.bidang_id ?? null;
       const layanan_id = req.query.layanan_id ?? null;
       let { start_date, end_date, search, status } = req.query;
+      const year = req.query.year ? parseInt(req.query.year) : null;
+      const month = req.query.month ? parseInt(req.query.month) : null;
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
       const offset = (page - 1) * limit;
@@ -128,10 +130,6 @@ module.exports = {
         whereCondition.bidang_id = req.user.bidang_id;
       } else if (req.user.role === "Super Admin") {
       }
-
-      // if (req.user.role === 'Admin Verifikasi') {
-      //     whereCondition.layanan_id = req.user.layanan_id;
-      // }
 
       if (search) {
         whereCondition[Op.or] = [
@@ -161,6 +159,30 @@ module.exports = {
       } else if (end_date) {
         whereCondition.createdAt = {
           [Op.lte]: moment(end_date).endOf("day").toDate(),
+        };
+      }
+
+      if (year && month) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        whereCondition.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
         };
       }
 

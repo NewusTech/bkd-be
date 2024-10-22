@@ -8,7 +8,7 @@ const route = express.Router();
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 2 * 1024 * 1024 }  });
  
 route.get('/user/manual/book/get', manualbookController.getManualBook);
 route.get('/user/manual/book/get/:id', manualbookController.getManualBookById); 

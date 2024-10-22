@@ -8,7 +8,7 @@ const route = express.Router();
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 2 * 1024 * 1024 }  });
 
 route.post('/user/galeri/create', [mid.checkRolesAndLogout(['Super Admin'])], upload.single('image'), GaleriController.createGaleri);
 route.get('/user/galeri/get', GaleriController.getGaleri); 

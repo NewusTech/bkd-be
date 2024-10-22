@@ -8,7 +8,7 @@ const route = express.Router();
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 2 * 1024 * 1024 } });
 
 route.post('/user/banner/create', [mid.checkRolesAndLogout(['Super Admin'])], upload.fields([{ name: 'image', maxCount: 1 },{ name: 'image_potrait', maxCount: 1 },]), BannerController.createBanner);
 route.get('/user/banner/get', BannerController.getBanner); 

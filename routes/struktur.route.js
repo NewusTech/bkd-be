@@ -8,7 +8,7 @@ const route = express.Router();
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 2 * 1024 * 1024 }  });
 
 route.post('/user/struktur/file/create', [mid.checkRolesAndLogout(['Super Admin'])], upload.single('file'), StrukturController.createStruktur);
 route.get('/user/struktur/file/get', StrukturController.getStruktur); 

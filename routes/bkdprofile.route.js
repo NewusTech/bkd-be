@@ -8,7 +8,7 @@ const route = express.Router();
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 2 * 1024 * 1024 }  });
 
 route.post('/user/bkd/profile/create', [mid.checkRolesAndLogout(['Super Admin'])], upload.fields([{ name: 'image_bkd', maxCount: 1 },{ name: 'logo', maxCount: 1 },]), BkdProfileController.createProfile);
 route.get('/user/bkd/profile/get', BkdProfileController.getProfile); 

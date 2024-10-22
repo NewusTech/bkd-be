@@ -102,6 +102,8 @@ module.exports = {
       const search = req.query.search ?? null;
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
+      const year = req.query.year ? parseInt(req.query.year) : null;
+      const month = req.query.month ? parseInt(req.query.month) : null;
       const offset = (page - 1) * limit;
       const start_date = req.query.start_date;
       const end_date = req.query.end_date;
@@ -149,6 +151,30 @@ module.exports = {
       } else if (end_date) {
         WhereClause.createdAt = {
           [Op.lte]: moment(end_date).endOf("day").toDate(),
+        };
+      }
+
+      if (year && month) {
+        WhereClause.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        WhereClause.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        WhereClause.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
         };
       }
 
@@ -266,6 +292,8 @@ module.exports = {
       const idlayanan = Number(req.params.idlayanan);
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
+      const year = req.query.year ? parseInt(req.query.year) : null;
+      const month = req.query.month ? parseInt(req.query.month) : null;
       const offset = (page - 1) * limit;
       const start_date = req.query.start_date;
       const end_date = req.query.end_date;
@@ -296,6 +324,30 @@ module.exports = {
       } else if (end_date) {
         WhereClause.createdAt = {
           [Op.lte]: moment(end_date).endOf("day").toDate(),
+        };
+      }
+
+      if (year && month) {
+        WhereClause.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        WhereClause.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        WhereClause.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
         };
       }
 
@@ -389,6 +441,8 @@ module.exports = {
     try {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
+      const year = req.query.year ? parseInt(req.query.year) : null;
+      const month = req.query.month ? parseInt(req.query.month) : null;
       const offset = (page - 1) * limit;
       let { start_date, end_date, search } = req.query;
 
@@ -420,6 +474,30 @@ module.exports = {
       } else if (end_date) {
         WhereClause.createdAt = {
           [Op.lte]: moment(end_date).endOf("day").toDate(),
+        };
+      }
+
+      if (year && month) {
+        WhereClause.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        WhereClause.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        WhereClause.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
         };
       }
 
@@ -557,6 +635,8 @@ module.exports = {
   getPDFHistoryByBidang: async (req, res) => {
     try {
       const bidang_id = req.user?.bidang_id || req.query.bidang_id;
+      const year = req.query.year ? parseInt(req.query.year) : null;
+      const month = req.query.month ? parseInt(req.query.month) : null;
       let history;
 
       const start_date = req.query.start_date;
@@ -583,6 +663,30 @@ module.exports = {
       const WhereClause2 = {};
       if (bidang_id) {
         WhereClause2.id = bidang_id;
+      }
+
+      if (year && month) {
+        WhereClause.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        WhereClause.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        WhereClause.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
+        };
       }
 
       [history] = await Promise.all([

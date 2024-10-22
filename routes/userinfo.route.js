@@ -8,7 +8,7 @@ const route = express.Router();
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 2 * 1024 * 1024 }  });
 
 route.get('/user/info/get', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userinfoController.getUserData); 
 route.get('/user/info/get/:slug', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userinfoController.getUserBySlug); 

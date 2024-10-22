@@ -65,6 +65,8 @@ module.exports = {
       const userinfo_id = req.user.role === "User" ? req.user.userId : null;
       let { start_date, end_date, search, status, layanan_id, bidang_id } =
         req.query;
+      let year = req.query.year ? parseInt(req.query.year) : null;
+      let month = req.query.month ? parseInt(req.query.month) : null;
       let applicationPrints;
 
       let whereCondition = {};
@@ -102,6 +104,30 @@ module.exports = {
         end_date.setHours(23, 59, 59, 999);
         whereCondition.createdAt = {
           [Op.lte]: new Date(end_date),
+        };
+      }
+
+      if (year && month) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        whereCondition.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
         };
       }
 
@@ -248,6 +274,8 @@ module.exports = {
       let { layananId } = req.params;
       const userinfo_id = req.user.role === "User" ? req.user.userId : null;
       let { start_date, end_date, bidang_id } = req.query;
+      let year = req.query.year ? parseInt(req.query.year) : null;
+      let month = req.query.month ? parseInt(req.query.month) : null;
 
       let history;
 
@@ -288,6 +316,30 @@ module.exports = {
         end_date.setHours(23, 59, 59, 999);
         whereCondition.createdAt = {
           [Op.lte]: new Date(end_date),
+        };
+      }
+
+      if (year && month) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        whereCondition.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
         };
       }
 
@@ -401,6 +453,8 @@ module.exports = {
   getStaffBKDPrint: async (req, res) => {
     try {
       let { search, status, bidang_id } = req.query;
+      let year = req.query.year ? parseInt(req.query.year) : null;
+      let month = req.query.month ? parseInt(req.query.month) : null;
 
       whereCondition = {};
 
@@ -413,6 +467,30 @@ module.exports = {
           { nama: { [Op.like]: `%${search}%` } },
           { nip: { [Op.like]: `%${search}%` } },
         ];
+      }
+
+      if (year && month) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        whereCondition.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
+        };
       }
 
       if (status) {
@@ -495,6 +573,8 @@ module.exports = {
       const userinfo_id = req.user.role === "User" ? req.user.userId : null;
       let { search, status, start_date, end_date, bidang_id, layanan_id } =
         req.query;
+      let year = req.query.year ? parseInt(req.query.year) : null;
+      let month = req.query.month ? parseInt(req.query.month) : null;
 
       const whereCondition = {};
       const WhereCondition2 = {};
@@ -531,6 +611,30 @@ module.exports = {
         end_date.setHours(23, 59, 59, 999);
         whereCondition.createdAt = {
           [Op.lte]: new Date(end_date),
+        };
+      }
+
+      if (year && month) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        whereCondition.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
         };
       }
 
@@ -647,6 +751,8 @@ module.exports = {
       const userinfo_id = req.user.role === "User" ? req.user.userId : null;
       let { start_date, end_date, search, status, layanan_id, bidang_id } =
         req.query;
+      let year = req.query.year ? parseInt(req.query.year) : null;
+      let month = req.query.month ? parseInt(req.query.month) : null;
       let applicationPrints;
 
       let whereCondition = {};
@@ -667,6 +773,30 @@ module.exports = {
 
       if (userinfo_id) {
         whereCondition.userinfo_id = userinfo_id;
+      }
+
+      if (year && month) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        whereCondition.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
+        };
       }
 
       if (start_date && end_date) {
@@ -875,6 +1005,8 @@ module.exports = {
       const userinfo_id = req.user.role === "User" ? req.user.userId : null;
       let { search, status, start_date, end_date, bidang_id, layanan_id } =
         req.query;
+      let year = req.query.year ? parseInt(req.query.year) : null;
+      let month = req.query.month ? parseInt(req.query.month) : null;
 
       const whereCondition = {};
       const WhereCondition2 = {};
@@ -894,6 +1026,30 @@ module.exports = {
 
       if (userinfo_id) {
         whereCondition.userinfo_id = userinfo_id;
+      }
+
+      if (year && month) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        whereCondition.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
+        };
       }
 
       if (start_date && end_date) {
@@ -1070,6 +1226,8 @@ module.exports = {
   getStaffBKDExcelPrint: async (req, res) => {
     try {
       let { search, status, bidang_id } = req.query;
+      let year = req.query.year ? parseInt(req.query.year) : null;
+      let month = req.query.month ? parseInt(req.query.month) : null;
 
       whereCondition = {};
 
@@ -1086,6 +1244,30 @@ module.exports = {
 
       if (status) {
         whereCondition.status = status;
+      }
+
+      if (year && month) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        whereCondition.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
+        };
       }
 
       const structures = await Promise.all([
@@ -1201,6 +1383,8 @@ module.exports = {
       let { layananId } = req.params;
       const userinfo_id = req.user.role === "User" ? req.user.userId : null;
       let { start_date, end_date, bidang_id } = req.query;
+      let year = req.query.year ? parseInt(req.query.year) : null;
+      let month = req.query.month ? parseInt(req.query.month) : null;
 
       let history;
 
@@ -1224,6 +1408,30 @@ module.exports = {
 
       if (userinfo_id) {
         whereCondition.userinfo_id = userinfo_id;
+      }
+
+      if (year && month) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        whereCondition.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        whereCondition.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
+        };
       }
 
       if (start_date && end_date) {

@@ -75,15 +75,14 @@ module.exports = {
       let { search } = req.query;
       const showDeleted = req.query.showDeleted ?? null;
       const page = parseInt(req.query.page) || 1;
+      const month = parseInt(req.query.month) || null;
+      const year = parseInt(req.query.year) || null;
       const limit = parseInt(req.query.limit) || 10;
       const offset = (page - 1) * limit;
       let bidangGets;
       let totalCount;
 
       const whereCondition = {};
-
-      // Menghapus logika autentikasi karena tidak diperlukan
-      // Jika ada logika autentikasi, pastikan untuk menghapusnya
 
       let includeOptions = [];
       let isrequired = false;
@@ -92,6 +91,18 @@ module.exports = {
         whereCondition.deletedAt = { [Op.not]: null };
       } else {
         whereCondition.deletedAt = null;
+      }
+
+      // Filter berdasarkan bulan dan tahun (berdasarkan createdAt)
+      if (month && year) {
+        whereCondition.createdAt = {
+          [Op.and]: [
+            Sequelize.where(Sequelize.fn('MONTH', Sequelize.col('Bidang.createdAt')), month),
+            Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('Bidang.createdAt')), year),
+          ],
+        };
+      } else if (year) {
+        whereCondition.createdAt = Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('Bidang.createdAt')), year);
       }
 
       if (search) {

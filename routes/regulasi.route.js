@@ -8,7 +8,7 @@ const route = express.Router();
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 2 * 1024 * 1024 }  });
 
 route.post('/user/regulasi/create', [mid.checkRolesAndLogout(['Super Admin'])], upload.single('file'), RegulasiController.createRegulasi);
 route.get('/user/regulasi/get', RegulasiController.getRegulasi); 

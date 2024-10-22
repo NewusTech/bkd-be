@@ -8,7 +8,7 @@ const route = express.Router();
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 2 * 1024 * 1024 }  });
 
 route.post('/user/pengaduan/create', [mid.checkRolesAndLogout(['User'])], upload.single('image'), pengaduanController.createPengaduan);
 route.get('/user/pengaduan/get', [mid.checkRolesAndLogout(['User', 'Super Admin', 'Kepala Dinas', 'Sekretaris Dinas', 'Kepala Bidang', 'Admin Verifikasi'])], pengaduanController.getPengaduan); 

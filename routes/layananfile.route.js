@@ -8,7 +8,7 @@ const route = express.Router();
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 2 * 1024 * 1024 }  });
 
 route.post('/user/layanan/file/create/:idlayanan', [mid.checkRolesAndLogout(['Super Admin'])], upload.single('file'), layananfile.createLayananFile);
 route.get('/user/layanan/file/get/:idlayanan', layananfile.getLayananFile);

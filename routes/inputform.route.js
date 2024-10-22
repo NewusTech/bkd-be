@@ -8,7 +8,7 @@ const route = express.Router();
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 2 * 1024 * 1024 }  });
 
 route.post('/user/input/form/create/:idlayanan', [mid.checkRolesAndLogout(['User', 'Super Admin'])], upload.any(), layananforminput.inputForm);
 route.put('/user/input/form/update/:idlayanannum', [mid.checkRolesAndLogout(['User', 'Super Admin'])], upload.any(), layananforminput.updateDataForm);

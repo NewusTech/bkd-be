@@ -1,8 +1,6 @@
 const { response } = require("../helpers/response.formatter");
-
 const { Layanan, Bidang, Layanan_form_num } = require("../models");
 require("dotenv").config();
-
 const slugify = require("slugify");
 const Validator = require("fastest-validator");
 const v = new Validator();
@@ -10,7 +8,7 @@ const puppeteer = require("puppeteer");
 const fs = require("fs");
 const path = require("path");
 const { generatePagination } = require("../pagination/pagination");
-const { Op, where } = require("sequelize");
+const { Op, Sequelize, where } = require("sequelize");
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const logger = require("../errorHandler/logger");
 
@@ -85,40 +83,51 @@ module.exports = {
       const bidang_id = req.query.bidang_id ?? null;
       const layanan_id = req.query.layanan_id ?? null;
       const showDeleted = req.query.showDeleted === "true" ?? false;
+      const month = parseInt(req.query.month) || null;
+      const year = parseInt(req.query.year) || null;
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
       const offset = (page - 1) * limit;
       let layananGets;
       let totalCount;
-
+  
       const whereCondition = {};
-
+  
       if (bidang_id) {
         whereCondition.bidang_id = bidang_id;
       }
-
+  
       if (layanan_id) {
         whereCondition.id = layanan_id;
       }
-
-      // Tambahkan pencarian berdasarkan nama layanan
+  
       if (search) {
         whereCondition[Op.or] = [
           {
             nama: { [Op.like]: `%${search}%` },
           },
-          // Menggunakan 'LIKE' untuk MySQL, gunakan 'like' untuk PostgreSQL
         ];
       }
-
+  
       // Menampilkan data yang dihapus jika parameter showDeleted true
       if (showDeleted) {
         whereCondition.deletedAt = { [Op.not]: null };
       } else {
         whereCondition.deletedAt = null;
       }
+  
+      // Filter berdasarkan bulan dan tahun (berdasarkan createdAt)
+      if (month && year) {
+        whereCondition.createdAt = {
+          [Op.and]: [
+            Sequelize.where(Sequelize.fn('MONTH', Sequelize.col('Layanan.createdAt')), month),
+            Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('Layanan.createdAt')), year),
+          ],
+        };
+      } else if (year) {
+        whereCondition.createdAt = Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('Layanan.createdAt')), year);
+      }
 
-      // Query untuk mendapatkan layanan dan jumlah total layanan
       [layananGets, totalCount] = await Promise.all([
         Layanan.findAll({
           where: whereCondition,
@@ -130,51 +139,33 @@ module.exports = {
           ],
           limit: limit,
           offset: offset,
-          order: [
-            ["id", "ASC"], // Mengurutkan berdasarkan ID
-          ],
+          order: [["id", "ASC"]],
         }),
         Layanan.count({
           where: whereCondition,
         }),
       ]);
-
+  
       // Modifikasi hasil untuk mencocokkan struktur yang diinginkan
       const modifiedLayananGets = layananGets.map((layanan) => {
         const { Bidang, ...otherData } = layanan.dataValues;
         return {
           ...otherData,
-          Bidang_name: Bidang?.nama, // Menampilkan nama bidang yang terkait
+          Bidang_name: Bidang?.nama,
         };
       });
-
-      // Generate pagination
-      const pagination = generatePagination(
-        totalCount,
-        page,
-        limit,
-        "/api/user/layanan/get"
-      );
-
-      // Kirimkan response
-      res.status(200).json({
-        status: 200,
-        message: "success get layanan",
-        data: modifiedLayananGets,
-        pagination: pagination,
-      });
+  
+      const pagination = generatePagination( totalCount, page, limit, "/api/user/layanan/get");
+  
+      res.status(200).json({status: 200, message: "success get layanan", data: modifiedLayananGets, pagination: pagination,});
     } catch (err) {
-      // Tangani error
-      res.status(500).json({
-        status: 500,
-        message: "internal server error",
-        error: err.message,
-      });
+      res.status(500).json({status: 500, message: "internal server error", error: err.message, });
       console.log(err);
       logger.error(`Error : ${err}`);
       logger.error(`Error message: ${err.message}`);
     }
   },
+  
 
   //get semua data layanan by bidang
   getLayananByBidang: async (req, res) => {
@@ -402,6 +393,8 @@ module.exports = {
       const start_date = req.query.start_date;
       const end_date = req.query.end_date;
       const showDeleted = req.query.showDeleted ?? null;
+      const month = parseInt(req.query.month) || null;
+      const year = parseInt(req.query.year) || null;
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
       const offset = (page - 1) * limit;
@@ -433,6 +426,18 @@ module.exports = {
             nama: { [Op.like]: `%${search}%` }, // Menggunakan 'LIKE' untuk MySQL, gunakan 'like' untuk PostgreSQL
           },
         ];
+      }
+
+      // Filter berdasarkan bulan dan tahun (berdasarkan createdAt)
+      if (month && year) {
+        whereCondition.createdAt = {
+          [Op.and]: [
+            Sequelize.where(Sequelize.fn('MONTH', Sequelize.col('createdAt')), month),
+            Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('createdAt')), year),
+          ],
+        };
+      } else if (year) {
+        whereCondition.createdAt = Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('createdAt')), year);
       }
 
       // Filter berdasarkan tanggal

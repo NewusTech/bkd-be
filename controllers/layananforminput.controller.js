@@ -1038,6 +1038,8 @@ module.exports = {
       const search = req.query.search ?? null;
       const status = req.query.status ?? null;
       const range = req.query.range;
+      const year = req.query.year ? parseInt(req.query.year) : null;
+      const month = req.query.month ? parseInt(req.query.month) : null;
       const isonline = req.query.isonline ?? null;
       let userinfo_id;
       if (data.role === "User") {
@@ -1095,6 +1097,31 @@ module.exports = {
       if (layanan_id) {
         WhereClause.layanan_id = layanan_id;
       }
+
+      if (year && month) {
+        WhereClause.createdAt = {
+          [Op.between]: [
+            new Date(year, month - 1, 1),
+            new Date(year, month, 0, 23, 59, 59, 999),
+          ],
+        };
+      } else if (year) {
+        WhereClause.createdAt = {
+          [Op.between]: [
+            new Date(year, 0, 1),
+            new Date(year, 11, 31, 23, 59, 59, 999),
+          ],
+        };
+      } else if (month) {
+        const currentYear = new Date().getFullYear();
+        WhereClause.createdAt = {
+          [Op.and]: [
+            { [Op.gte]: new Date(currentYear, month - 1, 1) },
+            { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
+          ],
+        };
+      }
+
 
       if (start_date && end_date) {
         end_date = new Date(end_date);

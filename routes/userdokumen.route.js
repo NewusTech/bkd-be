@@ -8,7 +8,7 @@ const route = express.Router();
 const multer = require('multer');
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({ storage: storage, limits: { fileSize: 2 * 1024 * 1024 }  });
 
 route.get('/user/dokumen/get', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userdokumenController.getUserDataDokumen); 
 route.get('/user/dokumen/get/:id', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userdokumenController.getUserDokumenByID); 
