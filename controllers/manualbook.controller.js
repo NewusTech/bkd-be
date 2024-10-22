@@ -30,7 +30,6 @@ module.exports = {
         ];
       }
 
-      //mendapatkan data manualbook berdasarkan id
       let manualbookGet = await Manual_book.findAll({
         include: [
           {
@@ -50,13 +49,13 @@ module.exports = {
         id: item?.id,
         title: item?.title,
         dokumen: item?.dokumen,
+        video_tutorial: item.video_tutorial,
         role_id: item?.role_id,
         createdAt: item?.createdAt,
         updatedAt: item?.updatedAt,
-        role_name: item?.Role?.name, // Mengambil nama role dari hasil join
+        role_name: item?.Role?.name,
       }));
 
-      //response menggunakan helper response.formatter
       res.status(200).json(response(200, "success get", modifiedManualbookGet));
     } catch (err) {
       res.status(500).json(response(500, "internal server error", err));
@@ -88,13 +87,13 @@ module.exports = {
         id: manualbookGet?.id,
         title: manualbookGet?.title,
         dokumen: manualbookGet?.dokumen,
+        video_tutorial: manualbookGet?.video_tutorial,
         role_id: manualbookGet?.role_id,
         createdAt: manualbookGet?.createdAt,
         updatedAt: manualbookGet?.updatedAt,
-        role_name: manualbookGet?.Role?.name, // Mengambil nama role dari hasil join
+        role_name: manualbookGet?.Role?.name,
       };
 
-      //response menggunakan helper response.formatter
       res.status(200).json(response(200, "success get", modifiedManualbookGet));
     } catch (err) {
       res.status(500).json(response(500, "internal server error", err));
@@ -105,32 +104,34 @@ module.exports = {
   //mengupdate manualbook berdasarkan id
   updateManualBook: async (req, res) => {
     try {
-      // Mendapatkan data manualbook untuk pengecekan
       let manualbookGet = await Manual_book.findOne({
         where: {
           id: req.params.id,
         },
       });
-
+  
       // Cek apakah data manualbook ada
       if (!manualbookGet) {
         res.status(404).json(response(404, "manual book not found"));
         return;
       }
-
+  
       // Membuat schema untuk validasi
       const schema = {
         title: { type: "string", optional: true },
         dokumen: { type: "string", optional: true },
+        video_tutorial: { type: "string", optional: true },
       };
-
+  
       let manualbookKey;
-
+      let videoTutorialKey;
+  
+      // Proses upload dokumen jika ada
       if (req.files && req.files.dokumen) {
         const file = req.files.dokumen[0];
         const timestamp = new Date().getTime();
         const uniqueFileName = `${timestamp}-${file.originalname}`;
-
+  
         const uploadParams = {
           Bucket: process.env.AWS_BUCKET,
           Key: `${process.env.PATH_AWS}/manualbook/${uniqueFileName}`,
@@ -138,53 +139,71 @@ module.exports = {
           ACL: "public-read",
           ContentType: file.mimetype,
         };
-
+  
         const command = new PutObjectCommand(uploadParams);
 
-        // Log upload status
         const uploadResponse = await s3Client.send(command);
         console.log("Upload Response:", uploadResponse);
-
+  
         manualbookKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
       }
-
-      // Buat object manualbook
+  
+      // Proses upload video_tutorial jika ada
+      if (req.files && req.files.video_tutorial) {
+        const file = req.files.video_tutorial[0];
+        const timestamp = new Date().getTime();
+        const uniqueFileName = `${timestamp}-${file.originalname}`;
+  
+        const uploadParams = {
+          Bucket: process.env.AWS_BUCKET,
+          Key: `${process.env.PATH_AWS}/manualbook/${uniqueFileName}`,
+          Body: file.buffer,
+          ACL: "public-read",
+          ContentType: file.mimetype,
+        };
+  
+        const command = new PutObjectCommand(uploadParams);
+  
+        const uploadResponse = await s3Client.send(command);
+        console.log("Upload Response Video:", uploadResponse);
+  
+        videoTutorialKey = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
+      }
+  
       let manualbookUpdateObj = {
         title: req.body.title,
       };
-
-      if (req.files && req.files.dokumen) {
+  
+      if (manualbookKey) {
         manualbookUpdateObj.dokumen = manualbookKey;
       }
+  
+      if (videoTutorialKey) {
+        manualbookUpdateObj.video_tutorial = videoTutorialKey;
+      }
 
-      // Validasi menggunakan module fastest-validator
       const validate = v.validate(manualbookUpdateObj, schema);
       if (validate.length > 0) {
         res.status(400).json(response(400, "validation failed", validate));
         return;
       }
-
-      // Update manualbook
+  
       await Manual_book.update(manualbookUpdateObj, {
         where: { id: req.params.id },
       });
-
+  
       // Mendapatkan data manualbook setelah update
       let manualbookAfterUpdate = await Manual_book.findOne({
         where: {
           id: req.params.id,
         },
       });
-
-      // Response menggunakan helper response.formatter
-      res
-        .status(200)
-        .json(
-          response(200, "success update manual book", manualbookAfterUpdate)
-        );
+  
+      res.status(200).json( response(200, "success update manual book", manualbookAfterUpdate));
     } catch (err) {
       res.status(500).json(response(500, "internal server error", err));
       console.log(err);
     }
   },
+  
 };

@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
   Manual_book.init({
     title: DataTypes.STRING,
     dokumen: DataTypes.STRING,
+    video_tutorial: DataTypes.STRING,
     role_id: DataTypes.INTEGER,
   }, {
     sequelize,
