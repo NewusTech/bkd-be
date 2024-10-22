@@ -615,14 +615,14 @@ module.exports = {
       }
 
       if (year && month) {
-        whereCondition.createdAt = {
+        WhereCondition3.createdAt = {
           [Op.between]: [
             new Date(year, month - 1, 1),
             new Date(year, month, 0, 23, 59, 59, 999),
           ],
         };
       } else if (year) {
-        whereCondition.createdAt = {
+        WhereCondition3.createdAt = {
           [Op.between]: [
             new Date(year, 0, 1),
             new Date(year, 11, 31, 23, 59, 59, 999),
@@ -630,7 +630,7 @@ module.exports = {
         };
       } else if (month) {
         const currentYear = new Date().getFullYear();
-        whereCondition.createdAt = {
+        WhereCondition3.createdAt = {
           [Op.and]: [
             { [Op.gte]: new Date(currentYear, month - 1, 1) },
             { [Op.lte]: new Date(currentYear, month, 0, 23, 59, 59, 999) },
