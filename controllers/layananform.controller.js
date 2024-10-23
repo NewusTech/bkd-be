@@ -136,7 +136,7 @@ module.exports = {
                     maxinput: input.maxinput ? Number(input.maxinput) : null,
                     mininput: input.mininput ? Number(input.mininput) : null,
                     isrequired: input.isrequired ? Number(input.isrequired) : null,
-                    status: input.status ? Number(input.status) : null,
+                    status: input.status ? Number(input.status) : 1,
                     layanan_id: input.layanan_id !== undefined ? Number(input.layanan_id) : null,
                     datajson: input.datajson || null
                 };
@@ -177,7 +177,8 @@ module.exports = {
             let formWhereCondition = {
                 tipedata: {
                     [Op.ne]: "file"
-                }
+                },
+                status: 1
             };
     
             if (req.user.role === 'User') {
@@ -214,7 +215,11 @@ module.exports = {
     getLayananForm: async (req, res) => {
         try {
             //mendapatkan data semua layananform
-            let layananformGets = await Layanan_form.findAll({});
+            let layananformGets = await Layanan_form.findAll({
+                where: {
+                    status: true
+                }});
+            
 
             //response menggunakan helper response.formatter
             res.status(200).json(response(200, 'success get layananform', layananformGets));
@@ -231,7 +236,8 @@ module.exports = {
             //mendapatkan data layananform berdasarkan id
             let layananformGet = await Layanan_form.findOne({
                 where: {
-                    id: req.params.id
+                    id: req.params.id,
+                    status: 1
                 },
             });
 
@@ -257,21 +263,29 @@ module.exports = {
 
     //mengupdate layananform berdasarkan id
     updateLayananForm: async (req, res) => {
+        const transaction = await sequelize.transaction();
         try {
-            //mendapatkan data layananform untuk pengecekan
+            // Mendapatkan data layananform untuk pengecekan
             let layananformGet = await Layanan_form.findOne({
                 where: {
                     id: req.params.id
                 }
-            })
-
-            //cek apakah data layananform ada
+            });
+    
+            // Cek apakah data layananform ada
             if (!layananformGet) {
-                res.status(404).json(response(404, 'layananform not found'));
-                return;
+                await transaction.rollback();
+                return res.status(404).json(response(404, 'layananform not found'));
             }
-
-            //membuat schema untuk validasi
+    
+            await Layanan_form.update({ status: 0 }, {
+                where: {
+                    id: req.params.id
+                },
+                transaction
+            });
+    
+            // Membuat schema untuk validasi
             const schema = {
                 field: {
                     type: "string",
@@ -315,64 +329,58 @@ module.exports = {
                     },
                     optional: true
                 }
-            }
-
-            //buat object layananform
-            let layananformUpdateObj = {
+            };
+    
+            // Buat object layananform baru
+            let layananformCreateObj = {
                 field: req.body.field,
                 tipedata: req.body.tipedata,
                 maxinput: req.body.maxinput ? Number(req.body.maxinput) : null,
                 mininput: req.body.mininput ? Number(req.body.mininput) : null,
                 isrequired: req.body.isrequired ? Number(req.body.isrequired) : null,
-                status: req.body.status ? Number(req.body.status) : null,
-                layanan_id: req.body.layanan_id !== undefined ? Number(req.body.layanan_id) : null,
+                status: 1,
+                layanan_id: req.body.layanan_id !== undefined ? Number(req.body.layanan_id) : layananformGet.layanan_id,
                 datajson: req.body.datajson || null
-            }
-
-            //validasi menggunakan module fastest-validator
-            const validate = v.validate(layananformUpdateObj, schema);
+            };
+   
+            const validate = v.validate(layananformCreateObj, schema);
             if (validate.length > 0) {
-                res.status(400).json(response(400, 'validation failed', validate));
-                return;
+                await transaction.rollback();
+                return res.status(400).json(response(400, 'validation failed', validate));
             }
-
-            //update layananform
-            await Layanan_form.update(layananformUpdateObj, {
+    
+            // Membuat form baru di database
+            let layananformCreate = await Layanan_form.create(layananformCreateObj, { transaction });
+    
+            await transaction.commit();
+    
+            // Mendapatkan data layananform baru yang dibuat
+            let layananformAfterCreate = await Layanan_form.findOne({
                 where: {
-                    id: req.params.id,
+                    id: layananformCreate.id,
                 }
-            })
+            });
 
-            //mendapatkan data layananform setelah update
-            let layananformAfterUpdate = await Layanan_form.findOne({
-                where: {
-                    id: req.params.id,
-                }
-            })
-
-            //response menggunakan helper response.formatter
-            res.status(200).json(response(200, 'success update layananform', layananformAfterUpdate));
-
+            return res.status(200).json(response(200, 'success update and create new layananform', layananformAfterCreate));
         } catch (err) {
-            res.status(500).json(response(500, 'internal server error', err));
-            console.log(err);
+            await transaction.rollback();
+            return res.status(500).json(response(500, 'internal server error', err));
         }
     },
+    
+    
 
     updateMultiLayananForm: async (req, res) => {
         const transaction = await sequelize.transaction();
-    
         try {
-            // Define schema for validation
             const schema = {
-                id: { type: "number", min: 1 },
+                id: { type: "number", min: 1, optional: true },
                 field: { type: "string", min: 1 },
                 tipedata: { type: "string", min: 1, optional: true },
                 maxinput: { type: "number", optional: true },
                 mininput: { type: "number", optional: true },
                 status: { type: "number", optional: true },
                 isrequired: { type: "number", optional: true },
-                layanan_id: { type: "number", optional: true },
                 datajson: {
                     type: "array",
                     items: {
@@ -387,15 +395,21 @@ module.exports = {
                 }
             };
     
+            // Ambil layanan_id dari URL parameter
+            const layanan_id = req.params.layananid;
+            if (!layanan_id) {
+                return res.status(400).json(response(400, 'layanan_id URL param is required'));
+            }
+    
             // Check if the request body is an array
             if (!Array.isArray(req.body)) {
-                res.status(400).json(response(400, 'Request body must be an array of objects'));
-                return;
+                return res.status(400).json(response(400, 'Request body must be an array of objects'));
             }
     
             // Initialize arrays for validation errors and successfully updated objects
             let errors = [];
             let updatedForms = [];
+            let createdForms = [];
     
             // Validate and process each object in the input array
             for (let input of req.body) {
@@ -411,59 +425,53 @@ module.exports = {
                     continue;
                 }
     
-                // Create the layananform update object
-                let layananformUpdateObj = {
-                    id: input.id,
+                // Update the status of the existing form to 0
+                await Layanan_form.update(
+                    { status: 0 }, // Update status to 0
+                    { where: { id: input.id }, transaction }
+                );
+    
+                // Create the new layananform object for insertion
+                let layananformCreateObj = {
                     field: input.field,
                     tipedata: input.tipedata,
-                    maxinput: input.maxinput ? Number(input.maxinput) : undefined,
-                    mininput: input.mininput ? Number(input.mininput) : undefined,
-                    isrequired: input.isrequired ? Number(input.isrequired) : undefined,
-                    status: input.status ? Number(input.status) : undefined,
-                    layanan_id: input.layanan_id !== undefined ? Number(input.layanan_id) : undefined,
+                    maxinput: input.maxinput ? Number(input.maxinput) : null,
+                    mininput: input.mininput ? Number(input.mininput) : null,
+                    isrequired: input.isrequired ? Number(input.isrequired) : null,
+                    status: input.status ? Number(input.status) : 1, // Default to 1 if not provided
+                    layanan_id: Number(layanan_id), // Menggunakan layanan_id dari URL parameter
                     datajson: input.datajson || null
                 };
     
-                // Validate the object
-                const validate = v.validate(layananformUpdateObj, schema);
+                // Validate the new object
+                const validate = v.validate(layananformCreateObj, schema);
                 if (validate.length > 0) {
                     errors.push({ input, errors: validate });
                     continue;
                 }
     
-                // Update layananform in the database
-                await Layanan_form.update(layananformUpdateObj, {
-                    where: {
-                        id: input.id,
-                    },
-                    transaction
-                });
-    
-                // Get the updated layananform
-                let layananformAfterUpdate = await Layanan_form.findOne({
-                    where: {
-                        id: input.id,
-                    }
-                });
-    
-                updatedForms.push(layananformAfterUpdate);
+                // Create new layananform in the database
+                let layananformCreate = await Layanan_form.create(layananformCreateObj, { transaction });
+                createdForms.push(layananformCreate);
             }
     
             // If there are validation errors, respond with them
             if (errors.length > 0) {
-                res.status(400).json(response(400, 'Validation failed', errors));
-                return;
+                await transaction.rollback();
+                return res.status(400).json(response(400, 'Validation failed', errors));
             }
     
-            // Respond with the successfully updated objects
+            // Commit transaction if everything is fine
             await transaction.commit();
-            res.status(200).json(response(200, 'Successfully updated layananform(s)', updatedForms));
+            return res.status(200).json(response(200, 'Successfully updated and created new layananform(s)', { createdForms }));
         } catch (err) {
             await transaction.rollback();
-            res.status(500).json(response(500, 'Internal server error', err));
             console.log(err);
+            return res.status(500).json(response(500, 'Internal server error', err));
         }
     },
+    
+    
     
 
     //menghapus layananform berdasarkan id
