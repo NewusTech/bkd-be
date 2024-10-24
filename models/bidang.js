@@ -12,6 +12,11 @@ module.exports = (sequelize, DataTypes) => {
       Bidang.hasMany(models.User_feedback, {
         foreignKey: "bidang_id",
       });
+      Bidang.hasMany(models.Bkd_struktur, {
+        foreignKey: 'bidang_id',
+        as: 'Bkd_struktur' // Alias untuk relasi ini
+      });
+      
     }
   }
   Bidang.init(

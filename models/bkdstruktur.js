@@ -9,6 +9,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'bkdstruktur_id',
        
       });
+      Bkd_struktur.belongsTo(models.Bidang, {
+        foreignKey: 'bidang_id',
+      });
+
     }
   }
   Bkd_struktur.init({
