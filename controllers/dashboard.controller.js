@@ -70,6 +70,9 @@ module.exports = {
                         }
                     }],
                     attributes: ['id', 'nama'],
+                    // where: {
+                    //     deletedAt: null // Pastikan Layanan yang diambil belum dihapus (soft delete)
+                    // }
                 }],
                 where: {
                     deletedAt: null
@@ -112,9 +115,15 @@ module.exports = {
                 }),
                 Layanan.findAll({
                     attributes: ['id', 'nama', 'createdAt'],
-                    where: whereClause,
+                    where: {
+                        ...whereClause,
+                        deletedAt: null
+                    },
                     include: [
-                        { model: Bidang, attributes: ['id', 'nama'], where: whereClause2 },
+                        { model: Bidang, attributes: ['id', 'nama'], where: {
+                            ...whereClause,
+                            deletedAt: null
+                        }, },
                         { model: Layanan_form_num, attributes: ['id'] },
                         { model: User_feedback, attributes: ['id', 'question_1', 'question_2', 'question_3', 'question_4'] },
                         { model: Pengaduan, attributes: ['id'] }
@@ -123,9 +132,15 @@ module.exports = {
                     offset: offset
                 }),
                 Layanan.count({
-                    where: whereClause,
+                    where: {
+                        ...whereClause,
+                        deletedAt: null
+                    },
                     include: [
-                        { model: Bidang, attributes: ['id', 'nama'], where: whereClause2 }
+                        { model: Bidang, attributes: ['id', 'nama'], where: {
+                            ...whereClause,
+                            deletedAt: null
+                        }, }
                     ],
                 })
             ]);
