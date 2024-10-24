@@ -472,37 +472,37 @@ module.exports = {
     //menghapus layananform berdasarkan id
     deleteLayananForm: async (req, res) => {
         try {
-
-            //mendapatkan data layananform untuk pengecekan
             let layananformGet = await Layanan_form.findOne({
                 where: {
                     id: req.params.id
                 }
-            })
-
-            //cek apakah data layananform ada
+            });
+    
+            // Cek apakah data layananform ada
             if (!layananformGet) {
                 res.status(404).json(response(404, 'layananform not found'));
                 return;
             }
-
-            await Layanan_form.destroy({
-                where: {
-                    id: req.params.id,
+    
+            await Layanan_form.update(
+                { status: false },
+                {
+                    where: { id: req.params.id }
                 }
-            })
-
-            res.status(200).json(response(200, 'success delete layananformGet'));
-
+            );
+    
+            // Response sukses
+            res.status(200).json(response(200, 'Success delete layanan form')); 
         } catch (err) {
             if (err.name === 'SequelizeForeignKeyConstraintError') {
-                res.status(400).json(response(400, 'Data tidak bisa dihapus karena masih digunakan pada tabel lain'));
+                res.status(400).json(response(400, 'Data tidak bisa diubah karena masih digunakan pada tabel lain'));
             } else {
                 res.status(500).json(response(500, 'Internal server error', err));
                 console.log(err);
             }
         }
     },
+    
 
     // LAYANAN DOCS
 
@@ -815,6 +815,43 @@ module.exports = {
             await transaction.rollback();
             res.status(500).json(response(500, 'Internal server error', err));
             console.error(err);
+        }
+    },
+    
+    //menghapus layanan doc
+    deleteLayananDocs: async (req, res) => {
+        try {
+            // Mendapatkan data layanandocs untuk pengecekan
+            let layanandocsGet = await Layanan_form.findOne({
+                where: {
+                    id: req.params.id
+                }
+            });
+    
+            // Cek apakah data layanandocs ada
+            if (!layanandocsGet) {
+                res.status(404).json(response(404, 'layanandocs not found'));
+                return;
+            }
+    
+            // Update status menjadi false
+            await Layanan_form.update(
+                { status: false }, 
+                {
+                    where: { id: req.params.id },
+                    hooks: false
+                }
+            );
+    
+            // Response sukses
+            res.status(200).json(response(200, 'Success delete layanan docs')); 
+        } catch (err) {
+            if (err.name === 'SequelizeForeignKeyConstraintError') {
+                res.status(400).json(response(400, 'Data tidak bisa diubah karena masih digunakan pada tabel lain'));
+            } else {
+                res.status(500).json(response(500, 'Internal server error', err));
+                console.log(err);
+            }
         }
     }
     
