@@ -1,26 +1,23 @@
 const { response } = require('../helpers/response.formatter');
 
-const { Bidang, Layanan, Layanan_form_num, User_feedback, User_info } = require('../models');
+const { Bidang, Layanan, Layanan_form_num, User_feedback, User_info, Bkd_struktur, Pengaduan } = require('../models');
 const { generatePagination } = require('../pagination/pagination');
 const { Op } = require('sequelize');
 const moment = require('moment-timezone');
 const { finished } = require('nodemailer/lib/xoauth2');
 
 module.exports = {
-
-
+    
     // get dashboard superadmin
     getDashboardSuperadmin: async (req, res) => {
         try {
             const { year, bidang_id, start_date, end_date, search, page, limit } = req.query;
-
-            // Default values or parsing parameters
+    
             const currentYear = parseInt(year) || new Date().getFullYear();
             const pageNumber = parseInt(page) || 1;
             const pageSize = parseInt(limit) || 10;
             const offset = (pageNumber - 1) * pageSize;
-
-            // Function to get last six months
+    
             const getLastSixMonths = (year) => {
                 const months = [];
                 for (let i = 5; i >= 0; i--) {
@@ -30,8 +27,7 @@ module.exports = {
                 }
                 return months;
             };
-
-            // Fetch monthly counts for permohonan and skm for the last six months
+    
             const lastSixMonths = getLastSixMonths(currentYear);
             const monthlyCounts = await Promise.all(lastSixMonths.map(async ({ startDate, endDate }) => {
                 const monthName = startDate.toLocaleString('default', { month: 'long' });
@@ -42,15 +38,32 @@ module.exports = {
                 });
                 return { month: monthName, permohonanCount };
             }));
-
-            // Fetch counts by Bidang
+    
+            const countpegawaibyBidang = await Bidang.findAll({
+                include: [{
+                    model: Bkd_struktur,
+                    as: 'Bkd_struktur',
+                    attributes: ['id', 'nama'],
+                }],
+                where: {
+                    deletedAt: null
+                },
+                attributes: ['id', 'nama'],
+            });
+            
+            const formattedCountPegawaiByBidang = countpegawaibyBidang.map(bidang => ({
+                id: bidang.id,
+                name: bidang.nama,
+                pegawai_count: bidang.Bkd_struktur ? bidang.Bkd_struktur.length : 0,
+            }));
+    
+            // get count by Bidang
             const countbyBidang = await Bidang.findAll({
                 include: [{
                     model: Layanan,
                     as: 'Layanans',
                     include: [{
                         model: Layanan_form_num,
-                        // as: 'Layananformnums',
                         attributes: ['id'],
                         where: {
                             createdAt: { [Op.between]: [new Date(currentYear, 0, 1), new Date(currentYear, 11, 31, 23, 59, 59)] }
@@ -63,14 +76,13 @@ module.exports = {
                 },
                 attributes: ['id', 'nama'],
             });
-
+    
             const formattedCountByBidang = countbyBidang.map(bidang => ({
                 id: bidang.id,
                 name: bidang.nama,
                 permohonan_count: bidang.Layanans.reduce((total, layanan) => total + layanan.Layanan_form_nums.length, 0),
             }));
-
-            // Fetch Layanan data with optional filters for bidang_id, start_date, end_date, and search
+            
             const whereClause = {};
             if (search) {
                 whereClause.name = { [Op.like]: `%${search}%` };
@@ -86,7 +98,7 @@ module.exports = {
             } else if (end_date) {
                 whereClause2.createdAt = { [Op.lte]: new Date(end_date) };
             }
-
+    
             const [permohonanCount, userFeedback, layananGets, totalCount] = await Promise.all([
                 Layanan_form_num.count({
                     where: {
@@ -104,7 +116,8 @@ module.exports = {
                     include: [
                         { model: Bidang, attributes: ['id', 'nama'], where: whereClause2 },
                         { model: Layanan_form_num, attributes: ['id'] },
-                        { model: User_feedback, attributes: ['id'] },
+                        { model: User_feedback, attributes: ['id', 'question_1', 'question_2', 'question_3', 'question_4'] },
+                        { model: Pengaduan, attributes: ['id'] }
                     ],
                     limit: pageSize,
                     offset: offset
@@ -117,8 +130,28 @@ module.exports = {
                 })
             ]);
 
+            const calculateTotalNilai = (feedback) => {
+                const nilaiPerUser =
+                  feedback.question_1 * 25 +
+                  feedback.question_2 * 25 +
+                  feedback.question_3 * 25 +
+                  feedback.question_4 * 25;
+    
+                return nilaiPerUser / 4;
+            };
+    
             const modifiedLayananGets = layananGets.map(layanan => {
-                const { Bidang } = layanan.dataValues;
+                const { Bidang, User_feedback } = layanan.dataValues;
+            
+                // cek data feedback
+                const totalNilaiFeedback = User_feedback && Array.isArray(User_feedback) 
+                    ? User_feedback.reduce((total, feedback) => total + calculateTotalNilai(feedback), 0) 
+                    : 0;
+            
+                const rataRataNilaiFeedback = User_feedback && User_feedback.length > 0 
+                    ? totalNilaiFeedback / User_feedback.length 
+                    : 0;
+            
                 return {
                     id: layanan.id,
                     layanan_name: layanan.nama,
@@ -126,29 +159,34 @@ module.exports = {
                     bidang_id: Bidang.id,
                     bidang_name: Bidang.nama,
                     permohonanCount: layanan.Layanan_form_nums.length,
+                    pengaduanCount: layanan.Pengaduans ? layanan.Pengaduans.length : 0,
+                    totalFeedback: User_feedback ? User_feedback.length : 0,
+                    rataRataNilaiFeedback: rataRataNilaiFeedback.toFixed(2),
                 };
             });
-
+    
             // Generate pagination
             const pagination = generatePagination(totalCount, pageNumber, pageSize, '/api/dashboard/superadmin');
-
-            // Construct final response object
+    
+            // response object
             const data = {
                 permohonanCount,
                 monthlyCounts,
                 countbyBidang: formattedCountByBidang,
                 countbyLayanan: modifiedLayananGets,
+                countPegawaibyBidang: formattedCountPegawaiByBidang,
+                // countFeedbackbyLayanan: formattedCountFeedbackByLayanan,
                 pagination
             };
-
+    
             res.status(200).json(response(200, 'success get data dashboard', data));
-
+    
         } catch (err) {
             console.error(err);
             res.status(500).json(response(500, 'internal server error', err));
         }
     },
-
+    
     // get dashboard kepala bidang
     getDashboardKepalaBidang: async (req, res) => {
         try {
