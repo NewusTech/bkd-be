@@ -366,7 +366,6 @@ module.exports = {
     }
   },
 
-
   updateDataForm: async (req, res) => {
     const transaction = await sequelize.transaction();
 

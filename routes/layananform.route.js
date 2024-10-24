@@ -11,7 +11,7 @@ route.get('/user/layanan/form/:layananid', [mid.checkRolesAndLogout(['Super Admi
 route.post('/user/layanan/form/create', [mid.checkRolesAndLogout(['Super Admin', 'Kepala Bidang'])], layananformController.createLayananForm);
 route.post('/user/layanan/form/createmulti', [mid.checkRolesAndLogout(['Super Admin', 'Kepala Bidang'])], layananformController.createMultiLayananForm);
 route.put('/user/layanan/form/update/:id', [mid.checkRolesAndLogout([ 'Super Admin', 'Kepala Bidang'])], layananformController.updateLayananForm); 
-route.put('/user/layanan/form/updatemulti/:layananid', [mid.checkRolesAndLogout(['Super Admin', 'Kepala Bidang'])], layananformController.updateMultiLayananForm); 
+route.put('/user/layanan/form/updatemulti', [mid.checkRolesAndLogout(['Super Admin', 'Kepala Bidang'])], layananformController.updateMultiLayananForm); 
 route.delete('/user/layanan/form/delete/:id', [mid.checkRolesAndLogout(['Super Admin', 'Kepala Bidang'])], layananformController.deleteLayananForm);
 
 //get from docs by layanan
