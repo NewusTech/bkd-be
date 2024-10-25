@@ -29,6 +29,7 @@ const { format } = require("date-fns");
 const { id } = require("date-fns/locale");
 const crypto = require("crypto");
 const axios = require("axios");
+const QRCode = require('qrcode');
 
 const Redis = require("ioredis");
 const redisClient = new Redis({
@@ -813,6 +814,66 @@ module.exports = {
       console.log(err);
     }
   },
+
+  generateQRCode: async (req, res) => {
+    try {
+        // Mendapatkan data layanan form num untuk pengecekan
+        let signGet = await Layanan_form_num.findOne({
+            where: {
+                id: req.params.idlayanannum,
+            },
+        });
+
+        if (!signGet) {
+            return res.status(404).json(response(404, "Layanan form num not found"));
+        }
+
+        const baseUrl = "https://sipadu.newus.id/"; 
+        
+        const requestData = {
+          no_request: "2df898-241017-0001",
+          layanan_id: 1,
+          userinfo_id: 14
+        };
+        const qrContent = `${baseUrl}?no_request=${requestData.no_request}&layanan_id=${requestData.layanan_id}&userinfo_id=${requestData.userinfo_id}`;
+
+        // Generate QR code ke dalam bentuk data buffer
+        const qrCodeBuffer = await QRCode.toBuffer(qrContent);
+
+        const timestamp = new Date().getTime();
+        const uniqueFileName = `${timestamp}-${signGet.no_request}.png`;
+
+        const uploadParams = {
+            Bucket: process.env.AWS_BUCKET,
+            Key: `${process.env.PATH_AWS}/sign/${uniqueFileName}`,
+            Body: qrCodeBuffer,
+            ACL: "public-read",
+            ContentType: "image/png",
+        };
+
+        const command = new PutObjectCommand(uploadParams);
+        await s3Client.send(command);
+
+        const qrCodeURL = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
+
+        await Layanan_form_num.update(
+            { sign: qrCodeURL },
+            { where: { id: req.params.idlayanannum } }
+        );
+
+        // Mendapatkan data setelah update
+        let signAfterUpdate = await Layanan_form_num.findOne({
+            where: {
+                id: req.params.idlayanannum,
+            },
+        });
+
+        return res.status(200).json(response(200, "Success generate QR code", signAfterUpdate));
+    } catch (err) {
+        console.error("Error:", err);
+        return res.status(500).json(response(500, "Internal server error", err.message));
+    }
+},
 
   //get history input form user
   getHistoryFormUser: async (req, res) => {
