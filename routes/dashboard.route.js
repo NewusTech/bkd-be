@@ -10,5 +10,6 @@ route.get('/user/dashboard/kepala/bidang', [mid.checkRolesAndLogout(['Kepala Bid
 route.get('/user/dashboard/admin/verifikasi', [mid.checkRolesAndLogout(['Admin Verifikasi'])], dashboardController.getDashboardAdminVerifikasi);
 route.get('/user/dashboard/kepala/dinas', [mid.checkRolesAndLogout(['Kepala Dinas'])], dashboardController.getDashboardKepalaDinas);
 route.get('/user/dashboard/sekretaris/dinas', [mid.checkRolesAndLogout(['Sekretaris Dinas'])], dashboardController.getDashboardSekretarisDinas);
+route.get('/user/dashboard/sekretaris/daerah', [mid.checkRolesAndLogout(['Sekretaris Daerah'])], dashboardController.getDashboardSekretarisDaerah);
 
 module.exports = route;
