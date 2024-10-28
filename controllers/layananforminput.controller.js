@@ -928,10 +928,8 @@ module.exports = {
         });
 
         // Response sukses
-        return res
-            .status(200)
-            .json({ message: "Success upload QR code", data: signAfterUpdate });
-    } catch (err) {
+        return res.status(200).json({status: 200, message: "Success upload QR code",data: signAfterUpdate});
+      } catch (err) {
         console.error("Error:", err);
         return res
             .status(500)
