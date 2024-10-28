@@ -937,12 +937,37 @@ module.exports = {
             .status(500)
             .json({ message: "Internal server error", error: err.message });
     }
-},
+  },
 
+  getBarcode: async (req, res) => {
+    try {
+        let signGet = await Layanan_form_num.findOne({
+            where: {
+                id: req.params.idlayanannum,
+            },
+            attributes: ['id', 'sign', 'createdAt', 'updatedAt'],
+        });
 
+        if (!signGet) {
+            return res.status(404).json({ message: "Layanan form num not found" });
+        }
 
-getDataBarcode: async (req, res) => {
-  try {
+        const sign = signGet.sign;
+
+        if (!sign) {
+            return res.status(404).json({ message: "Sign not found" });
+        }
+
+        // Mengembalikan sign
+        return res.status(200).json({ sign });
+    } catch (err) {
+        console.error("Error:", err);
+        return res.status(500).json({ message: "Internal server error", error: err.message });
+    }
+  },
+  
+  getDataBarcode: async (req, res) => {
+    try {
       let signGet = await Layanan_form_num.findOne({
           where: {
               id: req.params.idlayanannum,
@@ -971,11 +996,11 @@ getDataBarcode: async (req, res) => {
 
       // Mengembalikan hanya footer dalam JSON
       return res.status(200).json({ footerText });
-  } catch (err) {
+    } catch (err) {
       console.error("Error:", err);
       return res.status(500).json({ message: "Internal server error", error: err.message });
-  }
-},
+    }
+  },
 
   //get history input form user
   getHistoryFormUser: async (req, res) => {
