@@ -824,25 +824,22 @@ module.exports = {
             },
         });
 
+        // Cek apakah data layanan form num ada
         if (!signGet) {
-            return res.status(404).json(response(404, "Layanan form num not found"));
+            return res
+                .status(404)
+                .json({ message: "Layanan form num not found" });
         }
 
-        const baseUrl = "https://sipadu.newus.id/"; 
-        
-        const requestData = {
-          no_request: "2df898-241017-0001",
-          layanan_id: 1,
-          userinfo_id: 14
-        };
-        const qrContent = `${baseUrl}?no_request=${requestData.no_request}&layanan_id=${requestData.layanan_id}&userinfo_id=${requestData.userinfo_id}`;
+        const qrContent = `${process.env.SERVER_URL}/user/form/${req.params.idlayanannum}/data/barcode`;
 
         // Generate QR code ke dalam bentuk data buffer
         const qrCodeBuffer = await QRCode.toBuffer(qrContent);
 
         const timestamp = new Date().getTime();
-        const uniqueFileName = `${timestamp}-${signGet.no_request}.png`;
+        const uniqueFileName = `${timestamp}-${req.params.idlayanannum}.png`;
 
+        // Pengaturan upload ke AWS S3
         const uploadParams = {
             Bucket: process.env.AWS_BUCKET,
             Key: `${process.env.PATH_AWS}/sign/${uniqueFileName}`,
@@ -854,25 +851,130 @@ module.exports = {
         const command = new PutObjectCommand(uploadParams);
         await s3Client.send(command);
 
+        // Menyimpan URL QR code yang diunggah
         const qrCodeURL = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${uploadParams.Key}`;
+        console.log("QR Code URL setelah upload:", qrCodeURL);
 
-        await Layanan_form_num.update(
-            { sign: qrCodeURL },
-            { where: { id: req.params.idlayanannum } }
-        );
+        // Buat object untuk update
+        let signUpdateObj = {
+            sign: qrCodeURL, // QR code URL disimpan di field `sign`
+        };
 
-        // Mendapatkan data setelah update
+        // Update data di database
+        await Layanan_form_num.update(signUpdateObj, {
+            where: {
+                id: req.params.idlayanannum,
+            },
+        });
+
+        // Set timeout untuk memanggil API generate PDF dan upload hasilnya
+        setTimeout(async () => {
+            try {
+                console.log("Memanggil API generate PDF...");
+
+                // Memanggil API generate PDF menggunakan idlayanan dan idforminput yang baru saja dibuat
+                let idlayanan = signGet?.layanan_id;
+                let idforminput = signGet?.id;
+
+                let apiURL = `${process.env.SERVER_URL}/user/surat/${idlayanan}/${idforminput}`;
+                console.log(`URL: ${apiURL}`);
+
+                const responsePDF = await axios.get(apiURL, {
+                    responseType: "arraybuffer",
+                    headers: { "Cache-Control": "no-cache" },
+                });
+
+                const pdfBuffer = responsePDF.data;
+                console.log("PDF berhasil diambil dari API.");
+
+                // Upload PDF ke AWS S3
+                const pdfFileName = `${timestamp}-${idforminput}.pdf`;
+
+                const pdfUploadParams = {
+                    Bucket: process.env.AWS_BUCKET,
+                    Key: `${process.env.PATH_AWS}/file_output/${pdfFileName}`,
+                    Body: pdfBuffer,
+                    ACL: "public-read",
+                    ContentType: "application/pdf",
+                };
+
+                const pdfCommand = new PutObjectCommand(pdfUploadParams);
+                await s3Client.send(pdfCommand);
+
+                const fileOutputPath = `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${pdfUploadParams.Key}`;
+                console.log("PDF berhasil di-upload ke AWS S3:", fileOutputPath);
+
+                // Update field fileoutput di tabel Layanan_form_num
+                const [affectedRows] = await Layanan_form_num.update(
+                    { fileoutput: fileOutputPath },
+                    { where: { id: idforminput } }
+                );
+
+                if (affectedRows === 0) {
+                    console.error("Gagal update field fileoutput.");
+                } else {
+                    console.log("Field fileoutput berhasil diupdate.");
+                }
+            } catch (error) {
+                console.error("Error fetching or uploading PDF:", error);
+            }
+        }, 5000);
+
+        // Mendapatkan data layanan form num setelah update
         let signAfterUpdate = await Layanan_form_num.findOne({
             where: {
                 id: req.params.idlayanannum,
             },
         });
 
-        return res.status(200).json(response(200, "Success generate QR code", signAfterUpdate));
+        // Response sukses
+        return res
+            .status(200)
+            .json({ message: "Success upload QR code", data: signAfterUpdate });
     } catch (err) {
         console.error("Error:", err);
-        return res.status(500).json(response(500, "Internal server error", err.message));
+        return res
+            .status(500)
+            .json({ message: "Internal server error", error: err.message });
     }
+},
+
+
+
+getDataBarcode: async (req, res) => {
+  try {
+      let signGet = await Layanan_form_num.findOne({
+          where: {
+              id: req.params.idlayanannum,
+          },
+          include: [
+              {
+                  model: Layanan,
+                  include: [
+                      {
+                          model: Layanan_surat,
+                          attributes: ['footer'],
+                      },
+                  ],
+              },
+          ],
+      });
+
+      if (!signGet) {
+          return res.status(404).json({ message: "Layanan form num not found" });
+      }
+
+      const footerText = signGet.Layanan?.Layanan_surat?.footer;
+      if (!footerText) {
+          return res.status(404).json({ message: "Footer not found for the given service" });
+      }
+
+      // Mengembalikan hanya footer dalam JSON
+      return res.status(200).json({ footerText });
+  } catch (err) {
+      console.error("Error:", err);
+      return res.status(500).json({ message: "Internal server error", error: err.message });
+  }
 },
 
   //get history input form user
