@@ -203,7 +203,7 @@ module.exports = {
     },
     
     // get dashboard kepala bidang
-    getDashboardKepalaBidang: async (req, res) => {
+    getDashboardKepalaBidang: async (req, res) => { 
         try {
             // get parameter month dan year dari query
             const { month, year } = req.query;
@@ -236,19 +236,59 @@ module.exports = {
             const getAllLayanan = async (range) => {
                 const layanan = await Layanan.findAll({
                     where: bidangWhere,
-                    include: {
-                        model: Layanan_form_num,
-                        attributes: ['id', 'status'],
-                        required: false,
-                        where: { createdAt: { [Op.between]: range } },
-                    },
+                    include: [
+                        {
+                            model: Layanan_form_num,
+                            attributes: ['id', 'status'],
+                            required: false,
+                            where: { createdAt: { [Op.between]: range } },
+                        },
+                        {
+                            model: Pengaduan,
+                            attributes: ['id'],
+                            required: false,
+                        }
+                    ],
                 });
     
                 return layanan.map(l => ({
                     LayananId: l.id,
                     LayananName: l.nama,
-                    LayananformnumCount: l.Layanan_form_nums ? l.Layanan_form_nums.length : 0
+                    LayananformnumCount: l.Layanan_form_nums ? l.Layanan_form_nums.length : 0,
+                    TotalPengaduan: l.Pengaduans ? l.Pengaduans.length : 0
                 }));
+            };
+    
+            const getAllUserFeedback = async (range) => {
+                const layanan = await Layanan.findAll({
+                    where: bidangWhere,
+                    include: {
+                        model: User_feedback,
+                        attributes: ['id', 'question_1', 'question_2', 'question_3', 'question_4'],
+                        required: false,
+                        where: { createdAt: { [Op.between]: range } }
+                    }
+                });
+            
+                return layanan.map(l => {
+                    const feedbacks = l.User_feedbacks || [];
+                    const totalFeedback = feedbacks.length;
+            
+                    // Hitung nilai kepuasan dalam skala 100
+                    const totalNilai = feedbacks.reduce((sum, feedback) => {
+                        const nilaiPerFeedback = ((feedback.question_1 + feedback.question_2 + feedback.question_3 + feedback.question_4) / 16) * 100;
+                        return sum + nilaiPerFeedback;
+                    }, 0);
+            
+                    const rataRataNilai = totalFeedback > 0 ? totalNilai / totalFeedback : 0;
+            
+                    return {
+                        LayananId: l.id,
+                        LayananName: l.nama,
+                        TotalFeedback: totalFeedback,
+                        RataRataNilai: rataRataNilai.toFixed(2)
+                    };
+                });
             };
     
             // untuk menghitung total permohonan berdasarkan status
@@ -270,17 +310,23 @@ module.exports = {
     
             // Hitung total keseluruhan permohonan (semua status)
             const totalKeseluruhanPermohonan = await Layanan_form_num.count({
+                include: [{
+                    model: Layanan,
+                    where: bidangWhere
+                }],
                 where: {
                     createdAt: { [Op.between]: dateRange }
                 }
             });
     
-            // Ambil data layanan berdasarkan tanggal
+            // Ambil data layanan dan feedback berdasarkan tanggal
             const allLayananMonth = await getAllLayanan(dateRange);
+            const allUserFeedback = await getAllUserFeedback(dateRange);
     
             res.status(200).json(response(200, 'success get data', {
                 databidang,
                 allLayananMonth,
+                allUserFeedback,
                 totalMenungguVerifikasi,
                 totalDisetujui,
                 totalDitolak,
@@ -294,13 +340,11 @@ module.exports = {
     },
     
     // get dashboard admin verifikasi
-    getDashboardAdminVerifikasi: async (req, res) => {
+    getDashboardAdminVerifikasi: async (req, res) => { 
         try {
-            // get parameter month dan year dari query
             const { month, year } = req.query;
             const today = new Date();
     
-            // Jika tidak ada parameter, bulan dan tahun saat ini sebagai default
             const selectedYear = parseInt(year) || today.getFullYear();
             const selectedMonth = parseInt(month) || today.getMonth() + 1;
     
@@ -314,7 +358,6 @@ module.exports = {
             }
     
             const dateRange = [firstDay, lastDay];
-    
             const bidangWhere = { bidang_id: req.user.bidang_id };
     
             // Ambil data bidang berdasarkan user
@@ -327,24 +370,69 @@ module.exports = {
             const getAllLayanan = async (range) => {
                 const layanan = await Layanan.findAll({
                     where: bidangWhere,
-                    include: {
-                        model: Layanan_form_num,
-                        attributes: ['id', 'status'],
-                        required: false,
-                        where: { createdAt: { [Op.between]: range } },
-                    },
+                    include: [
+                        {
+                            model: Layanan_form_num,
+                            attributes: ['id', 'status'],
+                            required: false,
+                            where: { createdAt: { [Op.between]: range } },
+                        },
+                        {
+                            model: Pengaduan,
+                            attributes: ['id'],
+                            required: false,
+                            where: { createdAt: { [Op.between]: range } },
+                        }
+                    ],
                 });
     
                 return layanan.map(l => ({
                     LayananId: l.id,
                     LayananName: l.nama,
-                    LayananformnumCount: l.Layanan_form_nums ? l.Layanan_form_nums.length : 0
+                    LayananformnumCount: l.Layanan_form_nums ? l.Layanan_form_nums.length : 0,
+                    TotalPengaduan: l.Pengaduans ? l.Pengaduans.length : 0
                 }));
             };
     
-            // untuk menghitung total permohonan berdasarkan status
+            // Fungsi untuk menghitung total feedback dan nilai rata-rata
+            const getAllUserFeedback = async (range) => {
+                const layanan = await Layanan.findAll({
+                    where: bidangWhere,
+                    include: {
+                        model: User_feedback,
+                        attributes: ['id', 'question_1', 'question_2', 'question_3', 'question_4'],
+                        required: false,
+                        where: { createdAt: { [Op.between]: range } }
+                    }
+                });
+    
+                return layanan.map(l => {
+                    const feedbacks = l.User_feedbacks || [];
+                    const totalFeedback = feedbacks.length;
+    
+                    const totalNilai = feedbacks.reduce((sum, feedback) => {
+                        const nilaiPerFeedback = ((feedback.question_1 + feedback.question_2 + feedback.question_3 + feedback.question_4) / 16) * 100;
+                        return sum + nilaiPerFeedback;
+                    }, 0);
+    
+                    const rataRataNilai = totalFeedback > 0 ? totalNilai / totalFeedback : 0;
+    
+                    return {
+                        LayananId: l.id,
+                        LayananName: l.nama,
+                        TotalFeedback: totalFeedback,
+                        RataRataNilai: rataRataNilai.toFixed(2)
+                    };
+                });
+            };
+    
+            // Fungsi untuk menghitung total permohonan berdasarkan status
             const getTotalPermohonanByStatus = async (status, range) => {
                 return await Layanan_form_num.count({
+                    include: [{
+                        model: Layanan,
+                        where: bidangWhere
+                    }],
                     where: {
                         status: status,
                         createdAt: { [Op.between]: range }
@@ -352,6 +440,7 @@ module.exports = {
                 });
             };
     
+            // Hitung total permohonan berdasarkan status tertentu
             const [totalMenunggu, totalDisetujui, totalDitolak, totalDirevisi] = await Promise.all([
                 getTotalPermohonanByStatus(1, dateRange),  // Status Menunggu
                 getTotalPermohonanByStatus(9, dateRange),  // Status Disetujui
@@ -359,19 +448,25 @@ module.exports = {
                 getTotalPermohonanByStatus(3, dateRange)  // Status Direvisi
             ]);
     
-            // Hitung total keseluruhan permohonan (semua status)
+            // Hitung total keseluruhan permohonan berdasarkan bidang
             const totalKeseluruhanPermohonan = await Layanan_form_num.count({
+                include: [{
+                    model: Layanan,
+                    where: bidangWhere
+                }],
                 where: {
                     createdAt: { [Op.between]: dateRange }
                 }
             });
     
-            // Ambil data layanan berdasarkan tanggal
+            // Ambil data layanan dan feedback berdasarkan tanggal
             const allLayananMonth = await getAllLayanan(dateRange);
+            const allFeedbackData = await getAllUserFeedback(dateRange);
     
             res.status(200).json(response(200, 'success get data', {
                 databidang,
                 allLayananMonth,
+                allFeedbackData,
                 totalMenunggu,
                 totalDisetujui,
                 totalDitolak,
