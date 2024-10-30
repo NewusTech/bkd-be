@@ -1063,5 +1063,82 @@ module.exports = {
             res.status(500).json({status: 500, message: "Internal server error", error: err.message});
             console.error(err);
         }
+    },
+
+    getDataNIP: async (req, res) => {
+        try {
+            // Ambil parameter page, limit, dan search dari query
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const offset = (page - 1) * limit;
+            const search = req.query.search || ''; 
+
+            const whereClause = search ? { nip: { [Op.like]: `%${search}%` } } : {};
+    
+            // Hitung total data berdasarkan kondisi pencarian
+            const totalCount = await User_info.count({ where: whereClause });
+    
+            // Ambil data NIP berdasarkan kondisi pencarian dengan pagination
+            const allNIPs = await User_info.findAll({
+                attributes: ['id', 'nip'],
+                where: whereClause,
+                order: [['createdAt', 'DESC']],
+                limit: limit,
+                offset: offset
+            });
+    
+
+            const totalPages = Math.ceil(totalCount / limit);
+    
+            res.status(200).json({status: 200, message: "Get Data NIP Success", data: allNIPs,
+                pagination: {
+                    totalCount: totalCount,
+                    totalPages: totalPages,
+                    currentPage: page,
+                    perPage: limit
+                }
+            });
+        } catch (err) {
+            res.status(500).json({ status: 500, message: "Internal server error", error: err.message});
+            console.error(err);
+        }
+    },
+    
+    updateDataNIP: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { nip } = req.body;
+    
+            if (!nip) {
+                return res.status(400).json({status: 400, message: "NIP tidak boleh kosong"});
+            }
+    
+            // Cari data berdasarkan ID
+            const userInfo = await User_info.findOne({ where: { id } });
+    
+            // Jika data tidak ditemukan, kirim response 404
+            if (!userInfo) {
+                return res.status(404).json({
+                    status: 404,
+                    message: "User info dengan ID tersebut tidak ditemukan"
+                });
+            }
+    
+            userInfo.nip = nip;
+            await userInfo.save();
+    
+            // response sukses setelah update
+            res.status(200).json({status: 200, message: "NIP berhasil diupdate",
+                data: {
+                    id: userInfo.id,
+                    nip: userInfo.nip,
+                    updatedAt: userInfo.updatedAt
+                }
+            });
+        } catch (err) {
+            res.status(500).json({ status: 500, message: "Internal server error", error: err.message
+            });
+            console.error(err);
+        }
     }
 }
