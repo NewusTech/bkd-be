@@ -11,6 +11,7 @@ const { Op } = require('sequelize');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const logger = require('../errorHandler/logger');
+const ExcelJS = require('exceljs');
 
 const transporter = nodemailer.createTransport({
     service: 'Gmail',
@@ -76,26 +77,34 @@ module.exports = {
                 });
             }
     
+            // Cek apakah NIP sudah ada di tabel User_info
+            const existingUserInfo = await User_info.findOne({ where: { nip: req.body.nip } });
+            if (!existingUserInfo) {
+                return res.status(400).json({
+                    status: 400,
+                    message: "NIP tidak terdaftar di sistem. Silakan hubungi admin."
+                });
+            }
+    
             // Generate slug unik
             const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, "");
             const slug = `${req.body.name}-${timestamp}`;
     
-            // Membuat user baru
+            // Membuat user baru dengan userinfo_id yang didapat dari User_info
             let userCreateObj = {
                 password: passwordHash.generate(req.body.password),
                 role_id: req.body.role_id !== undefined ? Number(req.body.role_id) : undefined,
                 bidang_id: req.body.bidang_id !== undefined ? Number(req.body.bidang_id) : undefined,
-                slug: slug
+                slug: slug,
+                userinfo_id: existingUserInfo.id
             };
     
             // Simpan user
             let userCreate = await User.create(userCreateObj, { transaction });
     
-            // Membuat object untuk create userinfo
-            let userinfoCreateObj = {
+            // Update data di User_info dengan data dari request body
+            await existingUserInfo.update({
                 name: req.body.name,
-                user_id: userCreate.id, // Referensi ke user yang baru dibuat
-                nip: req.body.nip,
                 email: req.body.email,
                 telepon: req.body.telepon,
                 kecamatan_id: req.body.kecamatan_id,
@@ -103,28 +112,15 @@ module.exports = {
                 rt: req.body.rt,
                 rw: req.body.rw,
                 alamat: req.body.alamat,
+                user_id: userCreate.id, 
                 slug: slug
-            };
+            }, { transaction });
     
-            // Membuat entri baru di tabel userinfo
-            let userinfoCreate = await User_info.create(userinfoCreateObj, { transaction });
-
-            let userUpdateObj = {
-                userinfo_id: userinfoCreate.id, // menggunakan userinfoCreate.id, bukan userCreate.id
-            };
-            
-            await User.update(userUpdateObj, {
-                where: { id: userCreate.id }, // Update berdasarkan id user yang baru dibuat
-                transaction
-            });
-            
-
             // Commit transaksi jika semuanya berhasil
             await transaction.commit();
-            res.status(201).json(response(201, 'user created', { user: userCreate, userinfo: userinfoCreate }));
+            res.status(201).json(response(201, 'User created successfully', { user: userCreate, userinfo: existingUserInfo }));
     
         } catch (err) {
-            // Rollback transaksi jika ada error
             await transaction.rollback();
             if (err.name === 'SequelizeUniqueConstraintError') {
                 // Menangani error khusus untuk constraint unik
@@ -134,11 +130,15 @@ module.exports = {
                 });
             } else {
                 // Menangani error lainnya
-                res.status(500).json(response(500, 'terjadi kesalahan pada server', err));
+                res.status(500).json(response(500, 'Terjadi kesalahan pada server', err));
             }
             console.log(err);
         }
     },
+    
+    
+    
+    
     
     //login user
     loginUser: async (req, res) => {
@@ -686,7 +686,6 @@ module.exports = {
             return res.status(500).json({ status: 500, message: 'Internal server error.' });
         }
     },
-    
 
     forgotPassword: async (req, res) => {
         const { email } = req.body;
@@ -776,4 +775,75 @@ module.exports = {
             return res.status(500).json({ message: 'Internal server error.' });
         }
     },
+
+    importExcel: async (req, res) => {
+        try {
+            // Cek jika file tidak diunggah
+            if (!req.file) {
+                return res.status(400).json({ message: 'No file uploaded' });
+            }
+    
+            // Baca file Excel menggunakan ExcelJS
+            const workbook = new ExcelJS.Workbook();
+            await workbook.xlsx.load(req.file.buffer);
+            const worksheet = workbook.worksheets[0];
+    
+            // Array untuk menyimpan semua promise
+            const promises = [];
+    
+            // Proses setiap baris pada worksheet, mulai dari baris ke-2 (mengabaikan header)
+            worksheet.eachRow({ includeEmpty: false }, async (row, rowNumber) => {
+                if (rowNumber === 1) return;
+    
+                const nip = row.getCell(1).value; // Mengambil nilai NIP dari kolom 1
+                
+                // Validasi jika `nip` tidak ditemukan atau kosong
+                if (!nip) {
+                    console.log(`Skipping row ${rowNumber}, NIP is missing.`);
+                    return;
+                }
+    
+                // Siapkan data untuk disimpan atau diperbarui
+                const newUserInfo = {
+                    nip: nip,
+                };
+
+                promises.push(
+                    User_info.findOrCreate({
+                        where: { nip: newUserInfo.nip },
+                        defaults: newUserInfo
+                    }).then(([userInfo, created]) => {
+                        if (created) {
+                            console.log(`NIP ${newUserInfo.nip} berhasil ditambahkan.`);
+                        } else {
+                            console.log(`NIP ${newUserInfo.nip} sudah ada, melewati...`);
+                        }
+                    }).catch(err => {
+                        if (err.name === 'SequelizeUniqueConstraintError') {
+                            console.log(`NIP ${newUserInfo.nip} sudah terdaftar, melewati...`);
+                        } else {
+                            throw err;
+                        }
+                    })
+                );
+            });
+    
+            // Tunggu semua operasi selesai
+            await Promise.all(promises);
+    
+            res.status(201).json({ message: 'Import successful!' });
+        } catch (err) {
+            console.error('Error importing data: ', err.message);
+            if (err.name === 'SequelizeUniqueConstraintError') {
+                res.status(400).json({
+                    status: 400,
+                    message: `${err.errors[0].path} sudah terdaftar`
+                });
+            } else {
+                res.status(500).json({ status: 500, message: 'Internal server error', error: err.message });
+            }
+        }
+    }
+    
+
 }

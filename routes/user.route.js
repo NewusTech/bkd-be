@@ -4,6 +4,10 @@ const mid = require('../middlewares/auth.middleware');
 
 const express = require('express');
 const route = express.Router();
+const multer = require('multer');
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 route.post('/register', userController.createUser);
 route.post('/login', userController.loginUser);
@@ -20,5 +24,7 @@ route.get('/user/get', [mid.checkRolesAndLogout(['User', 'Admin Verifikasi', 'Su
 route.post('/user/forgot/password', userController.forgotPassword); 
 route.post('/user/reset/password/:token', userController.resetPassword); 
 route.post('/user/change/password/:slug', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userController.changePassword); 
+
+route.post('/user/info/import/excel', [mid.checkRolesAndLogout(['Super Admin'])], upload.single('file'), userController.importExcel);
 
 module.exports = route;
