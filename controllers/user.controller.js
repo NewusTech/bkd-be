@@ -136,10 +136,6 @@ module.exports = {
         }
     },
     
-    
-    
-    
-    
     //login user
     loginUser: async (req, res) => {
         try {
@@ -843,7 +839,5 @@ module.exports = {
                 res.status(500).json({ status: 500, message: 'Internal server error', error: err.message });
             }
         }
-    }
-    
-
+    }  
 }
