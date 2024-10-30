@@ -1024,4 +1024,44 @@ module.exports = {
         }
     },
 
+    createNIP: async (req, res) => {
+        try {
+            const schema = {
+                nip: { type: "string", min: 3 }
+            };
+            const validate = v.validate({ nip: req.body.nip }, schema);
+    
+            if (validate.length > 0) {
+                const errorMessages = validate.map(error => {
+                    if (error.type === 'stringMin') {
+                        return `${error.field} minimal ${error.expected} karakter`;
+                    } else {
+                        return `${error.field} tidak valid`;
+                    }
+                });
+    
+                return res.status(400).json({
+                    status: 400,
+                    message: errorMessages.join(', ')
+                });
+            }
+    
+            // Cek apakah NIP sudah ada di tabel User_info
+            const existingUserInfo = await User_info.findOne({ where: { nip: req.body.nip } });
+            if (existingUserInfo) {
+                return res.status(400).json({
+                    status: 400,
+                    message: "NIP sudah terdaftar."
+                });
+            }
+    
+            // Buat entri baru di tabel User_info
+            const newUserInfo = await User_info.create({ nip: req.body.nip });
+    
+            res.status(201).json({status: 201, message: "NIP created successfully", data: newUserInfo});
+        } catch (err) {
+            res.status(500).json({status: 500, message: "Internal server error", error: err.message});
+            console.error(err);
+        }
+    }
 }
