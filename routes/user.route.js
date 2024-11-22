@@ -24,6 +24,7 @@ route.get('/user/get', [mid.checkRolesAndLogout(['User', 'Admin Verifikasi', 'Su
 route.post('/user/forgot/password', userController.forgotPassword); 
 route.post('/user/reset/password/:token', userController.resetPassword); 
 route.post('/user/change/password/:slug', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userController.changePassword); 
+route.post('/user/change/password/by/admin/:slug', [mid.checkRolesAndLogout([ 'Super Admin', 'User'])], userController.changePasswordFromAdmin); 
 
 route.post('/user/info/import/excel', [mid.checkRolesAndLogout(['Super Admin'])], upload.single('file'), userController.importExcel);
 
