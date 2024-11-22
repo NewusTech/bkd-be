@@ -17,6 +17,8 @@ const layananformRoute = require("./layananform.route");
 const layananfileRoute = require("./layananfile.route");
 const inputformRoute = require("./inputform.route");
 const historyformRoute = require("./historyform.route");
+const provinsiRoute = require("./provinsi.route");
+const kotaRoute = require("./kota.route");
 const kecamatanRoute = require("./kecamatan.route");
 const desaRoute = require("./desa.route");
 const pangkatRoute = require("./pangkat.route");
@@ -57,6 +59,8 @@ module.exports = function (app, urlApi) {
   app.use(urlApi, layananfileRoute);
   app.use(urlApi, inputformRoute);
   app.use(urlApi, historyformRoute);
+  app.use(urlApi, provinsiRoute);
+  app.use(urlApi, kotaRoute);
   app.use(urlApi, kecamatanRoute);
   app.use(urlApi, desaRoute);
   app.use(urlApi, pangkatRoute);
