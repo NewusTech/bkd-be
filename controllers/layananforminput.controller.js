@@ -1218,6 +1218,7 @@ module.exports = {
     }
   },
 
+  //get history dokumen pengajuan user
   getHistoryDokumen: async (req, res) => {
     try {
       const search = req.query.search ?? null;
@@ -1225,15 +1226,14 @@ module.exports = {
       const range = req.query.range;
       const year = req.query.year ? parseInt(req.query.year) : null;
       const month = req.query.month ? parseInt(req.query.month) : null;
-      const isonline = req.query.isonline ?? null;
       let userinfo_id;
-      if (data.role === "User") {
-        userinfo_id = data.userId;
+      if (req.user.role === "User") {
+        userinfo_id = req.user.userId;
       } else {
         userinfo_id = req.query.userId;
       }
 
-      const instansi_id = Number(req.query.instansi_id);
+      const bidang_id = Number(req.query.bidang_id);
       const layanan_id = Number(req.query.layanan_id);
       const start_date = req.query.start_date;
       let end_date = req.query.end_date;
@@ -1248,18 +1248,13 @@ module.exports = {
       const WhereClause3 = {};
 
       if (
-        data.role === "Admin Instansi" ||
-        data.role === "Admin Verifikasi" ||
-        data.role === "Admin Layanan"
+        req.user.role === "Admin Verifikasi" ||
+        req.user.role === "Kepala Bidang"
       ) {
-        WhereClause2.instansi_id = data.instansi_id;
+        WhereClause2.bidang_id = req.user.bidang_id;
       }
 
-      if (data.role === "Admin Layanan") {
-        WhereClause.layanan_id = data.layanan_id;
-      }
-
-      WhereClause.status = 3;
+      WhereClause.status = 9;
 
       if (range == "today") {
         WhereClause.createdAt = {
@@ -1270,9 +1265,6 @@ module.exports = {
         };
       }
 
-      if (isonline) {
-        WhereClause.isonline = isonline;
-      }
       if (userinfo_id) {
         WhereClause.userinfo_id = userinfo_id;
       }
@@ -1326,8 +1318,8 @@ module.exports = {
         };
       }
 
-      if (instansi_id) {
-        WhereClause2.instansi_id = instansi_id;
+      if (bidang_id) {
+        WhereClause2.bidang_id = bidang_id;
       }
 
       if (search) {
@@ -1342,18 +1334,18 @@ module.exports = {
           include: [
             {
               model: Layanan,
-              attributes: ["name", "image", "id"],
+              attributes: ["nama", "id"],
               include: [
                 {
-                  model: Instansi,
-                  attributes: ["name", "image", "id"],
+                  model: Bidang,
+                  attributes: ["nama", "id"],
                 },
               ],
               where: WhereClause2,
             },
             {
               model: User_info,
-              attributes: ["name", "nik"],
+              attributes: ["name", "nip"],
               where: WhereClause3,
             },
           ],
@@ -1369,7 +1361,7 @@ module.exports = {
               where: WhereClause2,
             },
             {
-              model: Userinfo,
+              model: User_info,
               where: WhereClause3,
             },
           ],
@@ -1377,42 +1369,39 @@ module.exports = {
       ]);
 
       // Restructure the data to show Instansi first
-      let instansiMap = {};
+      let bidangMap = {};
 
       history.forEach((data) => {
-        const instansiId = data?.Layanan?.Instansi?.id;
-        const instansiName = data?.Layanan?.Instansi?.name;
-        const instansiImage = data?.Layanan?.Instansi?.image;
+        const bidangId = data?.Layanan?.Bidang?.id;
+        const bidangName = data?.Layanan?.Bidang?.nama;
 
-        if (!instansiMap[instansiId]) {
-          instansiMap[instansiId] = {
-            instansi_id: instansiId,
-            instansi_name: instansiName,
-            instansi_image: instansiImage,
+        if (!bidangMap[bidangId]) {
+          bidangMap[bidangId] = {
+            bidang_id: bidangId,
+            bidang_name: bidangName,
             dokumen: [],
           };
         }
 
-        instansiMap[instansiId].dokumen.push({
+        bidangMap[bidangId].dokumen.push({
           id: data.id,
           userinfo_id: data?.userinfo_id,
           tgl_selesai: data?.tgl_selesai,
-          layanan_name: data?.Layanan ? data?.Layanan?.name : null,
+          layanan_name: data?.Layanan ? data?.Layanan?.nama : null,
           createdAt: data?.createdAt,
           updatedAt: data?.updatedAt,
           fileoutput: data?.fileoutput,
-          filesertif: data?.filesertif,
           no_request: data?.no_request,
         });
       });
 
-      const formattedData = Object.values(instansiMap);
+      const formattedData = Object.values(bidangMap);
 
       const pagination = generatePagination(
         totalCount,
         page,
         limit,
-        `/api/user/historyform`
+        `/api/user/history/dokumen`
       );
 
       res.status(200).json({
