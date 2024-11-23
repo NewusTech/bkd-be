@@ -11,6 +11,12 @@ module.exports = (sequelize, DataTypes) => {
       User_info.hasMany(models.Layanan_form_num, {
         foreignKey: 'userinfo_id',
       });
+      User_info.belongsTo(models.Provinsi, {
+        foreignKey: 'provinsi_id',
+      });
+      User_info.belongsTo(models.Kota, {
+        foreignKey: 'kota_id',
+      });
       User_info.belongsTo(models.Kecamatan, {
         foreignKey: 'kecamatan_id',
       });
@@ -36,6 +42,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     telepon: DataTypes.STRING,
     image_profile: DataTypes.STRING,
+    provinsi_id: DataTypes.INTEGER,
+    kota_id: DataTypes.INTEGER,
     kecamatan_id: DataTypes.INTEGER,
     desa_id: DataTypes.INTEGER,
     rt: DataTypes.STRING,
