@@ -36,6 +36,8 @@ module.exports = {
                 telepon: { type: "string", min: 7, max: 15, pattern: /^[0-9]+$/, optional: true },
                 password: { type: "string", min: 5, max: 16 },
                 role_id: { type: "number", optional: true },
+                provinsi_id: { type: "string", min: 1, optional: true },
+                kota_id: { type: "string", min: 1, optional: true },
                 kecamatan_id: { type: "string", min: 1, optional: true },
                 desa_id: { type: "string", min: 1, optional: true },
                 rt: { type: "string", min: 1, optional: true },
@@ -51,6 +53,8 @@ module.exports = {
                 role_id: req.body.role_id !== undefined ? Number(req.body.role_id) : undefined,
                 email: req.body.email,
                 telepon: req.body.telepon,
+                provinsi_id: req.body.provinsi_id,
+                kota_id: req.body.kota_id,
                 kecamatan_id: req.body.kecamatan_id,
                 desa_id: req.body.desa_id,
                 rt: req.body.rt,
@@ -107,6 +111,8 @@ module.exports = {
                 name: req.body.name,
                 email: req.body.email,
                 telepon: req.body.telepon,
+                provinsi_id: req.body.provinsi_id,
+                kota_id: req.body.kota_id,
                 kecamatan_id: req.body.kecamatan_id,
                 desa_id: req.body.desa_id,
                 rt: req.body.rt,
@@ -276,8 +282,8 @@ module.exports = {
         }
     },
 
-    //get all data user
-    getUser: async (req, res) => {
+    //get all data admin
+    getAdmin: async (req, res) => {
         try {
             const showDeleted = req.query.showDeleted ?? null;
             const page = parseInt(req.query.page) || 1;
@@ -332,7 +338,80 @@ module.exports = {
                 };
             });
 
-            const pagination = generatePagination(totalCount, page, limit, '/api/user/get');
+            const pagination = generatePagination(totalCount, page, limit, '/api/admin/get');
+
+            res.status(200).json({
+                status: 200,
+                message: 'success get',
+                data: formattedUsers,
+                pagination: pagination
+            });
+
+        } catch (err) {
+            res.status(500).json(response(500, 'internal server error', err));
+            console.log(err);
+        }
+    },
+
+    //get all data user
+    getAccountUser: async (req, res) => {
+        try {
+            const showDeleted = req.query.showDeleted ?? null;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const offset = (page - 1) * limit;
+            let userGets;
+            let totalCount;
+
+            const whereCondition = {
+                role_id : 1
+            };
+
+            if (showDeleted !== null) {
+                whereCondition.deletedAt = { [Op.not]: null };
+            } else {
+                whereCondition.deletedAt = null;
+            }
+
+            [userGets, totalCount] = await Promise.all([
+                User.findAll({
+                    include: [
+                        {
+                            model: Role,
+                            attributes: ['name', 'id'],
+                            as: 'Role'
+                        },
+                        {
+                            model: User_info,
+                            as: 'User_info',
+                        },
+                    ],
+                    limit: limit,
+                    offset: offset,
+                    attributes: { exclude: ['Role', 'User_info'] },
+                    order: [['id', 'ASC']],
+                    where: whereCondition,
+                }),
+                User.count({
+                    where: whereCondition
+                })
+            ]);
+
+            let formattedUsers = userGets.map(user => {
+                return {
+                    id: user.id,
+                    slug: user.slug,
+                    nama: user.User_info?.nama,
+                    nip: user.User_info?.nip,
+                    email: user.User_info?.email,
+                    role_id: user.Role?.id,
+                    role_name: user.Role?.name,
+                    createdAt: user.createdAt,
+                    updatedAt: user.updatedAt
+                };
+            });
+
+            const pagination = generatePagination(totalCount, page, limit, '/api/user/account/get');
 
             res.status(200).json({
                 status: 200,
@@ -772,6 +851,34 @@ module.exports = {
         }
     },
 
+    changePasswordFromAdmin: async (req, res) => {
+        const slug = req.params.slug;
+        const { newPassword, confirmNewPassword } = req.body;
+
+        if (!newPassword || !confirmNewPassword) {
+            return res.status(400).json({ message: 'Semua kolom wajib diisi.' });
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            return res.status(400).json({ message: 'Kata sandi baru tidak cocok.' });
+        }
+
+        try {
+            const user = await User.findOne({ where: { slug } });
+            if (!user) {
+                return res.status(404).json({ message: 'Pengguna tidak ditemukan.' });
+            }
+
+            user.password = passwordHash.generate(newPassword);
+            await user.save();
+
+            return res.status(200).json({ message: 'Password has been updated.' });
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Internal server error.' });
+        }
+    },
+
     importExcel: async (req, res) => {
         try {
             // Cek jika file tidak diunggah
@@ -792,27 +899,31 @@ module.exports = {
                 if (rowNumber === 1) return;
     
                 const nip = row.getCell(1).value; // Mengambil nilai NIP dari kolom 1
-                
-                // Validasi jika `nip` tidak ditemukan atau kosong
-                if (!nip) {
-                    console.log(`Skipping row ${rowNumber}, NIP is missing.`);
+                const nama = row.getCell(2).value; // Mengambil nilai nama dari kolom 2
+    
+                // Validasi jika `nip` atau `nama` tidak ditemukan atau kosong
+                if (!nip || !nama) {
+                    console.log(`Skipping row ${rowNumber}, missing data (NIP or Name).`);
                     return;
                 }
     
                 // Siapkan data untuk disimpan atau diperbarui
                 const newUserInfo = {
                     nip: nip,
+                    name: nama,
                 };
-
+    
                 promises.push(
                     User_info.findOrCreate({
                         where: { nip: newUserInfo.nip },
-                        defaults: newUserInfo
-                    }).then(([userInfo, created]) => {
+                        defaults: newUserInfo,
+                    }).then(async ([userInfo, created]) => {
                         if (created) {
-                            console.log(`NIP ${newUserInfo.nip} berhasil ditambahkan.`);
+                            console.log(`NIP ${newUserInfo.nip} berhasil ditambahkan dengan nama ${newUserInfo.name}.`);
                         } else {
-                            console.log(`NIP ${newUserInfo.nip} sudah ada, melewati...`);
+                            // Jika data sudah ada, update nama
+                            await userInfo.update({ name: newUserInfo.name });
+                            console.log(`NIP ${newUserInfo.nip} diperbarui dengan nama ${newUserInfo.name}.`);
                         }
                     }).catch(err => {
                         if (err.name === 'SequelizeUniqueConstraintError') {
@@ -833,11 +944,13 @@ module.exports = {
             if (err.name === 'SequelizeUniqueConstraintError') {
                 res.status(400).json({
                     status: 400,
-                    message: `${err.errors[0].path} sudah terdaftar`
+                    message: `${err.errors[0].path} sudah terdaftar`,
                 });
             } else {
                 res.status(500).json({ status: 500, message: 'Internal server error', error: err.message });
             }
         }
-    }  
+    }
+     
+    
 }
