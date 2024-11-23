@@ -11,6 +11,7 @@ const { generatePagination } = require('../pagination/pagination');
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
 const Redis = require("ioredis");
+const { options } = require('../routes/historyform.route');
 const redisClient = new Redis({
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
@@ -73,8 +74,8 @@ module.exports = {
                         include: [
                             {
                                 model: Pangkat,
-                                attributes: ['nama', 'id'], // Pastikan kolom 'nama' ada di tabel Pangkat
-                                as: 'Pangkat' // Sesuaikan alias dengan relasi yang sudah didefinisikan
+                                attributes: ['nama', 'id'], 
+                                as: 'Pangkat'
                             },
                         ],
                     }),
@@ -87,8 +88,8 @@ module.exports = {
                         include: [
                             {
                                 model: Pangkat,
-                                attributes: ['nama', 'id'], // Pastikan kolom 'nama' ada di tabel Pangkat
-                                as: 'Pangkat' // Sesuaikan alias dengan relasi yang sudah didefinisikan
+                                attributes: ['nama', 'id'], 
+                                as: 'Pangkat'
                             },
                         ],
                     })
@@ -101,7 +102,7 @@ module.exports = {
                         include: [
                             {
                                 model: Pangkat,
-                                attributes: ['nama', 'id'], // Sama seperti di atas
+                                attributes: ['nama', 'id'],
                                 as: 'Pangkat'
                             },
                         ]
@@ -320,7 +321,7 @@ module.exports = {
         const transaction = await sequelize.transaction();
         try {
             // Mengambil user_id dari user yang sedang login
-            const userId = req.user?.user_akun_id; // Pastikan req.user sudah diisi dari middleware autentikasi
+            const userId = req.user?.user_akun_id;
     
             if (!userId) {
                 return res.status(400).json({
@@ -350,8 +351,8 @@ module.exports = {
     
             // Membuat schema untuk validasi input
             const schema = {
-                jenjang_kepangkatan: { type: "string", min: 2 },
-                tmt: { type: "string" },
+                pangkat_id: { type: "string", optional: true },
+                tmt: { type: "string", optional: true },
                 no_sk_pangkat: { type: "string", optional: true },
                 tgl_sk_pangkat: { type: "date", convert: true }
             };
@@ -377,7 +378,7 @@ module.exports = {
     
             // Update data kepangkatan
             await User_kepangkatan.update({
-                jenjang_kepangkatan: req.body.jenjang_kepangkatan,
+                pangkat_id: req.body.pangkat_id,
                 tmt: req.body.tmt,
                 no_sk_pangkat: req.body.no_sk_pangkat,
                 tgl_sk_pangkat: req.body.tgl_sk_pangkat
