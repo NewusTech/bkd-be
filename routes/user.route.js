@@ -14,7 +14,8 @@ route.post('/login', userController.loginUser);
 route.post('/logout', [mid.checkRolesAndLogout(['Super Admin', 'User', 'Admin Verifikasi', 'Kepala Bidang', 'Sekretaris Dinas', 'Kepala Dinas', 'Sekretaris Daerah'])], userController.logoutUser); 
 
 // API UNTUK ADMIN / SUPER ADMIN
-route.get('/getforuser', [mid.checkRolesAndLogout(['Super Admin', 'Admin Verifikasi'])], userController.getUser); 
+route.get('/admin/get', [mid.checkRolesAndLogout(['Super Admin', 'Admin Verifikasi'])], userController.getAdmin); 
+route.get('/user/account/get', [mid.checkRolesAndLogout(['Super Admin'])], userController.getAccountUser); 
 route.get('/user/get/:slug', [mid.checkRolesAndLogout(['Super Admin'])], userController.getUserBySlug); 
 route.delete('/user/delete/:slug', [mid.checkRolesAndLogout(['Super Admin'])], userController.deleteUser);
 
