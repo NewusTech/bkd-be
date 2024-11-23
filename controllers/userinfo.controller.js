@@ -677,7 +677,6 @@ module.exports = {
         }
     },
     
-    
 
     //create data person
     //dari sisi admin, jika user offline belum punya akun
@@ -957,7 +956,6 @@ module.exports = {
             console.log(err);
         }
     },
-    
 
     //menghapus user berdasarkan slug
     deleteUser: async (req, res) => {
@@ -1027,9 +1025,13 @@ module.exports = {
     createNIP: async (req, res) => {
         try {
             const schema = {
-                nip: { type: "string", min: 3 }
+                nip: { type: "string", min: 3 },
+                name: { type: "string", min: 3 }
             };
-            const validate = v.validate({ nip: req.body.nip }, schema);
+            const validate = v.validate({
+                nip: req.body.nip,
+                name: req.body.name,
+             }, schema);
     
             if (validate.length > 0) {
                 const errorMessages = validate.map(error => {
@@ -1047,7 +1049,10 @@ module.exports = {
             }
     
             // Cek apakah NIP sudah ada di tabel User_info
-            const existingUserInfo = await User_info.findOne({ where: { nip: req.body.nip } });
+            const existingUserInfo = await User_info.findOne({ where: { 
+                nip: req.body.nip,
+                name: req.body.name,
+            } });
             if (existingUserInfo) {
                 return res.status(400).json({
                     status: 400,
@@ -1056,7 +1061,10 @@ module.exports = {
             }
     
             // Buat entri baru di tabel User_info
-            const newUserInfo = await User_info.create({ nip: req.body.nip });
+            const newUserInfo = await User_info.create({
+                nip: req.body.nip,
+                name: req.body.name,
+             });
     
             res.status(201).json({status: 201, message: "NIP created successfully", data: newUserInfo});
         } catch (err) {
@@ -1107,10 +1115,14 @@ module.exports = {
     updateDataNIP: async (req, res) => {
         try {
             const { id } = req.params;
-            const { nip } = req.body;
+            const { nip, name } = req.body;
     
+            // Validasi input NIP
             if (!nip) {
-                return res.status(400).json({status: 400, message: "NIP tidak boleh kosong"});
+                return res.status(400).json({
+                    status: 400,
+                    message: "NIP tidak boleh kosong"
+                });
             }
     
             // Cari data berdasarkan ID
@@ -1124,21 +1136,33 @@ module.exports = {
                 });
             }
     
+            // Update NIP dan nama jika diberikan
             userInfo.nip = nip;
+            if (name) {
+                userInfo.name = name;
+            }
             await userInfo.save();
     
-            // response sukses setelah update
-            res.status(200).json({status: 200, message: "NIP berhasil diupdate",
+            // Response sukses setelah update
+            res.status(200).json({
+                status: 200,
+                message: "Data berhasil diupdate",
                 data: {
                     id: userInfo.id,
                     nip: userInfo.nip,
+                    name: userInfo.name,
                     updatedAt: userInfo.updatedAt
                 }
             });
         } catch (err) {
-            res.status(500).json({ status: 500, message: "Internal server error", error: err.message
+            // Tangani error
+            res.status(500).json({
+                status: 500,
+                message: "Internal server error",
+                error: err.message
             });
             console.error(err);
         }
     }
+    
 }
