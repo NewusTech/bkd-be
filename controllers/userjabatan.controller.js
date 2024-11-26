@@ -32,6 +32,7 @@ module.exports = {
     //UTK ADMIN NGECEK DATA PEMOHON
     getUserDataJabatan: async (req, res) => {
         try {
+            const iduser = req.user.role === "User" ? req.user.userId : req.body.userId; 
             const search = req.query.search ?? null;
             const role = req.query.role ?? null;
             const bidang = req.query.bidang ?? null;
@@ -64,6 +65,7 @@ module.exports = {
                 [userGets, totalCount] = await Promise.all([
                     User_jabatan.findAll({
                         where: {
+
                             [Op.or]: [
                                 { nip: { [Op.like]: `%${search}%` } },
                                 { name: { [Op.like]: `%${search}%` } }
@@ -84,10 +86,17 @@ module.exports = {
             } else {
                 [userGets, totalCount] = await Promise.all([
                     User_jabatan.findAll({
+                        where: {
+                            user_id: iduser
+                        },
                         limit: limit,
                         offset: offset
                     }),
-                    User_jabatan.count()
+                    User_jabatan.count({
+                        where: {
+                            user_id: iduser
+                        },
+                    })
                 ]);
             }
     
@@ -390,7 +399,6 @@ module.exports = {
             });
         }
     },
-    
 
     //menghapus user berdasarkan slug
     deleteUserJabatan: async (req, res) => {

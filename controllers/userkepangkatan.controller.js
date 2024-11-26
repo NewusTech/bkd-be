@@ -33,138 +33,48 @@ module.exports = {
     //UTK ADMIN NGECEK DATA PEMOHON
     getUserDataPangkat: async (req, res) => {
         try {
-            const search = req.query.search ?? null;
-            const role = req.query.role ?? null;
-            const bidang = req.query.bidang ?? null;
-            const layanan = req.query.layanan ?? null;
+            // Ambil informasi user_id dari pengguna yang sedang login
+            const iduser = req.user.role === "User" ? req.user.userId : req.body.userId; 
+            
             const page = parseInt(req.query.page) || 1;
             const limit = parseInt(req.query.limit) || 10;
-            const showDeleted = req.query.showDeleted ?? null;
             const offset = (page - 1) * limit;
-            let userGets;
-            let totalCount;
     
-            const userWhereClause = {};
-            if (showDeleted !== null) {
-                userWhereClause.deletedAt = { [Op.not]: null };
-            } else {
-                userWhereClause.deletedAt = null;
-            }
-            if (role) {
-                userWhereClause.role_id = role;
-            }
-            if (bidang) {
-                userWhereClause.bidang_id = bidang;
-            }
-            if (layanan) {
-                userWhereClause.layanan_id = layanan;
-            }
-    
-            // Query untuk mendapatkan data User_kepangkatan
-            if (search) {
-                [userGets, totalCount] = await Promise.all([
-                    User_kepangkatan.findAll({
-                        where: {
-                            [Op.or]: [
-                                { jenjang_kepangkatan: { [Op.like]: `%${search}%` } },
-                            ]
+            // Query untuk mendapatkan data User_kepangkatan milik user yang sedang login
+            const [userGets, totalCount] = await Promise.all([
+                User_kepangkatan.findAll({
+                    where: {
+                        user_id: iduser
+                    },
+                    limit: limit,
+                    offset: offset,
+                    include: [
+                        {
+                            model: Pangkat,
+                            attributes: ['nama', 'id'],
+                            as: 'Pangkat'
                         },
-                        limit: limit,
-                        offset: offset,
-                        include: [
-                            {
-                                model: Pangkat,
-                                attributes: ['nama', 'id'], 
-                                as: 'Pangkat'
-                            },
-                        ],
-                    }),
-                    User_kepangkatan.count({
-                        where: {
-                            [Op.or]: [
-                                { jenjang_kepangkatan: { [Op.like]: `%${search}%` } },
-                            ]
-                        },
-                        include: [
-                            {
-                                model: Pangkat,
-                                attributes: ['nama', 'id'], 
-                                as: 'Pangkat'
-                            },
-                        ],
-                    })
-                ]);
-            } else {
-                [userGets, totalCount] = await Promise.all([
-                    User_kepangkatan.findAll({
-                        limit: limit,
-                        offset: offset,
-                        include: [
-                            {
-                                model: Pangkat,
-                                attributes: ['nama', 'id'],
-                                as: 'Pangkat'
-                            },
-                        ]
-                    }),
-                    User_kepangkatan.count()
-                ]);
-            }
+                    ],
+                }),
+                User_kepangkatan.count({
+                    where: {
+                        user_id: iduser
+                    }
+                })
+            ]);
     
-            // Ambil semua user IDs dari hasil userGets
-            const userIds = userGets.map(user => user.user_id);
-    
-            // Query manual untuk mendapatkan data dari tabel User
-            const users = await User.findAll({
-                where: {
-                    id: { [Op.in]: userIds },
-                    ...userWhereClause
-                },
-                attributes: ['id'],
-            });
-    
-            // Ambil semua role IDs dari hasil users
-            const roleIds = users.map(user => user.role_id);
-    
-            // Query manual untuk mendapatkan data dari tabel Role
-            const roles = await Role.findAll({
-                where: {
-                    id: { [Op.in]: roleIds }
-                },
-                attributes: ['id', 'name']
-            });
-    
-            // Ambil semua bidang IDs dari hasil users
-            const bidangIds = users.map(user => user.bidang_id);
-    
-            // Query manual untuk mendapatkan data dari tabel Bidang
-            const bidangData = await Bidang.findAll({
-                where: {
-                    id: { [Op.in]: bidangIds }
-                },
-                attributes: ['id', 'nama']
-            });
-    
-            // Format hasil dengan menggabungkan data dari tabel User, Role, dan Bidang
-            const formattedData = userGets.map(user => {
-                const relatedUser = users.find(u => u.id === user.user_id);
-                const relatedRole = roles.find(r => r.id === relatedUser?.role_id);
-                const relatedBidang = bidangData.find(b => b.id === relatedUser?.bidang_id);
-                
-                return {
-                    id: user.id,
-                    user_id: user?.user_id,
-                    pangkat_id: user.pangkat_id,
-                    pangkat_nama: user.Pangkat ? user.Pangkat.nama : null, // Cek apakah user.Pangkat ada
-                    tmt: user.tmt,
-                    no_sk_pangkat: user.no_sk_pangkat,
-                    tgl_sk_pangkat: user.tgl_sk_pangkat,
-                    createdAt: user.createdAt,
-                    updatedAt: user.updatedAt,
-                    Role: relatedRole ? relatedRole.name : null,
-                    // Bidang: relatedBidang ? relatedBidang.nama : null
-                };
-            });
+            // Format hasil data
+            const formattedData = userGets.map(user => ({
+                id: user.id,
+                user_id: user.user_id,
+                pangkat_id: user.pangkat_id,
+                pangkat_nama: user.Pangkat ? user.Pangkat.nama : null,
+                tmt: user.tmt,
+                no_sk_pangkat: user.no_sk_pangkat,
+                tgl_sk_pangkat: user.tgl_sk_pangkat,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+            }));
     
             // Membuat pagination
             const pagination = generatePagination(totalCount, page, limit, '/api/user/kepangkatan/get');
@@ -186,6 +96,7 @@ module.exports = {
             console.log(err);
         }
     },
+    
 
     //mendapatkan data user berdasarkan slug
     //UTK ADMIN NGECEK DATA PEMOHON

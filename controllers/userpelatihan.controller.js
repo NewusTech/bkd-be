@@ -32,6 +32,7 @@ module.exports = {
     //UTK ADMIN NGECEK DATA PEMOHON
     getUserDataPelatihan: async (req, res) => {
         try {
+            const iduser = req.user.role === "User" ? req.user.userId : req.body.userId;
             const search = req.query.search ?? null;
             const role = req.query.role ?? null;
             const bidang = req.query.bidang ?? null;
@@ -84,10 +85,17 @@ module.exports = {
             } else {
                 [userGets, totalCount] = await Promise.all([
                     User_pelatihan.findAll({
+                        where: {
+                            user_id: iduser
+                        },
                         limit: limit,
                         offset: offset
                     }),
-                    User_pelatihan.count()
+                    User_pelatihan.count({
+                        where: {
+                            user_id: iduser
+                        },
+                    })
                 ]);
             }
     
