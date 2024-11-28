@@ -1088,7 +1088,7 @@ module.exports = {
     
             // Ambil data NIP berdasarkan kondisi pencarian dengan pagination
             const allNIPs = await User_info.findAll({
-                attributes: ['id', 'nip'],
+                attributes: ['id', 'name', 'nip'],
                 where: whereClause,
                 order: [['createdAt', 'DESC']],
                 limit: limit,
