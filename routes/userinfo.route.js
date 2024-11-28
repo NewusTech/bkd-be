@@ -21,7 +21,7 @@ route.get('/user/info/admin/get/:slug', [mid.checkRolesAndLogout(['Super Admin']
 route.put('/user/info/admin/update/:id', [mid.checkRolesAndLogout(['Super Admin'])], userinfoController.updateAdminById); 
 
 route.post('/user/info/admin/nip/create', [mid.checkRolesAndLogout(['Super Admin'])], userinfoController.createNIP); 
-route.get('/user/info/admin/nip/get', [mid.checkRolesAndLogout(['Super Admin'])], userinfoController.getDataNIP); 
+route.get('/user/info/admin/nip/get', [mid.checkRolesAndLogout(['Super Admin', 'User'])], userinfoController.getDataNIP); 
 route.put('/user/info/admin/nip/update/:id', [mid.checkRolesAndLogout(['Super Admin'])], userinfoController.updateDataNIP); 
 
 module.exports = route;
