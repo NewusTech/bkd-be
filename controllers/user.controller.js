@@ -92,7 +92,7 @@ module.exports = {
     
             // Generate slug unik
             const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, "");
-            const slug = `${req.body.name}-${timestamp}`;
+            const slug = `${req.body.name}-${timestamp}`.toLowerCase();
     
             // Membuat user baru dengan userinfo_id yang didapat dari User_info
             let userCreateObj = {
